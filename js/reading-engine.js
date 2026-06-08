@@ -1,21 +1,34 @@
 // ===== READING GENERATION =====
 async function generateReading(){
+  if(!canGenerateReading()){
+    showUpgradeModal('daily-limit');
+    return;
+  }
   goScreen('screen-reading');
   clearAutoSave();
   const content=document.getElementById('reading-content');
-  content.innerHTML='<div class="loading"><div class="spinner"></div><p>Generating your reading…</p><p id="ai-status" style="font-size:11px;color:var(--muted);margin-top:4px"></p></div>';
+  content.innerHTML=thoughtfulLoadingHtml('ai-status');
   const settings=loadSettings();
-  if(settings.geminiKey&&state.readingMode!=='classic-forced'){
+  const hasConfiguredAI=!!getGoogleApiKey();
+  if(hasConfiguredAI&&state.readingMode!=='classic-forced'){
     state.readingMode='ai';
     try{
       const narrative=await generateAIReading(settings);
       state.narrative=narrative;
       renderReading(narrative);
+      if(!state.readingUsageRecorded){
+        recordCompletedReading();
+        state.readingUsageRecorded=true;
+      }
       highlightReadingBtn('ai');
     }catch(e){
       const fallback=generateClassicReading();
       state.narrative=fallback;
       renderReading(fallback);
+      if(!state.readingUsageRecorded){
+        recordCompletedReading();
+        state.readingUsageRecorded=true;
+      }
       highlightReadingBtn('classic');
       content.insertAdjacentHTML('afterbegin',`<p style="color:var(--danger);font-size:11px;margin-bottom:12px">AI reading failed (${e.message}). Showing classic reading instead.</p>`);
     }
@@ -24,6 +37,10 @@ async function generateReading(){
     const classic=generateClassicReading();
     state.narrative=classic;
     renderReading(classic);
+    if(!state.readingUsageRecorded){
+      recordCompletedReading();
+      state.readingUsageRecorded=true;
+    }
     highlightReadingBtn('classic');
   }
 }
@@ -37,8 +54,8 @@ async function switchReadingMode(mode){
   const content=document.getElementById('reading-content');
   if(mode==='ai'){
     const settings=loadSettings();
-    if(!settings.geminiKey){alert('Set your Gemini API key in Settings to use AI readings.');return;}
-    content.innerHTML='<div class="loading"><div class="spinner"></div><p>Generating AI reading…</p><p id="ai-status" style="font-size:11px;color:var(--muted);margin-top:4px"></p></div>';
+    try{requireGoogleApiKey();}catch(e){alert(e.message);return;}
+    content.innerHTML=thoughtfulLoadingHtml('ai-status');
     try{
       const narrative=await generateAIReading(settings);
       state.narrative=narrative;
@@ -65,7 +82,31 @@ function getSpreadLayoutHint(spread){
   return `LAYOUT: ${n} cards, positions numbered 1 to ${n} as laid out in the photo.`;
 }
 
-async function generateAIReading(settings){
+function getCleanSpreadLayoutHint(spread){
+  if(spread.layout==='celtic')return 'LAYOUT: A cross with a vertical staff on the right.\nCross: pos 5 (Crown, top), pos 3 (Foundation, bottom), pos 1 (Present, centre), pos 2 (Challenge, crossing centre), pos 4 (Recent Past, left), pos 6 (Near Future, right).\nStaff: right column bottom-to-top: pos 7, 8, 9, 10.';
+  if(spread.layout==='romany')return 'LAYOUT: 7 columns of 3 cards each, left to right.\nCol 1 Emotion: pos 1-3. Col 2 Relationships: pos 4-6. Col 3 Hopes & Career: pos 7-9. Col 4 Finances: pos 10-12. Col 5 Spiritual: pos 13-15. Col 6 Obstacles: pos 16-18. Col 7 Health & Future: pos 19-21.\nWithin each column, top card = Past (lower id), middle = Present, bottom = Future (higher id).';
+  if(spread.layout==='yearly')return 'LAYOUT: 2 rows of 6 cards. Top row left-to-right = January (1) through June (6). Bottom row left-to-right = July (7) through December (12).';
+  const n=spread.cardCount;
+  if(spread.layout==='row'||n<=5)return `LAYOUT: ${n} cards in a single row, left to right, numbered 1 to ${n}.`;
+  return `LAYOUT: ${n} cards, positions numbered 1 to ${n} as laid out in the photo.`;
+}
+
+function readerContextLine(){
+  const parts=[];
+  if(state.readerAge)parts.push(`Age: ${state.readerAge}`);
+  if(state.readerLifeStage)parts.push(`Life stage: ${state.readerLifeStage}`);
+  return parts.length?parts.join('; '):'Not provided';
+}
+
+function readerSafetyInstruction(){
+  const age=parseInt(state.readerAge,10);
+  const stage=String(state.readerLifeStage||'').toLowerCase();
+  const isMinor=(age&&age<18)||stage.includes('child')||stage.includes('teen');
+  const minorLine=isMinor?'The reader may be a minor: keep the language especially gentle, age-appropriate, non-alarming, and encourage support from a trusted adult for serious worries. Do not frame romance, sexuality, money, career, or life decisions in an adult way for a child.':'';
+  return `Adapt the interpretation to the reader's age and life stage. A card that suggests independence, work, romance, conflict, or responsibility should be interpreted differently for a child, teen, adult, or older adult. Keep the reading reflective and empowering, not deterministic. ${minorLine}`.trim();
+}
+
+function buildAIReadingPrompt(settings){
   const spread=getSpread();
   let cardLines='';
   spread.positions.forEach(pos=>{
@@ -73,7 +114,7 @@ async function generateAIReading(settings){
     if(entry){
       const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
       const kws=card?card.keywords.join(', '):'';
-      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: ${entry.name} (${entry.orientation}) — Keywords: ${kws}\n`;
+      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: ${entry.name} (${entry.orientation}) - Keywords: ${kws}\n`;
     }else{
       cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: (no card entered)\n`;
     }
@@ -81,28 +122,34 @@ async function generateAIReading(settings){
   let droppedLine='';
   if(state.hasDroppedCard&&state.droppedCard){
     const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
-    droppedLine=`\nDropped Card (fell out during shuffling): ${state.droppedCard.name} (${state.droppedCard.orientation}) — Keywords: ${dc?dc.keywords.join(', '):''}\nThis card may reveal an underlying theme influencing the entire reading.\n`;
+    droppedLine=`\nDropped Card (fell out during shuffling): ${state.droppedCard.name} (${state.droppedCard.orientation}) - Keywords: ${dc?dc.keywords.join(', '):''}\nThis card may reveal an underlying theme influencing the entire reading.\n`;
   }
   const specialNote=spread.id==='romany'?'\nNOTE: If the Health & Future column (cards 19-21) mirrors the Relationships column (cards 4-6) in theme, interpret it as the health of a relationship, not physical health.':spread.id==='yearly'?'\nNOTE: Any Ace signals new beginnings for that month. Major Arcana carry extra weight. A Knight indicates major life change in that period.':spread.id==='celtic-cross'?'\nNOTE: Card 2 (The Challenge) crosses Card 1 and retains its meaning regardless of orientation.':'';
-  const prompt=`You are a compassionate, insightful tarot reader with deep knowledge of ${state.cardSystem==='tarot'?'traditional tarot':'playing card cartomancy'}.
+  return `You are a compassionate, insightful tarot reader with deep knowledge of ${state.cardSystem==='tarot'?'traditional tarot':'playing card cartomancy'}.
 Generate a complete reading with these sections, using markdown headers (##):
-## Introduction — Overall theme and mood
-## Position-by-Position — Each card interpreted in the specific meaning of its position
-## Pattern Analysis — Dominant suits, major arcana influence, repeated numbers, reversals, card interactions
-## Guidance — Practical, actionable advice
-## Reflection Questions — 3-5 thoughtful journaling prompts as a bulleted list
+## Introduction - Overall theme and mood
+## Position-by-Position - Each card interpreted in the specific meaning of its position
+## Pattern Analysis - Dominant suits, major arcana influence, repeated numbers, reversals, card interactions
+## Guidance - Practical, actionable advice
+## Reflection Questions - 3-5 thoughtful journaling prompts as a bulleted list
 
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
-${state.concerns.length?'Concerns: '+state.concerns.join(', '):'No specific concerns — provide general guidance.'}
+${state.concerns.length?'Concerns: '+state.concerns.join(', '):'No specific concerns - provide general guidance.'}
+Reader context: ${readerContextLine()}
+Age/life-stage guidance: ${readerSafetyInstruction()}
+Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 
-Spread: ${spread.name} — ${spread.description}
-${getSpreadLayoutHint(spread)}
+Spread: ${spread.name} - ${spread.description}
+${getCleanSpreadLayoutHint(spread)}
 
 Positions and cards:
 ${cardLines}${droppedLine}${specialNote}
 
 For each card in the Position-by-Position section, explicitly address what that specific position represents in this spread AND how the card's energy expresses through that positional lens. Write as a flowing narrative, not a list of definitions. Make connections between the cards.`;
-  return await callGemini(prompt,settings.geminiKey,state.uploadedImage||null,document.getElementById('ai-status'));
+}
+
+async function generateAIReading(settings){
+  return await callGemini(buildAIReadingPrompt(settings),requireGoogleApiKey(),state.uploadedImage||null,document.getElementById('ai-status'));
 }
 
 function generateClassicReading(){
@@ -209,6 +256,8 @@ function renderReading(text){
     html=sections[0]+sections.slice(1).map(s=>'<div class="reading-section">'+s+'</div>').join('');
   }
   content.innerHTML=html;
+  enhanceReadingOutput();
   const jSec=document.getElementById('journal-section');
   if(jSec){jSec.style.display='block';document.getElementById('journal-entry').value=''}
+  renderEntitlementsUI();
 }

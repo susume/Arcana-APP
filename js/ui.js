@@ -21,6 +21,9 @@ function routeForScreen(id){return String(id||'').replace(/^screen-/,'');}
 function screenForRoute(route){return route&&route.startsWith('screen-')?route:'screen-'+(route||'welcome');}
 function navigate(route){goScreen(screenForRoute(route),true);}
 function goScreen(id, fromRouter){
+  if(id==='screen-history' && !requestPremiumFeature('history')){
+    id='screen-welcome';
+  }
   if(!fromRouter && location.hash !== '#'+routeForScreen(id)) location.hash = '#'+routeForScreen(id);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -28,6 +31,7 @@ function goScreen(id, fromRouter){
   if(id==='screen-history')renderHistory();
   updateDots(id);
   updateProgressEstimate(id);
+  renderEntitlementsUI();
   autoSaveState();
 }
 const GUIDED_SCREENS=['screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
@@ -53,7 +57,10 @@ function startGuided(){
   state.hasDroppedCard=false;
   state.uploadedImage=null;
   state.spreadId=null;
+  state.readerAge='';
+  state.readerLifeStage='';
   state.guidedStep=0;
+  state.readingUsageRecorded=false;
   state.concerns=[];
   // Reset drop toggle UI
   const tog=document.getElementById('drop-toggle');
@@ -63,6 +70,10 @@ function startGuided(){
   const cl=document.getElementById('concern-list');
   cl.innerHTML='<div class="concern-row"><input type="text" placeholder="What\'s on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button></div>';
   document.querySelectorAll('.tag-chip').forEach(t=>t.classList.remove('active'));
+  const age=document.getElementById('reader-age');
+  const lifeStage=document.getElementById('reader-life-stage');
+  if(age)age.value='';
+  if(lifeStage)lifeStage.value='';
   state.cardSystem='tarot';
   currentCards=getCards();
   goScreen('screen-spread');
@@ -72,9 +83,16 @@ function startQuick(){
   state.uploadedImage=null;
   state.quickSpreadId=null;
   state.narrative='';
+  state.readingUsageRecorded=false;
   state.cards={};
+  state.readerAge='';
+  state.readerLifeStage='';
   document.getElementById('quick-results').innerHTML='';
   document.getElementById('quick-concern').value='';
+  const age=document.getElementById('quick-reader-age');
+  const lifeStage=document.getElementById('quick-reader-life-stage');
+  if(age)age.value='';
+  if(lifeStage)lifeStage.value='';
   const zone=document.getElementById('quick-upload-zone');
   zone.classList.remove('has-image');
   zone.innerHTML='<p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>';
@@ -170,11 +188,21 @@ function buildCustomPositions(){
 }
 function confirmSpread(){
   if(!state.spreadId){alert('Please select a reading type.');return;}
+  saveReaderContext('reader-age','reader-life-stage');
   goScreen('screen-reflection');
+}
+
+function saveReaderContext(ageId, lifeStageId){
+  const ageEl=document.getElementById(ageId);
+  const stageEl=document.getElementById(lifeStageId);
+  const age=ageEl?ageEl.value.trim():'';
+  state.readerAge=age?String(Math.max(1,Math.min(120,parseInt(age,10)||0))):'';
+  state.readerLifeStage=stageEl?stageEl.value.trim():'';
 }
 
 // ===== READING TYPE SELECTION =====
 function selectReadingType(id, el){
+  if(PREMIUM_SPREAD_IDS.includes(id) && !requestPremiumFeature('advanced-spreads')) return;
   document.querySelectorAll('.reading-choice-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   const spread=SPREADS.find(s=>s.id===id);
@@ -274,22 +302,33 @@ function renderShareCanvas(data){
 // ===== ENHANCED READING =====
 function enhanceReadingOutput(){
   const content=document.getElementById('reading-content');
-  if(!content)return;
+  if(!content||content.querySelector('.reading-summary-card'))return;
   const spread=SPREADS.find(s=>s.id===state.spreadId);
-  const cardNames=Object.values(state.cards).map(c=>c.name||'').filter(Boolean);
-  const hasMajor=cardNames.some(n=>/^(The |Wheel|Justice|Judgement|Strength|Death|Temperance)/.test(n));
+  const entries=Object.values(state.cards);
+  const cardNames=entries.map(c=>c.name||'').filter(Boolean);
+  const cardObjects=entries.map(entry=>currentCards.find(c=>c.name.toLowerCase()===(entry.name||'').toLowerCase())).filter(Boolean);
+  const hasMajor=cardObjects.some(c=>c.arcana==='major')||cardNames.some(n=>/^(The |Wheel|Justice|Judgement|Strength|Death|Temperance)/.test(n));
+  const reversedCount=entries.filter(c=>c.orientation==='reversed').length;
+  const suitCounts={};
+  cardObjects.forEach(c=>{if(c.suit)suitCounts[c.suit]=(suitCounts[c.suit]||0)+1;});
+  const dominantSuit=Object.entries(suitCounts).sort((a,b)=>b[1]-a[1])[0];
+  const themes=['Decision Making','Self Trust','New Opportunities'];
+  if(state.concerns.length)themes.unshift(state.concerns[0]);
+  if(hasMajor)themes.push('Major Arcana Influence');
+  if(dominantSuit)themes.push(dominantSuit[0].charAt(0).toUpperCase()+dominantSuit[0].slice(1)+' Focus');
   let h='<div class="reading-summary-card">';
-  h+='<h3 class="summary-title">'+(spread?spread.name:'Your Reading')+' Summary</h3>';
+  h+='<h3 class="summary-title">Summary</h3>';
+  h+='<p class="summary-copy">'+(spread?spread.name:'Your reading')+' with '+cardNames.length+' card'+(cardNames.length===1?'':'s')+' drawn. Review the key themes first, then continue into the full reading.</p>';
   h+='<div class="summary-meta">';
-  h+='<span class="summary-cards">'+cardNames.length+' cards drawn</span>';
+  h+='<span class="summary-cards">'+(spread?spread.name:'Reading')+'</span>';
+  if(state.readerAge||state.readerLifeStage)h+='<span class="major-badge">'+[state.readerAge?'Age '+state.readerAge:'',state.readerLifeStage||''].filter(Boolean).join(' / ')+'</span>';
   if(hasMajor)h+='<span class="major-badge">Major Arcana Present</span>';
+  if(reversedCount)h+='<span class="major-badge">'+reversedCount+' Reversed</span>';
   h+='</div>';
-  const sections=content.querySelectorAll('.reading-section h3');
-  if(sections.length>0){
-    h+='<div class="summary-themes">';
-    sections.forEach(function(s,i){if(i<4)h+='<span class="theme-tag">'+s.textContent+'</span>';});
-    h+='</div>';
-  }
+  h+='<h4 class="summary-subtitle">Key Themes</h4>';
+  h+='<div class="summary-themes">'+themes.slice(0,5).map(t=>'<span class="theme-tag">'+t+'</span>').join('')+'</div>';
+  h+='<p class="ai-disclaimer">AI-assisted readings are for reflection and personal insight only. They are not professional medical, legal, financial, mental-health, or crisis advice.</p>';
+  h+='<h4 class="summary-subtitle">Full Reading</h4>';
   h+='</div>';
   content.insertAdjacentHTML('afterbegin',h);
 }
@@ -435,8 +474,8 @@ function handleGuidedDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];
 function handleGuidedUpload(inp){if(inp.files[0])processUpload(inp.files[0],'guided-upload-zone','guided-identify-btn')}
 
 async function identifyGuidedCards(){
-  const settings=loadSettings();
-  if(!settings.geminiKey){alert('Please set your Gemini API key in Settings first.');return;}
+  let apiKey;
+  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('guided-identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -454,7 +493,7 @@ Examine the photo carefully. For each numbered position, identify the card name 
 Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,settings.geminiKey,state.uploadedImage);
+    const result=await callGemini(prompt,apiKey,state.uploadedImage);
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -510,10 +549,16 @@ function filterSuit(suit,el){
 }
 
 function toggleOrient(el){
-  if(el.dataset.orient==='upright'){el.dataset.orient='reversed';el.textContent='↓';el.classList.add('reversed')}
-  else{el.dataset.orient='upright';el.textContent='↑';el.classList.remove('reversed')}
+  if(el.dataset.orient==='upright'){
+    el.dataset.orient='reversed';
+    el.textContent='↓';
+    el.classList.add('reversed');
+  }else{
+    el.dataset.orient='upright';
+    el.textContent='↑';
+    el.classList.remove('reversed');
+  }
 }
-
 function toggleDrop(){
   const tog=document.getElementById('drop-toggle');
   tog.classList.toggle('on');
@@ -620,12 +665,15 @@ function renderQuickSpreads(){
     grid.appendChild(lbl);
     catSpreads.forEach(sp=>{
       const card=document.createElement('div');
-      card.className='spread-card qs-card'+(state.quickSpreadId===sp.id?' selected':'');
-      card.onclick=()=>selectQuickSpread(sp.id);
-      card.innerHTML=`<h4>${sp.name}</h4><div class="count">${sp.cardCount} cards</div>`;
+      const locked=PREMIUM_SPREAD_IDS.includes(sp.id)&&!isPremium();
+      card.className='spread-card qs-card'+(state.quickSpreadId===sp.id?' selected':'')+(locked?' premium-locked':'');
+      card.dataset.premiumFeature=PREMIUM_SPREAD_IDS.includes(sp.id)?'advanced-spreads':'';
+      card.onclick=()=>locked?showUpgradeModal('advanced-spreads'):selectQuickSpread(sp.id);
+      card.innerHTML=`<h4>${sp.name}</h4><div class="count">${sp.cardCount} cards${locked?' - Premium':''}</div>`;
       grid.appendChild(card);
     });
   });
+  renderEntitlementsUI();
 }
 function processUpload(file,zoneId,btnId){
   const reader=new FileReader();
@@ -640,8 +688,8 @@ function processUpload(file,zoneId,btnId){
 }
 
 async function identifyCards(){
-  const settings=loadSettings();
-  if(!settings.geminiKey){alert('Please set your Gemini API key in Settings first.');return;}
+  let apiKey;
+  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -659,7 +707,7 @@ Examine the photo carefully. For each numbered position in the layout above, ide
 Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,settings.geminiKey,state.uploadedImage);
+    const result=await callGemini(prompt,apiKey,state.uploadedImage);
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -750,26 +798,32 @@ function renderOverview(){
 }
 
 // ===== QUICK READING =====
-async function buildQuickSpreadRef(){
+function buildQuickSpreadRef(){
   return SPREADS.filter(s=>s.id!=='custom').map(s=>
     s.name+' ('+s.cardCount+' cards): '+s.positions.map(p=>p.id+'. '+p.name+' ['+p.description+']').join(' | ')
   ).join('\n');
 }
 
 async function quickRead(){
+  if(!canGenerateReading()){
+    showUpgradeModal('daily-limit');
+    return;
+  }
   const settings=loadSettings();
-  if(!settings.geminiKey){alert('Quick Reading requires a Gemini API key. Set it in Settings.');return;}
+  let apiKey;
+  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
   if(!state.uploadedImage){alert('Please upload a photo first.');return;}
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
+  saveReaderContext('quick-reader-age','quick-reader-life-stage');
   state.cardSystem=state.cardSystem||'tarot';
   const results=document.getElementById('quick-results');
-  results.innerHTML='<div class="loading"><div class="spinner"></div><p>Analyzing your spread…</p><p id="quick-ai-status" style="font-size:11px;color:var(--muted);margin-top:4px"></p></div>';
+  results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
   try{
     const qs=state.quickSpreadId?SPREADS.find(s=>s.id===state.quickSpreadId):null;
     let prompt;
     if(qs){
-      const layoutHint=getSpreadLayoutHint(qs);
+      const layoutHint=getCleanSpreadLayoutHint(qs);
       const posLines=qs.positions.map(p=>p.id+'. '+p.name+': '+p.description).join('\n');
       prompt=`You are a skilled tarot reader analyzing a photograph of a ${qs.name} spread (${qs.cardCount} cards).
 
@@ -780,13 +834,16 @@ ${posLines}
 
 For each visible card, identify its name, orientation (upright/reversed), and position, then interpret through that position's meaning.
 
-## Introduction 窶・Overall theme and mood of this ${qs.name} reading
-## Position-by-Position 窶・Card name + orientation + position meaning + interpretation
-## Pattern Analysis 窶・Dominant suits, Major Arcana presence, reversals, key interactions
-## Guidance 窶・Practical, actionable advice
-## Reflection Questions 窶・3-5 journaling prompts as a bulleted list
+## Introduction  - Overall theme and mood of this ${qs.name} reading
+## Position-by-Position  - Card name + orientation + position meaning + interpretation
+## Pattern Analysis  - Dominant suits, Major Arcana presence, reversals, key interactions
+## Guidance  - Practical, actionable advice
+## Reflection Questions  - 3-5 journaling prompts as a bulleted list
 
-${concern?'Querent concern: '+concern:'No specific concern 窶・provide general guidance.'}
+${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
+Reader context: ${readerContextLine()}
+Age/life-stage guidance: ${readerSafetyInstruction()}
+Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
 Write as a flowing narrative grounded in both card meaning and positional context. Be specific.`;
@@ -797,27 +854,34 @@ Write as a flowing narrative grounded in both card meaning and positional contex
 KNOWN SPREADS (match the layout in the photo to one of these):
 ${spreadRef}
 
-STEP 1 — IDENTIFY:
+STEP 1 - IDENTIFY:
 - Determine the card system (tarot Rider-Waite-Smith, or playing cards)
 - Match the layout to a known spread above, or describe it if unknown
 - For each visible card, identify: position number, card name, orientation (upright/reversed)
 - Use standard RWS card names (e.g. "The Fool", "Ace of Cups", "Queen of Swords")
 
-STEP 2 — READ:
+STEP 2 - READ:
 Generate a complete reading using ## markdown headers:
-## Introduction — Overall theme and mood of the spread
-## Position-by-Position — For each card, name the position and its meaning in this spread, then interpret the card through that positional lens
-## Pattern Analysis — Dominant suits, Major Arcana presence, reversals, card interactions
-## Guidance — Practical, actionable advice
-## Reflection Questions — 3-5 journaling prompts as a bulleted list
+## Introduction - Overall theme and mood of the spread
+## Position-by-Position - For each card, name the position and its meaning in this spread, then interpret the card through that positional lens
+## Pattern Analysis - Dominant suits, Major Arcana presence, reversals, card interactions
+## Guidance - Practical, actionable advice
+## Reflection Questions - 3-5 journaling prompts as a bulleted list
 
-${concern?'Querent concern: '+concern:'No specific concern — provide general guidance.'}
+${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
+Reader context: ${readerContextLine()}
+Age/life-stage guidance: ${readerSafetyInstruction()}
+Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
 Write as a flowing narrative. Address BOTH the card meaning AND its positional context. Be specific.`;
     }
-    const narrative=await callGemini(prompt,settings.geminiKey,state.uploadedImage,document.getElementById('quick-ai-status'));
+    const narrative=await callGemini(prompt,apiKey,state.uploadedImage,document.getElementById('quick-ai-status'));
     state.narrative=narrative;
+    if(!state.readingUsageRecorded){
+      recordCompletedReading();
+      state.readingUsageRecorded=true;
+    }
     results.innerHTML='';
     const content=document.createElement('div');
     content.id='quick-reading-content';
@@ -826,8 +890,9 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
     results.insertAdjacentHTML('beforeend',`
       <div class="nav-row" style="margin-top:16px">
         <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
-        <button class="btn btn-primary" onclick="saveReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
+        <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
       </div>`);
+    renderEntitlementsUI();
   }catch(e){
     results.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
   }
@@ -874,24 +939,28 @@ function showToast(msg){
 
 // ===== HISTORY =====
 function renderHistory(){
+  if(!requestPremiumFeature('history')) return;
   const list=document.getElementById('history-list');
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
   if(!readings.length){list.innerHTML='<p style="text-align:center;color:var(--muted);padding:40px">No saved readings yet. Complete a reading and save it to see it here.</p>';return;}
-  list.innerHTML='';
+  list.innerHTML='<div class="history-tools"><button class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button></div><div id="comparison-output"></div>';
   readings.forEach((r,i)=>{
     const d=new Date(r.date);
+    const readerContext=[r.readerAge?'Age '+r.readerAge:'',r.readerLifeStage||''].filter(Boolean).join(' / ');
     const item=document.createElement('div');
     item.className='history-item';
     item.innerHTML=`
       <div class="history-header" onclick="this.nextElementSibling.classList.toggle('open')">
-        <div><h4 style="font-size:13px">${r.title||'Untitled Reading'}</h4><span style="font-size:11px;color:var(--muted)">${r.spreadName||r.spread} · ${r.cardSystem}</span></div>
+        <input class="compare-reading-check" type="checkbox" value="${i}" onclick="event.stopPropagation()" title="Select for comparison">
+        <div><h4 style="font-size:13px">${r.title||'Untitled Reading'}</h4><span style="font-size:11px;color:var(--muted)">${r.spreadName||r.spread} / ${r.cardSystem}</span></div>
         <span class="h-date">${d.toLocaleDateString()}</span>
       </div>
       <div class="history-body">
         ${r.concerns&&r.concerns.length?`<p style="font-size:12px;color:var(--muted);margin-bottom:8px"><strong>Concerns:</strong> ${r.concerns.join(', ')}</p>`:''}
+        ${readerContext?`<p style="font-size:12px;color:var(--muted);margin-bottom:8px"><strong>Reader context:</strong> ${readerContext}</p>`:''}
         <div id="history-reading-${i}" style="margin-bottom:12px"></div>
         <label style="font-size:11px;color:var(--gold)">Journal Notes</label>
-        <textarea style="margin-top:4px" placeholder="Add your reflections…" oninput="updateNote(${i},this.value)">${r.notes||''}</textarea>
+        <textarea style="margin-top:4px" placeholder="Add your reflections..." oninput="updateNote(${i},this.value)">${r.notes||''}</textarea>
         <div style="margin-top:8px;text-align:right">
           <button class="btn btn-sm btn-danger" onclick="deleteReading(${i})">Delete</button>
         </div>
@@ -901,6 +970,7 @@ function renderHistory(){
     const readingDiv=document.getElementById(`history-reading-${i}`);
     renderReadingInto(readingDiv,r.narrative||'No reading content saved.');
   });
+  renderEntitlementsUI();
 }
 function updateNote(idx,val){
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
@@ -972,6 +1042,7 @@ function selectPickerCard(name){
 
 // ===== JOURNAL =====
 function saveJournal(){
+  if(!requestPremiumFeature('journal')) return;
   const txt=document.getElementById('journal-entry').value.trim();
   if(!txt)return;
   const date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});

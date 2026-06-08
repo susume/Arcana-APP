@@ -2,10 +2,10 @@
   <div class="step-dots" id="dots-concerns"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your Concerns</h2>
   <div class="onboard">
-    What's weighing on your mind? A focus helps shape the reading — or <strong>skip this</strong> for open guidance.
+    What's weighing on your mind? A focus helps shape the reading, or <strong>skip this</strong> for open guidance.
   </div>
   <div id="concern-list">
-    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button></div>
+    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
   </div>
   <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">+ Add Another</button>
   <div class="tag-chips">
@@ -18,7 +18,7 @@
     <span class="tag-chip" onclick="tagConcern(this)">General Guidance</span>
   </div>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
-    <button class="btn btn-primary" onclick="saveConcerns()">Continue →</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
+    <button class="btn btn-primary" onclick="saveConcerns()">Continue</button>
   </div>
 </div>

@@ -27,6 +27,7 @@ async function initApp(){
   document.querySelectorAll('.modal-overlay').forEach(m=>{
     m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)});
   });
+  renderEntitlementsUI();
 }
 
 window.addEventListener('hashchange',()=>goScreen(screenForRoute(location.hash.slice(1)),true));

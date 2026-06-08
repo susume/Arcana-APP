@@ -39,65 +39,45 @@
     ],
     "layout": "row"
   },
-  "three-card-sao": {
-    "id": "three-card-sao",
-    "name": "Three Card (Situation/Action/Outcome)",
-    "category": "Daily",
-    "description": "Situation · Action · Outcome",
-    "cardCount": 3,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Situation",
-        "description": "What is happening right now"
-      },
-      {
-        "id": 2,
-        "name": "Action",
-        "description": "The best action you can take"
-      },
-      {
-        "id": 3,
-        "name": "Outcome",
-        "description": "The likely result of that action"
-      }
-    ],
-    "layout": "row"
-  },
-  "five-card": {
-    "id": "five-card",
-    "name": "Five Card",
+  "six-card": {
+    "id": "six-card",
+    "name": "Simple Celtic Cross",
     "category": "Classic",
-    "description": "Situation · Obstacle · Hidden · Advice · Outcome",
-    "cardCount": 5,
+    "description": "6-card overview of your situation",
+    "cardCount": 6,
     "positions": [
       {
         "id": 1,
-        "name": "Situation",
-        "description": "Your current situation"
+        "name": "The Querent",
+        "description": "You and your situation until now"
       },
       {
         "id": 2,
-        "name": "Obstacle",
-        "description": "What stands in your way"
+        "name": "Surroundings",
+        "description": "Your current surroundings and present location"
       },
       {
         "id": 3,
-        "name": "Hidden Influence",
-        "description": "An unseen force affecting things"
+        "name": "Current Influences",
+        "description": "What is influencing you now"
       },
       {
         "id": 4,
-        "name": "Advice",
-        "description": "Guidance for your path"
+        "name": "External Events",
+        "description": "Current events related to your question"
       },
       {
         "id": 5,
-        "name": "Outcome",
-        "description": "The likely outcome"
+        "name": "Passing Away",
+        "description": "Circumstances that are transitioning"
+      },
+      {
+        "id": 6,
+        "name": "Near Future",
+        "description": "Influences that may occur soon"
       }
     ],
-    "layout": "cross"
+    "layout": "celtic-simple"
   },
   "celtic-cross": {
     "id": "celtic-cross",
@@ -158,116 +138,6 @@
       }
     ],
     "layout": "celtic"
-  },
-  "relationship": {
-    "id": "relationship",
-    "name": "Relationship",
-    "category": "Relationships",
-    "description": "You · Other · Connection · Challenge · Potential",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "You",
-        "description": "Your role in the relationship"
-      },
-      {
-        "id": 2,
-        "name": "Other Person",
-        "description": "The other person's energy"
-      },
-      {
-        "id": 3,
-        "name": "Connection",
-        "description": "What binds you together"
-      },
-      {
-        "id": 4,
-        "name": "Challenge",
-        "description": "What challenges the relationship"
-      },
-      {
-        "id": 5,
-        "name": "Potential Outcome",
-        "description": "Where this could lead"
-      }
-    ],
-    "layout": "row"
-  },
-  "career": {
-    "id": "career",
-    "name": "Career",
-    "category": "Life & Decisions",
-    "description": "Position · Opportunity · Obstacle · Advice · Future",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Current Position",
-        "description": "Where you are now professionally"
-      },
-      {
-        "id": 2,
-        "name": "Opportunity",
-        "description": "An opportunity presenting itself"
-      },
-      {
-        "id": 3,
-        "name": "Obstacle",
-        "description": "What blocks professional growth"
-      },
-      {
-        "id": 4,
-        "name": "Advice",
-        "description": "Guidance for your career path"
-      },
-      {
-        "id": 5,
-        "name": "Future Direction",
-        "description": "Where your career is heading"
-      }
-    ],
-    "layout": "row"
-  },
-  "future-love": {
-    "id": "future-love",
-    "name": "Future True Love",
-    "category": "Relationships",
-    "description": "6-card love reading",
-    "cardCount": 6,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Your Future Love",
-        "description": "Your future true love"
-      },
-      {
-        "id": 2,
-        "name": "Instant Attraction?",
-        "description": "Will the attraction be instant?"
-      },
-      {
-        "id": 3,
-        "name": "Their Character",
-        "description": "True love's character"
-      },
-      {
-        "id": 4,
-        "name": "Challenges",
-        "description": "Challenges and delays"
-      },
-      {
-        "id": 5,
-        "name": "What Will Help",
-        "description": "What is going to help"
-      },
-      {
-        "id": 6,
-        "name": "When/Where/How",
-        "description": "When, where or how you meet"
-      }
-    ],
-    "layout": "pyramid"
   },
   "two-pathways": {
     "id": "two-pathways",
@@ -534,81 +404,6 @@
     ],
     "layout": "romany"
   },
-  "timeline": {
-    "id": "timeline",
-    "name": "Timeline",
-    "category": "Classic",
-    "description": "5-card past to future",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Distant Past",
-        "description": "Events long ago shaping the present"
-      },
-      {
-        "id": 2,
-        "name": "Recent Past",
-        "description": "What happened recently"
-      },
-      {
-        "id": 3,
-        "name": "Present",
-        "description": "Where you are now"
-      },
-      {
-        "id": 4,
-        "name": "Near Future",
-        "description": "What is coming soon"
-      },
-      {
-        "id": 5,
-        "name": "Far Future",
-        "description": "The long-term direction"
-      }
-    ],
-    "layout": "row"
-  },
-  "six-card": {
-    "id": "six-card",
-    "name": "Simple Celtic Cross",
-    "category": "Classic",
-    "description": "6-card overview of your situation",
-    "cardCount": 6,
-    "positions": [
-      {
-        "id": 1,
-        "name": "The Querent",
-        "description": "You and your situation until now"
-      },
-      {
-        "id": 2,
-        "name": "Surroundings",
-        "description": "Your current surroundings and present location"
-      },
-      {
-        "id": 3,
-        "name": "Current Influences",
-        "description": "What is influencing you now"
-      },
-      {
-        "id": 4,
-        "name": "External Events",
-        "description": "Current events related to your question"
-      },
-      {
-        "id": 5,
-        "name": "Passing Away",
-        "description": "Circumstances that are transitioning"
-      },
-      {
-        "id": 6,
-        "name": "Near Future",
-        "description": "Influences that may occur soon"
-      }
-    ],
-    "layout": "celtic-simple"
-  },
   "custom": {
     "id": "custom",
     "name": "Custom Spread",
@@ -637,7 +432,7 @@
     "id": "standardReading",
     "name": "Standard Reading",
     "category": "Classic",
-    "description": "Past ? Present ? Future",
+    "description": "Past · Present · Future",
     "cardCount": 3,
     "positions": [
       {
@@ -661,33 +456,39 @@
   "deepExploration": {
     "id": "deepExploration",
     "name": "Deep Exploration",
-    "category": "Life & Decisions",
-    "description": "Current Situation ? Challenge ? Past Influence ? Near Future ? Advice ? Outcome",
+    "category": "Classic",
+    "description": "Current Situation · Challenge · Past Influence · Near Future · Advice · Outcome",
     "cardCount": 6,
     "positions": [
       {
         "id": 1,
-        "name": "Current Situation"
+        "name": "Current Situation",
+        "description": "Where you stand right now"
       },
       {
         "id": 2,
-        "name": "Challenge"
+        "name": "Challenge",
+        "description": "What stands in your way"
       },
       {
         "id": 3,
-        "name": "Past Influence"
+        "name": "Past Influence",
+        "description": "What has shaped the situation"
       },
       {
         "id": 4,
-        "name": "Near Future"
+        "name": "Near Future",
+        "description": "What is approaching"
       },
       {
         "id": 5,
-        "name": "Advice"
+        "name": "Advice",
+        "description": "Guidance for your path"
       },
       {
         "id": 6,
-        "name": "Outcome"
+        "name": "Outcome",
+        "description": "The likely result"
       }
     ],
     "layout": "grid"

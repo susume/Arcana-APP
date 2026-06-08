@@ -4,6 +4,30 @@
     Select your spread below, then upload a photo. AI reads each position with full context.
   </div>
   <input type="text" id="quick-concern" placeholder="Optional: what's on your mind?" style="margin-bottom:16px">
+  <div class="context-panel quick-context">
+    <div>
+      <h3>Reading Context</h3>
+      <p>Optional, but age and life stage help Arcana interpret the cards appropriately.</p>
+    </div>
+    <div class="context-grid">
+      <label>
+        Age
+        <input type="number" id="quick-reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
+      </label>
+      <label>
+        Life stage
+        <select id="quick-reader-life-stage">
+          <option value="">Prefer not to say</option>
+          <option>Child</option>
+          <option>Teen</option>
+          <option>Young adult</option>
+          <option>Adult</option>
+          <option>Older adult</option>
+        </select>
+      </label>
+    </div>
+    <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
+  </div>
   <div class="quick-step-label">Choose your spread</div>
   <div class="spread-grid" id="quick-spread-grid"></div>
   <div class="quick-step-label" style="margin-top:14px">Upload your photo</div>
@@ -14,6 +38,6 @@
   <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Read My Cards</button>
   <div id="quick-results"></div>
   <div style="margin-top:16px">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
   </div>
 </div>

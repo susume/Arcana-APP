@@ -17,15 +17,29 @@ function clearAutoSave(){
 
 // ===== PERSISTENCE =====
 function loadSettings(){
-  try{return JSON.parse(localStorage.getItem('arcana_settings'))||{geminiKey:'',readingStyle:'Traditional',readingTone:'Gentle'}}catch(e){return{geminiKey:'',readingStyle:'Traditional',readingTone:'Gentle'}}
+  try{
+    const saved=JSON.parse(localStorage.getItem('arcana_settings'))||{};
+    return {readingStyle:saved.readingStyle||'Traditional',readingTone:saved.readingTone||'Gentle'};
+  }catch(e){return{readingStyle:'Traditional',readingTone:'Gentle'}}
 }
 function saveSettings(){
+  const activationInput=document.getElementById('premium-key-input');
+  const activationStatus=document.getElementById('premium-key-status');
+  if(activationInput&&activationInput.value.trim()){
+    if(activatePremiumKey(activationInput.value)){
+      if(activationStatus){activationStatus.textContent='Premium activated on this device.';activationStatus.style.color='var(--success)';}
+    }else if(activationStatus){
+      activationStatus.textContent='Activation key not recognized.';
+      activationStatus.style.color='var(--danger)';
+      return;
+    }
+  }
   const s={
-    geminiKey:document.getElementById('api-key-input').value.trim(),
     readingStyle:document.getElementById('reading-style').value,
     readingTone:document.getElementById('reading-tone').value
   };
   localStorage.setItem('arcana_settings',JSON.stringify(s));
+  renderEntitlementsUI();
   closeModal('modal-settings');
   showToast('Settings saved ✓');
 }
@@ -37,12 +51,15 @@ function showToast(msg){
 }
 function loadSettingsUI(){
   const s=loadSettings();
-  document.getElementById('api-key-input').value=s.geminiKey;
   document.getElementById('reading-style').value=s.readingStyle;
   document.getElementById('reading-tone').value=s.readingTone;
+  const keyInput=document.getElementById('premium-key-input');
+  if(keyInput)keyInput.value='';
+  renderEntitlementsUI();
 }
 
 function saveReading(){
+  if(!requestPremiumFeature('history')) return;
   const title=prompt('Give this reading a title:','Reading '+new Date().toLocaleDateString());
   if(!title)return;
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
@@ -53,6 +70,8 @@ function saveReading(){
     date:new Date().toISOString(),
     mode:state.mode,
     concerns:[...state.concerns],
+    readerAge:state.readerAge||'',
+    readerLifeStage:state.readerLifeStage||'',
     cardSystem:state.cardSystem||'tarot',
     spread:state.spreadId||'quick',
     spreadName:spread?spread.name:'Quick Reading',

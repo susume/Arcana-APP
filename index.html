@@ -13,81 +13,77 @@
   <div class="stars" id="stars"></div>
   <main id="app"></main>
   <template id="template-welcome">
-<div class="screen active" id="screen-welcome">
-  <div class="logo">
-    <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
-    <h1>Arcana</h1>
-    <div class="divider"></div>
-<div class="hero-constellation" aria-hidden="true">
-<svg viewBox="0 0 400 220" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:360px;margin:0 auto;display:block;opacity:.85">
-  <defs>
-    <radialGradient id="mg" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="oklch(0.85 0.08 280)"></stop><stop offset="100%" stop-color="oklch(0.72 0.12 295)"></stop></radialGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
-  </defs>
-  <g filter="url(#glow)" opacity=".9">
-    <circle cx="200" cy="88" r="36" fill="url(#mg)" opacity=".18"></circle>
-    <path d="M200 52a36 36 0 1 0 0 72 28 28 0 1 1 0-72Z" fill="oklch(0.88 0.06 290)" opacity=".9"></path>
-  </g>
-  <g stroke="oklch(0.70 0.10 295)" stroke-width=".7" opacity=".5">
-    <line x1="120" y1="40" x2="155" y2="72"></line><line x1="155" y1="72" x2="178" y2="68"></line>
-    <line x1="178" y1="68" x2="200" y2="88"></line><line x1="200" y1="88" x2="240" y2="75"></line>
-    <line x1="240" y1="75" x2="272" y2="58"></line><line x1="200" y1="88" x2="215" y2="130"></line>
-    <line x1="215" y1="130" x2="250" y2="155"></line><line x1="215" y1="130" x2="175" y2="148"></line>
-    <line x1="175" y1="148" x2="140" y2="135"></line><line x1="140" y1="135" x2="120" y2="155"></line>
-    <line x1="55" y1="90" x2="90" y2="105"></line><line x1="90" y1="105" x2="120" y2="98"></line>
-    <line x1="300" y1="100" x2="330" y2="120"></line><line x1="330" y1="120" x2="355" y2="108"></line>
-  </g>
-  <g fill="oklch(0.90 0.06 290)">
-    <circle cx="120" cy="40" r="2.5"></circle><circle cx="155" cy="72" r="2"></circle><circle cx="178" cy="68" r="1.8"></circle>
-    <circle cx="240" cy="75" r="2.2"></circle><circle cx="272" cy="58" r="1.8"></circle>
-    <circle cx="215" cy="130" r="2"></circle><circle cx="250" cy="155" r="2.5"></circle><circle cx="175" cy="148" r="1.8"></circle>
-    <circle cx="140" cy="135" r="2"></circle><circle cx="120" cy="155" r="2.2"></circle>
-    <circle cx="55" cy="90" r="1.5"></circle><circle cx="90" cy="105" r="2"></circle><circle cx="120" cy="98" r="1.8"></circle>
-    <circle cx="300" cy="100" r="2"></circle><circle cx="330" cy="120" r="2.2"></circle><circle cx="355" cy="108" r="1.5"></circle>
-  </g>
-  <g fill="oklch(0.80 0.04 285)" opacity=".4">
-    <circle cx="30" cy="30" r="1"></circle><circle cx="75" cy="55" r="1.2"></circle><circle cx="320" cy="35" r="1"></circle>
-    <circle cx="370" cy="70" r="1.1"></circle><circle cx="45" cy="170" r="1"></circle><circle cx="345" cy="170" r="1.2"></circle>
-    <circle cx="160" cy="195" r="1"></circle><circle cx="260" cy="190" r="1.1"></circle><circle cx="185" cy="30" r="1"></circle>
-  </g>
-</svg>
-</div>
-    <p class="tagline">Illuminate what the cards reveal</p>
-  </div>
-  <div class="onboard">
-    A space for reflection and clarity. Choose <strong>Guided</strong> to be walked through each step, or <strong>Quick</strong> to snap a photo and let AI read your cards. No experience needed.
-  </div>
-  <div class="mode-grid">
-    <div class="mode-card" onclick="startGuided()">
-      <div class="card-back mode-ico"><div class="cb-star"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></div></div>
-      <h3>Guided Reading</h3>
-      <p>Draw cards one by one with step-by-step guidance</p>
-      <span class="badge" style="margin-top:8px">Recommended</span>
+<div class="screen active landing-screen" id="screen-welcome">
+  <div class="landing-shell">
+    <div class="landing-topbar">
+      <div class="brand-lockup">
+        <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
+        <div>
+          <h1>Arcana</h1>
+          <p>Insight Through the Cards</p>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.2" y1="8" x2="20.8" y2="8"></line><line x1="3.2" y1="16" x2="20.8" y2="16"></line><circle cx="8" cy="8" r="2.6"></circle><circle cx="16" cy="16" r="2.6"></circle></svg>
+      </button>
     </div>
-    <div class="mode-card" onclick="startQuick()">
-      <div class="mode-ico" style="width:62px;height:62px;display:grid;place-items:center;border-radius:14px;background:var(--gold-dim);color:var(--au-violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px" aria-hidden="true"><path d="M13.2 3 5.5 13.2H10l-1 7.8 8-10.6H12.4l.8-7.4Z"></path></svg></div>
-      <h3>Quick Reading</h3>
-      <p>Photograph your spread for an instant AI interpretation</p>
-      <span class="badge" style="margin-top:8px">Advanced</span>
+
+    <div class="landing-command">
+      <div class="landing-copy">
+        <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
+        <h2>Insight through the cards</h2>
+        <p>Reflect on relationships, decisions, career questions, and personal growth through guided AI-assisted readings.</p>
+      </div>
+
+      <div class="card-stage" aria-hidden="true">
+        <div class="stage-card card-a"></div>
+        <div class="stage-card card-b"></div>
+        <div class="stage-card card-c"></div>
+        <div class="stage-line"></div>
+      </div>
+    </div>
+
+    <div class="landing-actions-panel">
+      <button class="action-tile primary-action" onclick="startGuided()">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg></span>
+        <span><strong>Start Reading</strong><small>Guided card-by-card flow</small></span>
+      </button>
+      <button class="action-tile" onclick="startQuick()">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg></span>
+        <span><strong>Quick Upload</strong><small>For readers with a spread ready</small></span>
+      </button>
+      <button class="action-tile" onclick="goScreen('screen-history')" data-premium-feature="history">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>
+        <span><strong>History</strong><small>Premium journal archive</small></span>
+      </button>
+    </div>
+
+    <div class="plan-preview premium-strip">
+      <div>
+        <h3>Free</h3>
+        <p>1 reading per day. Quick Insight, Standard Reading, Deep Exploration, AI interpretation, and a basic summary.</p>
+      </div>
+      <div>
+        <h3>Premium</h3>
+        <p>$4.99/month. Unlimited readings, history, narration, journal tools, advanced spreads, comparison, and priority AI processing.</p>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</span>
     </div>
   </div>
-  <div class="footer-links">
-    <span class="footer-link" onclick="goScreen('screen-history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> History</span>
-    <span class="footer-link" onclick="openModal('modal-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.2" y1="8" x2="20.8" y2="8"></line><line x1="3.2" y1="16" x2="20.8" y2="16"></line><circle cx="8" cy="8" r="2.6"></circle><circle cx="16" cy="16" r="2.6"></circle></svg> Settings</span>
-    <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Help</span>
-  </div>
-  <div class="api-note">AI features require a free Google Gemini API key · All readings saved locally on your device</div>
 </div>
-  </template>
+</template>
   <template id="template-concerns">
 <div class="screen" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your Concerns</h2>
   <div class="onboard">
-    What's weighing on your mind? A focus helps shape the reading — or <strong>skip this</strong> for open guidance.
+    What's weighing on your mind? A focus helps shape the reading, or <strong>skip this</strong> for open guidance.
   </div>
   <div id="concern-list">
-    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button></div>
+    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
   </div>
   <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">+ Add Another</button>
   <div class="tag-chips">
@@ -100,11 +96,11 @@
     <span class="tag-chip" onclick="tagConcern(this)">General Guidance</span>
   </div>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
-    <button class="btn btn-primary" onclick="saveConcerns()">Continue →</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
+    <button class="btn btn-primary" onclick="saveConcerns()">Continue</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-card-system">
 <div class="screen" id="screen-card-system">
   <div class="step-dots" id="dots-system"></div>
@@ -114,68 +110,93 @@
   </div>
   <div class="card-opt" onclick="selectSystem('tarot',this)">
     <h3>Traditional Tarot</h3>
-    <p>78 cards — 22 Major Arcana + 56 Minor Arcana (Wands, Cups, Swords, Pentacles). Rich symbolism, centuries of tradition.</p>
+    <p>78 cards: 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
   </div>
   <div class="card-opt" onclick="selectSystem('playing',this)">
     <h3>Playing Cards</h3>
-    <p>Standard 52-card deck — Hearts, Diamonds, Clubs, Spades. Classic cartomancy readings.</p>
+    <p>Standard 52-card deck: Hearts, Diamonds, Clubs, and Spades for classic cartomancy readings.</p>
   </div>
   <div class="card-opt" onclick="selectSystem('playing-joker',this)">
     <h3>Playing Cards + Joker</h3>
-    <p>53 cards. The Joker represents unlimited potential — taking a big risk but trusting that all will be well.</p>
+    <p>53 cards. The Joker represents unlimited potential, risk, and trust in the unknown.</p>
   </div>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-concerns')">← Back</button>
-    <button class="btn btn-primary" onclick="confirmSystem()">Continue →</button>
+    <button class="btn" onclick="goScreen('screen-concerns')">Back</button>
+    <button class="btn btn-primary" onclick="confirmSystem()">Continue</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-choose-reading">
 <div class="screen" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Choose Your Reading</h2>
+  <div class="onboard compact-onboard">Free readings include Quick Insight, Standard Reading, and Deep Exploration. Advanced readings unlock with Premium.</div>
+  <div class="context-panel">
+    <div>
+      <h3>Reading Context</h3>
+      <p>Optional, but helpful. Age and life stage can change how a card should be interpreted.</p>
+    </div>
+    <div class="context-grid">
+      <label>
+        Age
+        <input type="number" id="reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
+      </label>
+      <label>
+        Life stage
+        <select id="reader-life-stage">
+          <option value="">Prefer not to say</option>
+          <option>Child</option>
+          <option>Teen</option>
+          <option>Young adult</option>
+          <option>Adult</option>
+          <option>Older adult</option>
+        </select>
+      </label>
+    </div>
+    <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
+  </div>
   <div class="reading-choices" id="reading-choices">
     <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
-      <div class="rc-header"><h3>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
+      <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
       <p>Fast guidance for a single question</p>
       <span class="rc-time">~1 minute</span>
     </div>
     <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
-      <div class="rc-header"><h3>Standard Reading</h3><span class="rc-cards">3 Cards</span></div>
+      <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
       <p>Past, Present, Future</p>
       <span class="rc-time">~3 minutes</span>
     </div>
     <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
-      <div class="rc-header"><h3>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
+      <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
       <p>Comprehensive insight into a situation</p>
       <span class="rc-time">~5 minutes</span>
     </div>
     <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
-      <span id="adv-arrow">▼</span> Advanced Readings
+      <span id="adv-arrow">v</span> Advanced Readings <span class="premium-chip">Premium</span>
     </div>
     <div class="advanced-readings-panel" id="advanced-readings-panel" style="display:none">
-      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)">
+      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
         <h3>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span>
       </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)">
+      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
         <h3>Romany Spread</h3><span class="rc-cards">21 Cards</span>
       </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)">
+      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
         <h3>Yearly Forecast</h3><span class="rc-cards">12 Cards</span>
       </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)">
+      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
       </div>
     </div>
   </div>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
-    <button class="btn btn-primary" onclick="confirmSpread()">Continue →</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
+    <button class="btn btn-primary" onclick="confirmSpread()">Continue</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-reflection">
 <div class="screen" id="screen-reflection">
   <div class="step-dots" id="dots-reflection"></div>
@@ -184,44 +205,41 @@
     <div class="reflection-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;color:var(--au-violet)"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l2 2"></path></svg>
     </div>
-    <h2 style="text-align:center;font-size:24px;font-weight:600;margin:20px 0 12px;letter-spacing:.2px;font-family:var(--font-display)">What's weighing on your mind?</h2>
-    <p class="reflection-intro">Arcana helps you reflect on relationships, decisions, career questions, and personal growth.</p>
-    <p class="reflection-hint">Take a moment to hold your question in your thoughts. You don't need to type anything — just let it settle.</p>
+    <h2 style="text-align:center;font-size:24px;font-weight:600;margin:20px 0 12px;letter-spacing:.2px;font-family:var(--font-display)">Prepare Your Reading</h2>
+    <div class="prepare-list">
+      <p>Find a quiet space.</p>
+      <p>Think about the situation you'd like insight into.</p>
+      <p>Shuffle your deck while focusing on your question.</p>
+      <p>Draw your cards and place them according to the spread.</p>
+    </div>
     <div class="reflection-breathe">
       <div class="breathe-circle"></div>
       <span>Breathe and focus...</span>
     </div>
-    <div class="shuffle-prompt" style="margin-top:28px;text-align:center">
-      <div class="shuffle-icon" style="margin-bottom:12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px;color:var(--au-violet);opacity:.8"><rect x="2" y="4" width="8" height="12" rx="1"></rect><rect x="6" y="6" width="8" height="12" rx="1" opacity=".7"></rect><rect x="10" y="8" width="8" height="12" rx="1" opacity=".5"></rect></svg>
-      </div>
-      <p style="color:var(--fg);font-size:15px;font-weight:500;margin-bottom:6px">When you're ready:</p>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6">Shuffle your deck while focusing on your question.</p>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6">Lay your cards out face down, then press Continue.</p>
-    </div>
   </div>
   <div class="nav-row" style="margin-top:32px">
-    <button class="btn" onclick="goScreen('screen-spread')">← Back</button>
-    <button class="btn btn-primary" onclick="confirmReflection()">Continue →</button>
+    <button class="btn" onclick="goScreen('screen-spread')">Back</button>
+    <button class="btn btn-primary" onclick="confirmReflection()">Continue</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-placement">
 <div class="screen" id="screen-card-entry">
   <div class="step-dots" id="dots-entry"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Enter Your Cards</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Lay Out Your Cards</h2>
+  <div class="onboard compact-onboard">Use the visual guide to place each card by position. When your spread is ready, upload a clear photo from above or enter the cards manually.</div>
 
   <div class="dropped-card-section">
     <div class="toggle-row">
       <div class="toggle" id="drop-toggle" onclick="toggleDrop()"></div>
       <h4>Did a card fall out during shuffling?</h4>
     </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A card that drops while shuffling can carry special significance — it may reveal an underlying theme or energy influencing your entire reading.</p>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A card that drops while shuffling can carry special significance. It may reveal an underlying theme or energy influencing your entire reading.</p>
     <div id="drop-card-entry" style="display:none">
       <div class="card-entry-row">
         <span class="pos-name">Dropped Card</span>
         <button class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
-        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" title="Click to toggle orientation">↑</div>
+        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" title="Click to toggle orientation">U</div>
       </div>
     </div>
   </div>
@@ -234,27 +252,27 @@
 
   <div id="tab-guided">
     <div class="onboard">
-      Draw cards <strong>one at a time</strong> — the app guides each position. When finished, <strong>photograph your spread</strong> and AI identifies them.
+      Draw cards <strong>one at a time</strong>. The app guides each position. When finished, <strong>photograph your spread</strong> and AI identifies them.
     </div>
     <div id="guided-ritual-prompt"></div>
     <div id="guided-spread-diagram"></div>
     <div id="guided-actions" style="text-align:center;margin-top:12px"></div>
     <div id="guided-photo-section" style="display:none;margin-top:16px">
       <div class="divider" style="margin-bottom:16px"></div>
-      <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards placed ✦ Now photograph your spread</p>
+      <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards placed. Now photograph your spread.</p>
       <div class="upload-zone" id="guided-upload-zone" onclick="document.getElementById('guided-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleGuidedDrop(event)">
         <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo of your completed spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
       </div>
       <input type="file" id="guided-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleGuidedUpload(this)">
       <button class="btn btn-primary" id="guided-identify-btn" style="display:none;width:100%;margin-top:8px" onclick="identifyGuidedCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
       <div id="guided-identify-results"></div>
-      <p style="text-align:center;margin-top:12px"><span class="footer-link" onclick="switchTab('tab-manual',document.querySelectorAll('.tab-btn')[2])">Or enter cards manually →</span></p>
+      <p style="text-align:center;margin-top:12px"><span class="footer-link" onclick="switchTab('tab-manual',document.querySelectorAll('.tab-btn')[2])">Or enter cards manually</span></p>
     </div>
   </div>
 
   <div id="tab-upload" style="display:none">
     <div class="onboard">
-      Photograph your spread face-up. <strong>AI identifies each card</strong> — correct any mistakes before continuing.
+      Take a clear photo from above. Ensure all cards are visible, and avoid shadows or glare.
     </div>
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
       <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo here<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
@@ -266,18 +284,18 @@
 
   <div id="tab-manual" style="display:none">
     <div class="onboard">
-      Type to search, then set each card <strong>upright ↑</strong> or <strong>reversed ↓</strong>.
+      Type to search, then set each card <strong>upright</strong> or <strong>reversed</strong>.
     </div>
     <div class="suit-filter" id="suit-filter"></div>
     <div id="manual-entries"></div>
   </div>
 
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-spread')">← Back</button>
-    <button class="btn btn-primary" onclick="confirmCards()">Review Cards →</button>
+    <button class="btn" onclick="goScreen('screen-spread')">Back</button>
+    <button class="btn btn-primary" onclick="confirmCards()">Review Cards</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-overview">
 <div class="screen" id="screen-overview">
   <div class="step-dots" id="dots-overview"></div>
@@ -288,11 +306,11 @@
   <div id="dropped-overview" style="display:none;margin-bottom:16px"></div>
   <div class="overview-grid" id="overview-grid"></div>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-card-entry')">← Edit Cards</button>
+    <button class="btn" onclick="goScreen('screen-card-entry')">Edit Cards</button>
     <button class="btn btn-primary" onclick="generateReading()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate Reading</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-results">
 <div class="screen" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
@@ -300,34 +318,36 @@
   <div class="reading-toggle no-print">
     <button class="btn btn-sm" id="btn-ai-read" onclick="switchReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
     <button class="btn btn-sm" id="btn-classic-read" onclick="switchReadingMode('classic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> Classic Reading</button>
+    <button class="btn btn-sm" onclick="narrateReading()" data-premium-feature="voice">Voice</button>
   </div>
   <div id="reading-content"></div>
 
-  <div class="journal-section no-print" id="journal-section">
-    <div class="journal-prompt">❖ Reflection</div>
-    <textarea id="journal-entry" class="journal-textarea" placeholder="What resonated with you? What surprised you? What do you want to remember from this reading?"></textarea>
+  <div class="journal-section no-print" id="journal-section" data-premium-feature="journal">
+    <div class="journal-prompt">Reflection</div>
+    <p class="reflection-question">What stood out most to you?</p>
+    <textarea id="journal-entry" class="journal-textarea" placeholder="Write your reflection here..."></textarea>
     <button class="btn btn-sm" onclick="saveJournal()" style="margin-top:8px">Save Reflection</button>
   </div>
   <div class="nav-row no-print" style="flex-wrap:wrap;gap:8px">
-    <button class="btn" onclick="goScreen('screen-welcome')">← New Reading</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">New Reading</button>
     <button class="btn" onclick="shareReading()">Share</button>
     <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
-    <button class="btn btn-primary" onclick="saveReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
+    <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-history">
 <div class="screen" id="screen-history">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Reading History</h2>
   <div class="onboard">
-    Your past readings, stored on this device. Revisit for reflection or journaling.
+    Premium reading history is stored on this device. Revisit readings, add journal notes, and compare patterns over time.
   </div>
   <div id="history-list"></div>
   <div style="text-align:center;margin-top:16px">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back to Home</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back to Home</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-quick">
 <div class="screen" id="screen-quick">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Quick Reading</h2>
@@ -335,6 +355,30 @@
     Select your spread below, then upload a photo. AI reads each position with full context.
   </div>
   <input type="text" id="quick-concern" placeholder="Optional: what's on your mind?" style="margin-bottom:16px">
+  <div class="context-panel quick-context">
+    <div>
+      <h3>Reading Context</h3>
+      <p>Optional, but age and life stage help Arcana interpret the cards appropriately.</p>
+    </div>
+    <div class="context-grid">
+      <label>
+        Age
+        <input type="number" id="quick-reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
+      </label>
+      <label>
+        Life stage
+        <select id="quick-reader-life-stage">
+          <option value="">Prefer not to say</option>
+          <option>Child</option>
+          <option>Teen</option>
+          <option>Young adult</option>
+          <option>Adult</option>
+          <option>Older adult</option>
+        </select>
+      </label>
+    </div>
+    <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
+  </div>
   <div class="quick-step-label">Choose your spread</div>
   <div class="spread-grid" id="quick-spread-grid"></div>
   <div class="quick-step-label" style="margin-top:14px">Upload your photo</div>
@@ -345,20 +389,25 @@
   <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Read My Cards</button>
   <div id="quick-results"></div>
   <div style="margin-top:16px">
-    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-settings">
 <div class="modal-overlay" id="modal-settings">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('modal-settings')">✕</button>
+    <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
     <h2>Settings</h2>
-    <label>Gemini API Key</label>
-    <input type="password" id="api-key-input" placeholder="Paste your API key here">
-    <p style="font-size:11px;color:var(--muted);margin-top:4px">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a></p>
-    <button class="btn btn-sm" onclick="testApiKey()" style="margin-top:8px">Test Key</button>
-    <span id="key-status" style="margin-left:8px;font-size:12px"></span>
+
+    <div class="settings-section">
+      <h3>Subscription</h3>
+      <p id="premium-settings-status" class="settings-status">Free plan active</p>
+      <label>Activation Key</label>
+      <input type="text" id="premium-key-input" placeholder="Enter premium activation key">
+      <p id="premium-key-status" class="activation-status"></p>
+      <button class="btn btn-sm" onclick="deactivatePremium();renderEntitlementsUI();showToast('Premium deactivated on this device.')">Deactivate Premium</button>
+    </div>
+
     <label>Reading Style</label>
     <select id="reading-style">
       <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
@@ -368,30 +417,30 @@
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
     <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
-      <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete all saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear All Data</button>
+      <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear Saved Data</button>
     </div>
     <div style="margin-top:12px;text-align:right">
       <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Settings</button>
     </div>
   </div>
 </div>
-  </template>
+</template>
   <template id="template-help">
 <div class="modal-overlay" id="modal-help">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('modal-help')">✕</button>
+    <button class="close-btn" onclick="closeModal('modal-help')">&times;</button>
     <h2>Guide</h2>
-    <div class="help-section"><h3>What is Tarot?</h3><p>Tarot is a system of 78 cards used for reflection, insight, and guidance. It's not about predicting the future — it's a tool for exploring your thoughts, feelings, and possibilities.</p></div>
-    <div class="help-section"><h3>Major &amp; Minor Arcana</h3><p>The 22 <strong>Major Arcana</strong> cards represent life's big themes and spiritual lessons (The Fool, The Tower, The Star…). The 56 <strong>Minor Arcana</strong> cards deal with everyday situations across four suits.</p></div>
-    <div class="help-section"><h3>Suits</h3><p><strong>Wands</strong> (♣ Clubs) = passion, creativity, action. <strong>Cups</strong> (♥ Hearts) = emotions, relationships, intuition. <strong>Swords</strong> (♠ Spades) = intellect, conflict, truth. <strong>Pentacles</strong> (♦ Diamonds) = material world, money, health.</p></div>
+    <div class="help-section"><h3>What is Tarot?</h3><p>Tarot is a system of 78 cards used for reflection, insight, and guidance. It's not about predicting the future; it's a tool for exploring your thoughts, feelings, and possibilities.</p></div>
+    <div class="help-section"><h3>Major &amp; Minor Arcana</h3><p>The 22 <strong>Major Arcana</strong> cards represent life's big themes and spiritual lessons, including The Fool, The Tower, and The Star. The 56 <strong>Minor Arcana</strong> cards deal with everyday situations across four suits.</p></div>
+    <div class="help-section"><h3>Suits</h3><p><strong>Wands</strong> = passion, creativity, action. <strong>Cups</strong> = emotions, relationships, intuition. <strong>Swords</strong> = intellect, conflict, truth. <strong>Pentacles</strong> = material world, money, health.</p></div>
     <div class="help-section"><h3>Court Cards</h3><p><strong>Pages/Jacks</strong> = youth, messages, learning. <strong>Knights</strong> = action, movement, pursuit. <strong>Queens</strong> = maturity, nurturing, mastery. <strong>Kings</strong> = authority, leadership, responsibility.</p></div>
-    <div class="help-section"><h3>Reversed Cards</h3><p>A reversed card appears upside-down. Its meaning isn't necessarily "bad" — it often indicates blocked energy, internalized qualities, or the shadow side of the card's upright meaning.</p></div>
-    <div class="help-section"><h3>Dropped Cards</h3><p>If a card falls out while you're shuffling, pay attention — many readers believe these "jumper" cards carry a message your subconscious wants you to see. Arcana lets you record this card separately.</p></div>
-    <div class="help-section"><h3>Spreads</h3><p>A spread is the layout pattern for your cards. Each position has a specific meaning (past, present, future, obstacle, advice, etc.). The cards interact with each other through their positions.</p></div>
-    <div class="help-section"><h3>AI vs Classic Readings</h3><p><strong>AI readings</strong> use Google Gemini to weave a personalized narrative. <strong>Classic readings</strong> use pre-written card meanings assembled into a structured interpretation — no internet required.</p></div>
+    <div class="help-section"><h3>Reversed Cards</h3><p>A reversed card appears upside-down. Its meaning is not necessarily bad; it often indicates blocked energy, internalized qualities, or the shadow side of the card's upright meaning.</p></div>
+    <div class="help-section"><h3>Dropped Cards</h3><p>If a card falls out while you're shuffling, pay attention. Many readers believe these jumper cards carry a message your subconscious wants you to see. Arcana lets you record this card separately.</p></div>
+    <div class="help-section"><h3>Spreads</h3><p>A spread is the layout pattern for your cards. Each position has a specific meaning: past, present, future, obstacle, advice, and more. The cards interact with each other through their positions.</p></div>
+    <div class="help-section"><h3>AI vs Classic Readings</h3><p><strong>AI readings</strong> use Google Gemini to weave a personalized narrative. <strong>Classic readings</strong> use pre-written card meanings assembled into a structured interpretation, with no internet required.</p></div>
   </div>
 </div>
-  </template>
+</template>
   <script type="application/json" id="spreads-data">{
   "one-card": {
     "id": "one-card",
@@ -412,7 +461,7 @@
     "id": "three-card",
     "name": "Three Card (Past/Present/Future)",
     "category": "Daily",
-    "description": "Past · Present · Future",
+    "description": "Past - Present - Future",
     "cardCount": 3,
     "positions": [
       {
@@ -432,66 +481,6 @@
       }
     ],
     "layout": "row"
-  },
-  "three-card-sao": {
-    "id": "three-card-sao",
-    "name": "Three Card (Situation/Action/Outcome)",
-    "category": "Daily",
-    "description": "Situation · Action · Outcome",
-    "cardCount": 3,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Situation",
-        "description": "What is happening right now"
-      },
-      {
-        "id": 2,
-        "name": "Action",
-        "description": "The best action you can take"
-      },
-      {
-        "id": 3,
-        "name": "Outcome",
-        "description": "The likely result of that action"
-      }
-    ],
-    "layout": "row"
-  },
-  "five-card": {
-    "id": "five-card",
-    "name": "Five Card",
-    "category": "Classic",
-    "description": "Situation · Obstacle · Hidden · Advice · Outcome",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Situation",
-        "description": "Your current situation"
-      },
-      {
-        "id": 2,
-        "name": "Obstacle",
-        "description": "What stands in your way"
-      },
-      {
-        "id": 3,
-        "name": "Hidden Influence",
-        "description": "An unseen force affecting things"
-      },
-      {
-        "id": 4,
-        "name": "Advice",
-        "description": "Guidance for your path"
-      },
-      {
-        "id": 5,
-        "name": "Outcome",
-        "description": "The likely outcome"
-      }
-    ],
-    "layout": "cross"
   },
   "celtic-cross": {
     "id": "celtic-cross",
@@ -553,116 +542,6 @@
     ],
     "layout": "celtic"
   },
-  "relationship": {
-    "id": "relationship",
-    "name": "Relationship",
-    "category": "Relationships",
-    "description": "You · Other · Connection · Challenge · Potential",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "You",
-        "description": "Your role in the relationship"
-      },
-      {
-        "id": 2,
-        "name": "Other Person",
-        "description": "The other person's energy"
-      },
-      {
-        "id": 3,
-        "name": "Connection",
-        "description": "What binds you together"
-      },
-      {
-        "id": 4,
-        "name": "Challenge",
-        "description": "What challenges the relationship"
-      },
-      {
-        "id": 5,
-        "name": "Potential Outcome",
-        "description": "Where this could lead"
-      }
-    ],
-    "layout": "row"
-  },
-  "career": {
-    "id": "career",
-    "name": "Career",
-    "category": "Life & Decisions",
-    "description": "Position · Opportunity · Obstacle · Advice · Future",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Current Position",
-        "description": "Where you are now professionally"
-      },
-      {
-        "id": 2,
-        "name": "Opportunity",
-        "description": "An opportunity presenting itself"
-      },
-      {
-        "id": 3,
-        "name": "Obstacle",
-        "description": "What blocks professional growth"
-      },
-      {
-        "id": 4,
-        "name": "Advice",
-        "description": "Guidance for your career path"
-      },
-      {
-        "id": 5,
-        "name": "Future Direction",
-        "description": "Where your career is heading"
-      }
-    ],
-    "layout": "row"
-  },
-  "future-love": {
-    "id": "future-love",
-    "name": "Future True Love",
-    "category": "Relationships",
-    "description": "6-card love reading",
-    "cardCount": 6,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Your Future Love",
-        "description": "Your future true love"
-      },
-      {
-        "id": 2,
-        "name": "Instant Attraction?",
-        "description": "Will the attraction be instant?"
-      },
-      {
-        "id": 3,
-        "name": "Their Character",
-        "description": "True love's character"
-      },
-      {
-        "id": 4,
-        "name": "Challenges",
-        "description": "Challenges and delays"
-      },
-      {
-        "id": 5,
-        "name": "What Will Help",
-        "description": "What is going to help"
-      },
-      {
-        "id": 6,
-        "name": "When/Where/How",
-        "description": "When, where or how you meet"
-      }
-    ],
-    "layout": "pyramid"
-  },
   "two-pathways": {
     "id": "two-pathways",
     "name": "Two Pathways",
@@ -688,27 +567,27 @@
       {
         "id": 4,
         "name": "C1 Near Future A",
-        "description": "Choice 1 — near future"
+        "description": "Choice 1 -near future"
       },
       {
         "id": 5,
         "name": "C1 Near Future B",
-        "description": "Choice 1 — near future"
+        "description": "Choice 1 -near future"
       },
       {
         "id": 6,
         "name": "C1 Far Future A",
-        "description": "Choice 1 — far future"
+        "description": "Choice 1 -far future"
       },
       {
         "id": 7,
         "name": "C1 Far Future B",
-        "description": "Choice 1 — far future"
+        "description": "Choice 1 -far future"
       },
       {
         "id": 8,
         "name": "C1 Outcome",
-        "description": "Choice 1 — outcome"
+        "description": "Choice 1 -outcome"
       },
       {
         "id": 9,
@@ -718,27 +597,27 @@
       {
         "id": 10,
         "name": "C2 Near Future A",
-        "description": "Choice 2 — near future"
+        "description": "Choice 2 -near future"
       },
       {
         "id": 11,
         "name": "C2 Near Future B",
-        "description": "Choice 2 — near future"
+        "description": "Choice 2 -near future"
       },
       {
         "id": 12,
         "name": "C2 Far Future A",
-        "description": "Choice 2 — far future"
+        "description": "Choice 2 -far future"
       },
       {
         "id": 13,
         "name": "C2 Far Future B",
-        "description": "Choice 2 — far future"
+        "description": "Choice 2 -far future"
       },
       {
         "id": 14,
         "name": "C2 Outcome",
-        "description": "Choice 2 — outcome"
+        "description": "Choice 2 -outcome"
       }
     ],
     "layout": "grid"
@@ -928,41 +807,6 @@
     ],
     "layout": "romany"
   },
-  "timeline": {
-    "id": "timeline",
-    "name": "Timeline",
-    "category": "Classic",
-    "description": "5-card past to future",
-    "cardCount": 5,
-    "positions": [
-      {
-        "id": 1,
-        "name": "Distant Past",
-        "description": "Events long ago shaping the present"
-      },
-      {
-        "id": 2,
-        "name": "Recent Past",
-        "description": "What happened recently"
-      },
-      {
-        "id": 3,
-        "name": "Present",
-        "description": "Where you are now"
-      },
-      {
-        "id": 4,
-        "name": "Near Future",
-        "description": "What is coming soon"
-      },
-      {
-        "id": 5,
-        "name": "Far Future",
-        "description": "The long-term direction"
-      }
-    ],
-    "layout": "row"
-  },
   "six-card": {
     "id": "six-card",
     "name": "Simple Celtic Cross",
@@ -1100,6 +944,8 @@
   <script src="js/tarot.js"></script>
   <script src="js/spreads.js"></script>
   <script src="js/state.js"></script>
+  <script src="js/subscription.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/reading-engine.js"></script>

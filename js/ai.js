@@ -1,9 +1,18 @@
 // ===== GEMINI API =====
 const GEMINI_MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-3.5-flash','gemini-3.1-flash-lite'];
 
+function hasAIConfiguration(){
+  return !!(getAIProxyUrl() || getGoogleApiKey());
+}
+
+function requireAIConfiguration(){
+  if(hasAIConfiguration()) return true;
+  throw new Error('Arcana AI is not configured yet. Set ARCANA_AI_PROXY_URL in js/config.js after deploying the private AI proxy.');
+}
+
 function requireGoogleApiKey(){
   const key=getGoogleApiKey();
-  if(!key)throw new Error('Arcana AI is not configured yet. Add your Google API key in js/config.js.');
+  if(!key)throw new Error('Arcana AI is not configured for direct development access. Use ARCANA_AI_PROXY_URL for production.');
   return key;
 }
 
@@ -16,6 +25,21 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
   }
   const body=JSON.stringify({contents:[{parts}]});
   const headers={'Content-Type':'application/json'};
+  const proxyUrl=getAIProxyUrl();
+
+  if(proxyUrl){
+    if(statusEl)statusEl.textContent='Contacting Arcana AI...';
+    const resp=await fetch(proxyUrl,{
+      method:'POST',
+      headers,
+      body:JSON.stringify({prompt,imageData})
+    });
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok)throw new Error(data.error||`AI proxy error ${resp.status}`);
+    return data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
+  }
+
+  if(!apiKey)apiKey=requireGoogleApiKey();
 
   for(let m=0;m<GEMINI_MODELS.length;m++){
     const model=GEMINI_MODELS[m];

@@ -9,7 +9,7 @@ async function generateReading(){
   const content=document.getElementById('reading-content');
   content.innerHTML=thoughtfulLoadingHtml('ai-status');
   const settings=loadSettings();
-  const hasConfiguredAI=!!getGoogleApiKey();
+  const hasConfiguredAI=hasAIConfiguration();
   if(hasConfiguredAI&&state.readingMode!=='classic-forced'){
     state.readingMode='ai';
     try{
@@ -54,7 +54,7 @@ async function switchReadingMode(mode){
   const content=document.getElementById('reading-content');
   if(mode==='ai'){
     const settings=loadSettings();
-    try{requireGoogleApiKey();}catch(e){alert(e.message);return;}
+    try{requireAIConfiguration();}catch(e){alert(e.message);return;}
     content.innerHTML=thoughtfulLoadingHtml('ai-status');
     try{
       const narrative=await generateAIReading(settings);
@@ -149,7 +149,7 @@ For each card in the Position-by-Position section, explicitly address what that 
 }
 
 async function generateAIReading(settings){
-  return await callGemini(buildAIReadingPrompt(settings),requireGoogleApiKey(),state.uploadedImage||null,document.getElementById('ai-status'));
+  return await callGemini(buildAIReadingPrompt(settings),null,state.uploadedImage||null,document.getElementById('ai-status'));
 }
 
 function generateClassicReading(){

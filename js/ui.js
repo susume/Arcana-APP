@@ -474,8 +474,7 @@ function handleGuidedDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];
 function handleGuidedUpload(inp){if(inp.files[0])processUpload(inp.files[0],'guided-upload-zone','guided-identify-btn')}
 
 async function identifyGuidedCards(){
-  let apiKey;
-  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
+  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('guided-identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -493,7 +492,7 @@ Examine the photo carefully. For each numbered position, identify the card name 
 Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,apiKey,state.uploadedImage);
+    const result=await callGemini(prompt,null,state.uploadedImage);
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -688,8 +687,7 @@ function processUpload(file,zoneId,btnId){
 }
 
 async function identifyCards(){
-  let apiKey;
-  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
+  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -707,7 +705,7 @@ Examine the photo carefully. For each numbered position in the layout above, ide
 Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,apiKey,state.uploadedImage);
+    const result=await callGemini(prompt,null,state.uploadedImage);
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -810,8 +808,7 @@ async function quickRead(){
     return;
   }
   const settings=loadSettings();
-  let apiKey;
-  try{apiKey=requireGoogleApiKey();}catch(e){alert(e.message);return;}
+  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
   if(!state.uploadedImage){alert('Please upload a photo first.');return;}
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
@@ -876,7 +873,7 @@ Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
 Write as a flowing narrative. Address BOTH the card meaning AND its positional context. Be specific.`;
     }
-    const narrative=await callGemini(prompt,apiKey,state.uploadedImage,document.getElementById('quick-ai-status'));
+    const narrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
     state.narrative=narrative;
     if(!state.readingUsageRecorded){
       recordCompletedReading();

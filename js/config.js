@@ -1,6 +1,13 @@
-// Add your Google Gemini API key here for this static build.
-// For a public paid app, move this key to a backend proxy so it is not visible in browser source.
-const ARCANA_GOOGLE_API_KEY = 'AQ.Ab8RN6KqgbClThdACyffxRmR0PGggapykcZORFq7Os23iBLKUg';
+// Production should use a backend proxy so the browser never receives the Google key.
+// Example: const ARCANA_AI_PROXY_URL = 'https://your-worker.your-subdomain.workers.dev';
+const ARCANA_AI_PROXY_URL = '';
+
+// Development-only fallback. Do not commit a real Google Gemini API key here.
+const ARCANA_GOOGLE_API_KEY = '';
+
+function getAIProxyUrl(){
+  return String(ARCANA_AI_PROXY_URL || '').trim();
+}
 
 function getGoogleApiKey(){
   return String(ARCANA_GOOGLE_API_KEY || '').trim();

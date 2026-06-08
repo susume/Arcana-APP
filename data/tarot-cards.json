@@ -1,0 +1,1174 @@
+[
+  {
+    "name": "The Fool",
+    "arcana": "major",
+    "suit": null,
+    "number": 0,
+    "keywords": [
+      "beginnings",
+      "innocence",
+      "spontaneity",
+      "leap of faith"
+    ],
+    "upright": "A leap of faith into the unknown. New beginnings, unlimited potential, and the courage to start a journey without knowing the destination.",
+    "reversed": "Recklessness, naivety, foolish risk-taking. Holding back from a necessary leap due to fear.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Magician",
+    "arcana": "major",
+    "suit": null,
+    "number": 1,
+    "keywords": [
+      "willpower",
+      "manifestation",
+      "skill",
+      "resourcefulness"
+    ],
+    "upright": "You have all the tools you need. Channel your willpower to manifest your desires. Skill and resourcefulness lead to success.",
+    "reversed": "Manipulation, trickery, untapped potential. Misuse of talent or deception.",
+    "system": "tarot"
+  },
+  {
+    "name": "The High Priestess",
+    "arcana": "major",
+    "suit": null,
+    "number": 2,
+    "keywords": [
+      "intuition",
+      "mystery",
+      "subconscious",
+      "inner voice"
+    ],
+    "upright": "Trust your intuition. Hidden knowledge is revealing itself. Look beyond the surface and listen to your inner voice.",
+    "reversed": "Secrets withheld, disconnection from intuition, superficial understanding.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Empress",
+    "arcana": "major",
+    "suit": null,
+    "number": 3,
+    "keywords": [
+      "abundance",
+      "nurturing",
+      "fertility",
+      "nature"
+    ],
+    "upright": "Abundance flows to you through nurturing and creativity. A time of growth, comfort, and connection with the natural world.",
+    "reversed": "Creative block, dependence, neglect of self-care or others.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Emperor",
+    "arcana": "major",
+    "suit": null,
+    "number": 4,
+    "keywords": [
+      "authority",
+      "structure",
+      "stability",
+      "leadership"
+    ],
+    "upright": "Establish order and structure. Authority exercised wisely brings stability. Take charge of your situation with discipline.",
+    "reversed": "Rigidity, tyranny, lack of discipline, loss of control.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Hierophant",
+    "arcana": "major",
+    "suit": null,
+    "number": 5,
+    "keywords": [
+      "tradition",
+      "guidance",
+      "conformity",
+      "spiritual wisdom"
+    ],
+    "upright": "Seek wisdom through established traditions and mentors. Spiritual guidance is available if you are open to learning.",
+    "reversed": "Challenging convention, unorthodox approaches, rejecting tradition.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Lovers",
+    "arcana": "major",
+    "suit": null,
+    "number": 6,
+    "keywords": [
+      "love",
+      "union",
+      "choices",
+      "alignment"
+    ],
+    "upright": "A deep connection or important choice. Alignment of values and desires. Union of complementary forces.",
+    "reversed": "Disharmony, misalignment, difficult choices, broken trust.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Chariot",
+    "arcana": "major",
+    "suit": null,
+    "number": 7,
+    "keywords": [
+      "determination",
+      "willpower",
+      "victory",
+      "control"
+    ],
+    "upright": "Victory through determination and willpower. Harness opposing forces and drive forward with confidence.",
+    "reversed": "Lack of direction, aggression, obstacles overwhelming willpower.",
+    "system": "tarot"
+  },
+  {
+    "name": "Strength",
+    "arcana": "major",
+    "suit": null,
+    "number": 8,
+    "keywords": [
+      "courage",
+      "patience",
+      "inner strength",
+      "compassion"
+    ],
+    "upright": "True strength comes from patience and compassion, not force. Tame your inner fears with gentle courage.",
+    "reversed": "Self-doubt, weakness, raw emotion overwhelming reason.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Hermit",
+    "arcana": "major",
+    "suit": null,
+    "number": 9,
+    "keywords": [
+      "solitude",
+      "introspection",
+      "wisdom",
+      "inner light"
+    ],
+    "upright": "Withdraw from the noise and seek answers within. Solitude brings wisdom. Your inner light guides the way.",
+    "reversed": "Isolation, loneliness, withdrawal from help, lost direction.",
+    "system": "tarot"
+  },
+  {
+    "name": "Wheel of Fortune",
+    "arcana": "major",
+    "suit": null,
+    "number": 10,
+    "keywords": [
+      "cycles",
+      "fate",
+      "turning point",
+      "luck"
+    ],
+    "upright": "The wheel turns — change is coming. A turning point in your journey. Embrace the cycles of fortune.",
+    "reversed": "Bad luck, resistance to change, feeling stuck in a cycle.",
+    "system": "tarot"
+  },
+  {
+    "name": "Justice",
+    "arcana": "major",
+    "suit": null,
+    "number": 11,
+    "keywords": [
+      "fairness",
+      "truth",
+      "accountability",
+      "balance"
+    ],
+    "upright": "Truth and fairness prevail. Take responsibility for your actions. A balanced decision is required.",
+    "reversed": "Injustice, dishonesty, lack of accountability, unfair treatment.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Hanged Man",
+    "arcana": "major",
+    "suit": null,
+    "number": 12,
+    "keywords": [
+      "surrender",
+      "new perspective",
+      "pause",
+      "sacrifice"
+    ],
+    "upright": "Surrender control and see things from a new perspective. A willing pause that leads to enlightenment.",
+    "reversed": "Stalling, resistance to necessary sacrifice, indecision.",
+    "system": "tarot"
+  },
+  {
+    "name": "Death",
+    "arcana": "major",
+    "suit": null,
+    "number": 13,
+    "keywords": [
+      "transformation",
+      "endings",
+      "rebirth",
+      "transition"
+    ],
+    "upright": "A profound transformation. Something must end for something new to begin. Embrace the rebirth.",
+    "reversed": "Resistance to change, stagnation, fear of letting go.",
+    "system": "tarot"
+  },
+  {
+    "name": "Temperance",
+    "arcana": "major",
+    "suit": null,
+    "number": 14,
+    "keywords": [
+      "balance",
+      "moderation",
+      "patience",
+      "harmony"
+    ],
+    "upright": "Find the middle path. Patience and moderation bring harmony. Blend opposing elements into something beautiful.",
+    "reversed": "Imbalance, excess, impatience, lack of harmony.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Devil",
+    "arcana": "major",
+    "suit": null,
+    "number": 15,
+    "keywords": [
+      "bondage",
+      "materialism",
+      "shadow self",
+      "temptation"
+    ],
+    "upright": "Examine what binds you — addiction, materialism, toxic patterns. Awareness of your shadow self is the first step to freedom.",
+    "reversed": "Breaking free, releasing attachments, reclaiming power.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Tower",
+    "arcana": "major",
+    "suit": null,
+    "number": 16,
+    "keywords": [
+      "upheaval",
+      "sudden change",
+      "revelation",
+      "awakening"
+    ],
+    "upright": "Sudden upheaval shatters false structures. Though shocking, this destruction clears the way for truth and rebuilding.",
+    "reversed": "Avoidance of disaster, fear of change, personal transformation.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Star",
+    "arcana": "major",
+    "suit": null,
+    "number": 17,
+    "keywords": [
+      "hope",
+      "healing",
+      "inspiration",
+      "renewal"
+    ],
+    "upright": "A guiding light appears after darkness. Hope, healing, and renewed faith. Trust that you are on the right path.",
+    "reversed": "Despair, disconnection, lack of faith, lost inspiration.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Moon",
+    "arcana": "major",
+    "suit": null,
+    "number": 18,
+    "keywords": [
+      "illusion",
+      "fear",
+      "subconscious",
+      "uncertainty"
+    ],
+    "upright": "Things are not as they seem. Navigate through uncertainty by trusting your instincts. Face your fears and illusions.",
+    "reversed": "Release of fear, clarity emerging, overcoming confusion.",
+    "system": "tarot"
+  },
+  {
+    "name": "The Sun",
+    "arcana": "major",
+    "suit": null,
+    "number": 19,
+    "keywords": [
+      "joy",
+      "success",
+      "vitality",
+      "clarity"
+    ],
+    "upright": "Radiant joy and success. Everything becomes clear under the sun. Vitality, warmth, and achievement.",
+    "reversed": "Temporary sadness, lack of clarity, delayed success.",
+    "system": "tarot"
+  },
+  {
+    "name": "Judgement",
+    "arcana": "major",
+    "suit": null,
+    "number": 20,
+    "keywords": [
+      "rebirth",
+      "calling",
+      "reflection",
+      "reckoning"
+    ],
+    "upright": "A calling to rise up and embrace your purpose. Reflect on your journey and answer the call to transformation.",
+    "reversed": "Self-doubt, refusal to learn, harsh self-judgement.",
+    "system": "tarot"
+  },
+  {
+    "name": "The World",
+    "arcana": "major",
+    "suit": null,
+    "number": 21,
+    "keywords": [
+      "completion",
+      "integration",
+      "accomplishment",
+      "wholeness"
+    ],
+    "upright": "A cycle reaches completion. Integration of all you have learned. Wholeness, accomplishment, and celebration.",
+    "reversed": "Incomplete, shortcuts taken, lack of closure.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ace of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 1,
+    "keywords": [
+      "creation",
+      "inspiration",
+      "willpower",
+      "passion"
+    ],
+    "upright": "Creative spark and inspired action.",
+    "reversed": "Delays in new ventures, lack of direction.",
+    "system": "tarot"
+  },
+  {
+    "name": "Two of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 2,
+    "keywords": [
+      "planning",
+      "decisions",
+      "discovery",
+      "future"
+    ],
+    "upright": "Planning your future path with both options open.",
+    "reversed": "Fear of the unknown, poor planning.",
+    "system": "tarot"
+  },
+  {
+    "name": "Three of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 3,
+    "keywords": [
+      "expansion",
+      "foresight",
+      "enterprise",
+      "trade"
+    ],
+    "upright": "Expansion and looking ahead — your ships are coming in.",
+    "reversed": "Setbacks in plans, lack of foresight.",
+    "system": "tarot"
+  },
+  {
+    "name": "Four of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 4,
+    "keywords": [
+      "celebration",
+      "harmony",
+      "homecoming",
+      "peace"
+    ],
+    "upright": "Celebration, stability, and joyful homecoming.",
+    "reversed": "Instability, transition, feeling unwelcome.",
+    "system": "tarot"
+  },
+  {
+    "name": "Five of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 5,
+    "keywords": [
+      "conflict",
+      "competition",
+      "tension",
+      "disagreement"
+    ],
+    "upright": "Petty conflict and competitive tension.",
+    "reversed": "Avoiding conflict, inner tension.",
+    "system": "tarot"
+  },
+  {
+    "name": "Six of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 6,
+    "keywords": [
+      "victory",
+      "recognition",
+      "pride",
+      "reward"
+    ],
+    "upright": "Public recognition and victory after effort.",
+    "reversed": "Failure, lack of recognition, self-doubt.",
+    "system": "tarot"
+  },
+  {
+    "name": "Seven of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 7,
+    "keywords": [
+      "perseverance",
+      "defiance",
+      "courage",
+      "challenge"
+    ],
+    "upright": "Holding your ground despite opposition.",
+    "reversed": "Giving up, overwhelmed, cannot keep fighting.",
+    "system": "tarot"
+  },
+  {
+    "name": "Eight of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 8,
+    "keywords": [
+      "speed",
+      "movement",
+      "action",
+      "change"
+    ],
+    "upright": "Swift movement and rapid developments.",
+    "reversed": "Delays, frustration, losing momentum.",
+    "system": "tarot"
+  },
+  {
+    "name": "Nine of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 9,
+    "keywords": [
+      "resilience",
+      "persistence",
+      "boundaries",
+      "stamina"
+    ],
+    "upright": "Standing firm through perseverance and endurance.",
+    "reversed": "Paranoia, defensiveness, stubbornness.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ten of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 10,
+    "keywords": [
+      "burden",
+      "responsibility",
+      "hard work",
+      "pressure"
+    ],
+    "upright": "Carrying heavy burdens and responsibilities.",
+    "reversed": "Burnout, taking on too much, inability to delegate.",
+    "system": "tarot"
+  },
+  {
+    "name": "Page of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 11,
+    "keywords": [
+      "exploration",
+      "enthusiasm",
+      "discovery",
+      "free spirit"
+    ],
+    "upright": "An enthusiastic messenger bringing exciting news or opportunities.",
+    "reversed": "Setbacks to plans, hasty actions, lack of direction.",
+    "system": "tarot"
+  },
+  {
+    "name": "Knight of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 12,
+    "keywords": [
+      "adventure",
+      "energy",
+      "passion",
+      "impulsiveness"
+    ],
+    "upright": "Passionate pursuit of a goal with fiery determination.",
+    "reversed": "Recklessness, scattered energy, delays in travel.",
+    "system": "tarot"
+  },
+  {
+    "name": "Queen of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 13,
+    "keywords": [
+      "confidence",
+      "warmth",
+      "determination",
+      "vibrancy"
+    ],
+    "upright": "A warm, confident presence who inspires others with courage.",
+    "reversed": "Jealousy, selfishness, demanding temperament.",
+    "system": "tarot"
+  },
+  {
+    "name": "King of Wands",
+    "arcana": "minor",
+    "suit": "wands",
+    "number": 14,
+    "keywords": [
+      "leadership",
+      "vision",
+      "entrepreneurship",
+      "honor"
+    ],
+    "upright": "Bold leadership with a clear vision and natural charisma.",
+    "reversed": "Impulsiveness, ruthlessness, unrealistic expectations.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ace of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 1,
+    "keywords": [
+      "love",
+      "new feelings",
+      "intuition",
+      "compassion"
+    ],
+    "upright": "New emotional beginning, love offered or received.",
+    "reversed": "Blocked emotions, love unrequited.",
+    "system": "tarot"
+  },
+  {
+    "name": "Two of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 2,
+    "keywords": [
+      "partnership",
+      "unity",
+      "mutual attraction",
+      "connection"
+    ],
+    "upright": "Deep connection and mutual attraction forming.",
+    "reversed": "Imbalance in relationship, broken connection.",
+    "system": "tarot"
+  },
+  {
+    "name": "Three of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 3,
+    "keywords": [
+      "celebration",
+      "friendship",
+      "joy",
+      "creativity"
+    ],
+    "upright": "Celebration with friends, creative collaboration, joy.",
+    "reversed": "Overindulgence, scattered creativity, isolation.",
+    "system": "tarot"
+  },
+  {
+    "name": "Four of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 4,
+    "keywords": [
+      "apathy",
+      "contemplation",
+      "reevaluation",
+      "boredom"
+    ],
+    "upright": "Turning inward, emotional apathy, missed opportunities.",
+    "reversed": "Motivation returns, new opportunity noticed.",
+    "system": "tarot"
+  },
+  {
+    "name": "Five of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 5,
+    "keywords": [
+      "grief",
+      "loss",
+      "regret",
+      "disappointment"
+    ],
+    "upright": "Grief and loss, but something remains — focus on what is left.",
+    "reversed": "Acceptance, moving on, finding peace after loss.",
+    "system": "tarot"
+  },
+  {
+    "name": "Six of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 6,
+    "keywords": [
+      "nostalgia",
+      "childhood",
+      "innocence",
+      "memories"
+    ],
+    "upright": "Sweet nostalgia and happy memories, an old friend returns.",
+    "reversed": "Living in the past, unrealistic expectations.",
+    "system": "tarot"
+  },
+  {
+    "name": "Seven of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 7,
+    "keywords": [
+      "illusion",
+      "fantasy",
+      "choices",
+      "wishful thinking"
+    ],
+    "upright": "So many dreams, but which is real? Choose carefully.",
+    "reversed": "Confusion clears, grounding in reality.",
+    "system": "tarot"
+  },
+  {
+    "name": "Eight of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 8,
+    "keywords": [
+      "departure",
+      "letting go",
+      "moving on",
+      "searching"
+    ],
+    "upright": "Walking away from what no longer serves you.",
+    "reversed": "Fear of change, clinging to comfort.",
+    "system": "tarot"
+  },
+  {
+    "name": "Nine of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 9,
+    "keywords": [
+      "contentment",
+      "satisfaction",
+      "gratitude",
+      "pleasure"
+    ],
+    "upright": "Wishes fulfilled, emotional and material satisfaction.",
+    "reversed": "Smugness, materialism, dissatisfaction despite having enough.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ten of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 10,
+    "keywords": [
+      "harmony",
+      "family",
+      "love",
+      "emotional fulfillment"
+    ],
+    "upright": "Loving family, deep emotional fulfillment, lasting happiness.",
+    "reversed": "Family discord, broken home, misaligned values.",
+    "system": "tarot"
+  },
+  {
+    "name": "Page of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 11,
+    "keywords": [
+      "creativity",
+      "intuition",
+      "sensitivity",
+      "dreamer"
+    ],
+    "upright": "A sensitive soul bringing creative inspiration or emotional news.",
+    "reversed": "Emotional immaturity, creative blocks, escapism.",
+    "system": "tarot"
+  },
+  {
+    "name": "Knight of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 12,
+    "keywords": [
+      "romance",
+      "charm",
+      "imagination",
+      "following the heart"
+    ],
+    "upright": "A romantic idealist following their heart toward new horizons.",
+    "reversed": "Moodiness, unrealistic expectations, emotional manipulation.",
+    "system": "tarot"
+  },
+  {
+    "name": "Queen of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 13,
+    "keywords": [
+      "compassion",
+      "calm",
+      "emotional security",
+      "intuition"
+    ],
+    "upright": "Deep emotional wisdom and compassion; nurturing intuition.",
+    "reversed": "Codependency, emotional insecurity, martyrdom.",
+    "system": "tarot"
+  },
+  {
+    "name": "King of Cups",
+    "arcana": "minor",
+    "suit": "cups",
+    "number": 14,
+    "keywords": [
+      "emotional balance",
+      "diplomacy",
+      "generosity",
+      "wisdom"
+    ],
+    "upright": "Emotionally balanced leadership with generous wisdom.",
+    "reversed": "Emotional manipulation, volatility, moodiness.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ace of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 1,
+    "keywords": [
+      "clarity",
+      "truth",
+      "breakthrough",
+      "new idea"
+    ],
+    "upright": "A breakthrough of clarity and truth.",
+    "reversed": "Confusion, miscommunication, mental fog.",
+    "system": "tarot"
+  },
+  {
+    "name": "Two of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 2,
+    "keywords": [
+      "stalemate",
+      "denial",
+      "blocked emotions",
+      "avoidance"
+    ],
+    "upright": "Refusing to see or address a difficult situation.",
+    "reversed": "Releasing denial, confronting truth.",
+    "system": "tarot"
+  },
+  {
+    "name": "Three of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 3,
+    "keywords": [
+      "heartbreak",
+      "sorrow",
+      "grief",
+      "painful truth"
+    ],
+    "upright": "Heartbreak and deep sorrow; a painful but necessary truth.",
+    "reversed": "Recovery from heartbreak, releasing pain.",
+    "system": "tarot"
+  },
+  {
+    "name": "Four of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 4,
+    "keywords": [
+      "rest",
+      "recovery",
+      "contemplation",
+      "solitude"
+    ],
+    "upright": "Rest and recovery — you need to step back and heal.",
+    "reversed": "Restlessness, burnout from refusing rest.",
+    "system": "tarot"
+  },
+  {
+    "name": "Five of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 5,
+    "keywords": [
+      "conflict",
+      "defeat",
+      "dishonor",
+      "betrayal"
+    ],
+    "upright": "Conflict and defeat, possibly through dishonor.",
+    "reversed": "Learning from defeat, making amends.",
+    "system": "tarot"
+  },
+  {
+    "name": "Six of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 6,
+    "keywords": [
+      "transition",
+      "moving on",
+      "mental shift",
+      "recovery"
+    ],
+    "upright": "A necessary transition; moving toward something better.",
+    "reversed": "Resistance to change, unfinished business.",
+    "system": "tarot"
+  },
+  {
+    "name": "Seven of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 7,
+    "keywords": [
+      "deception",
+      "betrayal",
+      "stealth",
+      "strategy"
+    ],
+    "upright": "Strategic action, possibly deception — check your motives.",
+    "reversed": "Coming clean, being caught, confession.",
+    "system": "tarot"
+  },
+  {
+    "name": "Eight of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 8,
+    "keywords": [
+      "restriction",
+      "powerlessness",
+      "isolation",
+      "victimhood"
+    ],
+    "upright": "Feeling trapped and powerless, but the bonds are mental.",
+    "reversed": "Finding a way out, self-empowerment.",
+    "system": "tarot"
+  },
+  {
+    "name": "Nine of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 9,
+    "keywords": [
+      "anxiety",
+      "nightmares",
+      "worry",
+      "despair"
+    ],
+    "upright": "Overwhelming anxiety and worry keeping you up at night.",
+    "reversed": "Recovery from anxiety, hope returning.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ten of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 10,
+    "keywords": [
+      "ending",
+      "pain",
+      "betrayal",
+      "loss",
+      "rock bottom"
+    ],
+    "upright": "A painful ending, but the worst is over.",
+    "reversed": "Survival, rising from disaster, unable to let go.",
+    "system": "tarot"
+  },
+  {
+    "name": "Page of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 11,
+    "keywords": [
+      "curiosity",
+      "mental agility",
+      "new ideas",
+      "communication"
+    ],
+    "upright": "A sharp mind eager to learn and communicate new ideas.",
+    "reversed": "Gossip, deception, all talk and no action.",
+    "system": "tarot"
+  },
+  {
+    "name": "Knight of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 12,
+    "keywords": [
+      "ambition",
+      "speed",
+      "directness",
+      "intellect"
+    ],
+    "upright": "Swift intellectual pursuit, charging ahead with determination.",
+    "reversed": "Aggression, impatience, scattered thinking.",
+    "system": "tarot"
+  },
+  {
+    "name": "Queen of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 13,
+    "keywords": [
+      "perception",
+      "clarity",
+      "independence",
+      "direct communication"
+    ],
+    "upright": "Clear-sighted perception that cuts through deception.",
+    "reversed": "Cruelty, cold-heartedness, bitterness.",
+    "system": "tarot"
+  },
+  {
+    "name": "King of Swords",
+    "arcana": "minor",
+    "suit": "swords",
+    "number": 14,
+    "keywords": [
+      "authority",
+      "intellect",
+      "truth",
+      "ethical leadership"
+    ],
+    "upright": "Intellectual authority wielded with ethical clarity.",
+    "reversed": "Tyrannical thinking, abuse of power, manipulation.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ace of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 1,
+    "keywords": [
+      "opportunity",
+      "prosperity",
+      "new venture",
+      "manifestation"
+    ],
+    "upright": "A new financial or material opportunity manifests.",
+    "reversed": "Missed opportunity, poor financial planning.",
+    "system": "tarot"
+  },
+  {
+    "name": "Two of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 2,
+    "keywords": [
+      "balance",
+      "adaptability",
+      "juggling",
+      "resourcefulness"
+    ],
+    "upright": "Balancing multiple priorities with adaptability.",
+    "reversed": "Overcommitted, financial disorganization.",
+    "system": "tarot"
+  },
+  {
+    "name": "Three of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 3,
+    "keywords": [
+      "mastery",
+      "teamwork",
+      "craftsmanship",
+      "skill"
+    ],
+    "upright": "Teamwork producing quality results; recognition of skill.",
+    "reversed": "Mediocre work, lack of teamwork, shortcuts.",
+    "system": "tarot"
+  },
+  {
+    "name": "Four of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 4,
+    "keywords": [
+      "control",
+      "security",
+      "possessiveness",
+      "stability"
+    ],
+    "upright": "Holding tight to what you have; security through control.",
+    "reversed": "Greed, financial insecurity despite having enough.",
+    "system": "tarot"
+  },
+  {
+    "name": "Five of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 5,
+    "keywords": [
+      "hardship",
+      "loss",
+      "poverty",
+      "isolation"
+    ],
+    "upright": "Financial hardship and feeling left out in the cold.",
+    "reversed": "Recovery from financial setback, spiritual poverty.",
+    "system": "tarot"
+  },
+  {
+    "name": "Six of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 6,
+    "keywords": [
+      "generosity",
+      "charity",
+      "sharing",
+      "kindness"
+    ],
+    "upright": "Generous spirit, giving or receiving needed help.",
+    "reversed": "Strings attached to generosity, debt.",
+    "system": "tarot"
+  },
+  {
+    "name": "Seven of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 7,
+    "keywords": [
+      "patience",
+      "investment",
+      "long-term vision",
+      "assessment"
+    ],
+    "upright": "Patience as long-term investments take root.",
+    "reversed": "Impatience, poor returns, frustration with slow progress.",
+    "system": "tarot"
+  },
+  {
+    "name": "Eight of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 8,
+    "keywords": [
+      "dedication",
+      "craftsmanship",
+      "mastery",
+      "diligence"
+    ],
+    "upright": "Dedicated mastery through disciplined practice.",
+    "reversed": "Cutting corners, lack of ambition, dead-end work.",
+    "system": "tarot"
+  },
+  {
+    "name": "Nine of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 9,
+    "keywords": [
+      "independence",
+      "luxury",
+      "self-sufficiency",
+      "abundance"
+    ],
+    "upright": "Self-sufficient abundance and well-earned independence.",
+    "reversed": "Over-investment in material life, financial setbacks.",
+    "system": "tarot"
+  },
+  {
+    "name": "Ten of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 10,
+    "keywords": [
+      "legacy",
+      "wealth",
+      "family",
+      "inheritance",
+      "establishment"
+    ],
+    "upright": "Lasting legacy, family wealth, and material fulfillment.",
+    "reversed": "Family disputes over money, failure to plan legacy.",
+    "system": "tarot"
+  },
+  {
+    "name": "Page of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 11,
+    "keywords": [
+      "ambition",
+      "desire to learn",
+      "new skill",
+      "opportunity"
+    ],
+    "upright": "A diligent student manifesting new practical opportunities.",
+    "reversed": "Lack of focus, procrastination, missed opportunities.",
+    "system": "tarot"
+  },
+  {
+    "name": "Knight of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 12,
+    "keywords": [
+      "hard work",
+      "routine",
+      "patience",
+      "reliability"
+    ],
+    "upright": "Steady, reliable progress through patient hard work.",
+    "reversed": "Laziness, boredom, stagnation, perfectionism.",
+    "system": "tarot"
+  },
+  {
+    "name": "Queen of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 13,
+    "keywords": [
+      "nurturing",
+      "practical",
+      "generous",
+      "down-to-earth"
+    ],
+    "upright": "Practical generosity and nurturing abundance in daily life.",
+    "reversed": "Neglect of finances, smothering, work-life imbalance.",
+    "system": "tarot"
+  },
+  {
+    "name": "King of Pentacles",
+    "arcana": "minor",
+    "suit": "pentacles",
+    "number": 14,
+    "keywords": [
+      "wealth",
+      "business",
+      "security",
+      "discipline"
+    ],
+    "upright": "Material mastery and disciplined abundance; a provider.",
+    "reversed": "Greed, materialism, stubbornness, poor financial management.",
+    "system": "tarot"
+  }
+]

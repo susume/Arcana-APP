@@ -1,0 +1,91 @@
+{
+  "suits": [
+    "hearts",
+    "spades",
+    "diamonds",
+    "clubs"
+  ],
+  "symbols": {
+    "hearts": "♥",
+    "spades": "♠",
+    "diamonds": "♦",
+    "clubs": "♣"
+  },
+  "ranks": [
+    "Ace",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Jack",
+    "Queen",
+    "King"
+  ],
+  "meanings": {
+    "hearts": [
+      "New friendship, romance",
+      "Deepening attraction",
+      "Joy in company, friendship, celebration",
+      "Turning inwards, apathy",
+      "Loss, despair",
+      "Childhood, nostalgia, good memories, an old friendship resumes",
+      "Daydreaming, wishful thinking, choices",
+      "Emotional detachment, leaving love behind, making a hard choice",
+      "Satisfaction, sensual pleasure, spiritual growth",
+      "Contentment, fulfilment, joy, family",
+      "Falls in love easily, romantic, chatterbox",
+      "Emotional, dependent, empathic",
+      "Wise, tolerant, diplomatic, feeling, patient"
+    ],
+    "spades": [
+      "New insights, realizations",
+      "Failure to communicate",
+      "Miscommunication, misunderstanding",
+      "Recuperation, recovery, contemplation",
+      "Discord, dishonour, hollow victory",
+      "Moving on, travel, mentally getting to a better place",
+      "Lying, deceitfulness, theft, irresponsibility",
+      "Illusion of being trapped, powerlessness",
+      "Nightmares, problems, worry, guilt",
+      "Giving up, victim, martyrdom",
+      "Rebel, fights for a cause, intellectual, political",
+      "Sharp, intelligent, ruthless, insightful, organized",
+      "Introspective, ethical, communicator, stern"
+    ],
+    "diamonds": [
+      "New project, job, home, win",
+      "Juggling resources, waiting on results",
+      "Teamwork, improving skills",
+      "Miserliness, possessiveness",
+      "Loss of possessions or job or money",
+      "Giving or receiving money, a pay-rise, obtaining resources",
+      "Reassessment, turning point, mild dissatisfaction",
+      "Paying attention to detail, focus, practice",
+      "Independence, self-reliance, increasing wealth",
+      "Great wealth, family property, inheritance",
+      "Reliable, hard-working, quiet, hidden depths",
+      "Practical, warm, dependable, motherhood",
+      "Self-made, business owner, encouraging, enjoys the fruits of his labors, jolly"
+    ],
+    "clubs": [
+      "New idea, business, action",
+      "Planning and preparation",
+      "Leadership, exploration",
+      "A goal achieved, rest from action",
+      "Competition, disagreement, irritation",
+      "Victory, achievement, passing exams",
+      "Defence, conviction, strong belief",
+      "Organization, moving quickly, pregnancy",
+      "Continuing a battle, endurance, physical strength",
+      "Carrying burdens, responsibility, debt",
+      "Unreliable, hot-headed, risk taker, athletic",
+      "Energetic, career-minded, untidy, disorganized",
+      "Creative, forceful, entrepreneurial, charismatic, hot-tempered"
+    ]
+  }
+}

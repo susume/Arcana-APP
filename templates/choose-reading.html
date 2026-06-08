@@ -1,0 +1,44 @@
+<div class="screen" id="screen-spread">
+  <div class="step-dots" id="dots-spread"></div>
+  <div class="progress-estimate" id="progress-spread"></div>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Choose Your Reading</h2>
+  <div class="reading-choices" id="reading-choices">
+    <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
+      <div class="rc-header"><h3>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
+      <p>Fast guidance for a single question</p>
+      <span class="rc-time">~1 minute</span>
+    </div>
+    <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
+      <div class="rc-header"><h3>Standard Reading</h3><span class="rc-cards">3 Cards</span></div>
+      <span class="badge" style="margin-bottom:6px">Recommended</span>
+      <p>Past, Present, Future</p>
+      <span class="rc-time">~3 minutes</span>
+    </div>
+    <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
+      <div class="rc-header"><h3>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
+      <p>Comprehensive insight into a situation</p>
+      <span class="rc-time">~5 minutes</span>
+    </div>
+    <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
+      <span id="adv-arrow">▼</span> Advanced Readings
+    </div>
+    <div class="advanced-readings-panel" id="advanced-readings-panel" style="display:none">
+      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)">
+        <h3>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span>
+      </div>
+      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)">
+        <h3>Romany Spread</h3><span class="rc-cards">21 Cards</span>
+      </div>
+      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)">
+        <h3>Yearly Forecast</h3><span class="rc-cards">12 Cards</span>
+      </div>
+      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)">
+        <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goScreen('screen-welcome')">← Back</button>
+    <button class="btn btn-primary" onclick="confirmSpread()">Continue →</button>
+  </div>
+</div>

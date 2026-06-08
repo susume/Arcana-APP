@@ -1,0 +1,25 @@
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('modal-settings')">✕</button>
+    <h2>Settings</h2>
+    <label>Gemini API Key</label>
+    <input type="password" id="api-key-input" placeholder="Paste your API key here">
+    <p style="font-size:11px;color:var(--muted);margin-top:4px">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a></p>
+    <button class="btn btn-sm" onclick="testApiKey()" style="margin-top:8px">Test Key</button>
+    <span id="key-status" style="margin-left:8px;font-size:12px"></span>
+    <label>Reading Style</label>
+    <select id="reading-style">
+      <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
+    </select>
+    <label>Reading Tone</label>
+    <select id="reading-tone">
+      <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
+    </select>
+    <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
+      <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete all saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear All Data</button>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>

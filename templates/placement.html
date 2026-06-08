@@ -1,0 +1,70 @@
+<div class="screen" id="screen-card-entry">
+  <div class="step-dots" id="dots-entry"></div>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Enter Your Cards</h2>
+
+  <div class="dropped-card-section">
+    <div class="toggle-row">
+      <div class="toggle" id="drop-toggle" onclick="toggleDrop()"></div>
+      <h4>Did a card fall out during shuffling?</h4>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A card that drops while shuffling can carry special significance — it may reveal an underlying theme or energy influencing your entire reading.</p>
+    <div id="drop-card-entry" style="display:none">
+      <div class="card-entry-row">
+        <span class="pos-name">Dropped Card</span>
+        <button class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
+        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" title="Click to toggle orientation">↑</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('tab-guided',this)">Guided Draw</button>
+    <button class="tab-btn" onclick="switchTab('tab-upload',this)">Upload Photo</button>
+    <button class="tab-btn" onclick="switchTab('tab-manual',this)">Manual Entry</button>
+  </div>
+
+  <div id="tab-guided">
+    <div class="onboard">
+      Draw cards <strong>one at a time</strong> — the app guides each position. When finished, <strong>photograph your spread</strong> and AI identifies them.
+    </div>
+    <div id="guided-ritual-prompt"></div>
+    <div id="guided-spread-diagram"></div>
+    <div id="guided-actions" style="text-align:center;margin-top:12px"></div>
+    <div id="guided-photo-section" style="display:none;margin-top:16px">
+      <div class="divider" style="margin-bottom:16px"></div>
+      <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards placed ✦ Now photograph your spread</p>
+      <div class="upload-zone" id="guided-upload-zone" onclick="document.getElementById('guided-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleGuidedDrop(event)">
+        <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo of your completed spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+      </div>
+      <input type="file" id="guided-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleGuidedUpload(this)">
+      <button class="btn btn-primary" id="guided-identify-btn" style="display:none;width:100%;margin-top:8px" onclick="identifyGuidedCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
+      <div id="guided-identify-results"></div>
+      <p style="text-align:center;margin-top:12px"><span class="footer-link" onclick="switchTab('tab-manual',document.querySelectorAll('.tab-btn')[2])">Or enter cards manually →</span></p>
+    </div>
+  </div>
+
+  <div id="tab-upload" style="display:none">
+    <div class="onboard">
+      Photograph your spread face-up. <strong>AI identifies each card</strong> — correct any mistakes before continuing.
+    </div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
+      <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo here<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+    </div>
+    <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleUpload(this)">
+    <button class="btn btn-primary" id="identify-btn" style="display:none;width:100%" onclick="identifyCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
+    <div id="upload-results"></div>
+  </div>
+
+  <div id="tab-manual" style="display:none">
+    <div class="onboard">
+      Type to search, then set each card <strong>upright ↑</strong> or <strong>reversed ↓</strong>.
+    </div>
+    <div class="suit-filter" id="suit-filter"></div>
+    <div id="manual-entries"></div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn" onclick="goScreen('screen-spread')">← Back</button>
+    <button class="btn btn-primary" onclick="confirmCards()">Review Cards →</button>
+  </div>
+</div>

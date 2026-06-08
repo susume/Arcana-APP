@@ -198,7 +198,9 @@ function renderEntitlementsUI(){
     const feature = el.dataset.premiumFeature;
     const locked = !premiumFeature(feature);
     el.classList.toggle('premium-locked', locked);
-    el.setAttribute('aria-disabled', locked ? 'true' : 'false');
+    el.removeAttribute('aria-disabled');
+    if(locked)el.setAttribute('title', `${featureTitle(feature)} - activate Premium to use this.`);
+    else el.removeAttribute('title');
   });
 }
 

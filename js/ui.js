@@ -28,6 +28,8 @@ function goScreen(id, fromRouter){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
   if(id==='screen-history')renderHistory();
   updateDots(id);
   updateProgressEstimate(id);
@@ -145,6 +147,8 @@ function confirmSystem(){
 }
 
 // ===== SPREADS =====
+const ACTIVE_SPREAD_IDS=['one-card','three-card','six-card','celtic-cross','romany','yearly','two-pathways'];
+
 function renderSpreads(){
   const grid=document.getElementById('spread-grid');
   grid.innerHTML='';
@@ -243,11 +247,16 @@ function updateProgressEstimate(screenId){
 }
 
 // ===== SOCIAL SHARING =====
+function getReadingSpread(){
+  return SPREADS.find(s=>s.id===(state.mode==='quick'?(state.quickSpreadId||state.spreadId):state.spreadId));
+}
+
 function shareReading(){
-  const narrative=document.getElementById('narrative-text');
-  if(!narrative)return;
-  const spread=SPREADS.find(s=>s.id===state.spreadId);
-  showShareModal({text:narrative.innerText,spread:spread?spread.name:'Reading',cards:Object.values(state.cards)});
+  const content=document.getElementById('reading-content');
+  const text=state.narrative||(content?content.innerText:'');
+  if(!text)return;
+  const spread=getReadingSpread();
+  showShareModal({text:state.narrative||text,spread:spread?spread.name:'Reading',cards:Object.values(state.cards)});
 }
 function showShareModal(data){
   let modal=document.getElementById('share-modal');
@@ -530,13 +539,13 @@ function buildSuitFilter(){
   const container=document.getElementById('suit-filter');
   container.innerHTML='<span class="suit-btn active" onclick="filterSuit(null,this)">All</span>';
   if(state.cardSystem==='tarot'){
-    container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('major',this)">${GLYPH.star8} Major</span>`;
+    container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('major',this)">Major</span>`;
     TAROT_SUITS.forEach(s=>{
-      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</span>`;
+      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</span>`;
     });
   }else{
     PLAYING_SUITS.forEach(s=>{
-      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${PLAYING_SYM[s]} ${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
     });
   }
 }
@@ -583,7 +592,7 @@ function searchCard(input,posId){
   results.forEach(card=>{
     const item=document.createElement('div');
     item.className='dd-item';
-    item.innerHTML=`${getSuitSym(card)}<span>${card.name}</span>`;
+    item.innerHTML=`${renderCardArt(card,'tarot-card-thumb dropdown-card-art',72)}<span>${card.name}</span>`;
     item.onclick=()=>{
       input.value=card.name;
       if(posId.startsWith('guided-')){
@@ -656,7 +665,7 @@ function renderQuickSpreads(){
   grid.innerHTML='';
   const catOrder=['Daily','Classic','Relationships','Life & Decisions'];
   catOrder.forEach(cat=>{
-    const catSpreads=SPREADS.filter(s=>s.id!=='custom'&&s.category===cat);
+    const catSpreads=SPREADS.filter(s=>ACTIVE_SPREAD_IDS.includes(s.id)&&s.category===cat);
     if(!catSpreads.length)return;
     const lbl=document.createElement('div');
     lbl.className='spread-cat-label';
@@ -765,10 +774,10 @@ function renderOverview(){
     if(!entry){
       tile.innerHTML=`<div class="c-pos">${pos.name}</div><div style="color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer" onclick="goScreen('screen-card-entry')">Unknown — tap to set</div>`;
     }else{
-      const sym=card?getSuitSym(card):'?';
+      const art=card?renderCardArt(card,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>';
       const kws=card?card.keywords.slice(0,3):[];
       tile.innerHTML=`
-        <div class="suit-sym">${sym}</div>
+        <div class="suit-sym">${art}</div>
         <div class="c-name">${entry.name}</div>
         <div class="c-pos">${pos.name}</div>
         <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'↑ Upright':'↓ Reversed'}</span>
@@ -784,7 +793,7 @@ function renderOverview(){
     dropDiv.style.display='block';
     dropDiv.innerHTML=`<div class="overview-tile" style="border-color:var(--au-violet)">
       <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
-      <div class="suit-sym">${dc?getSuitSym(dc):'?'}</div>
+      <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
       <div class="c-name">${state.droppedCard.name}</div>
       <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'↑ Upright':'↓ Reversed'}</span>
       <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>
@@ -797,7 +806,7 @@ function renderOverview(){
 
 // ===== QUICK READING =====
 function buildQuickSpreadRef(){
-  return SPREADS.filter(s=>s.id!=='custom').map(s=>
+  return SPREADS.filter(s=>ACTIVE_SPREAD_IDS.includes(s.id)).map(s=>
     s.name+' ('+s.cardCount+' cards): '+s.positions.map(p=>p.id+'. '+p.name+' ['+p.description+']').join(' | ')
   ).join('\n');
 }
@@ -889,6 +898,7 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
         <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
         <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
       </div>`);
+    renderJournalSection(results);
     renderEntitlementsUI();
   }catch(e){
     results.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
@@ -993,13 +1003,13 @@ function openCardPicker(posId){
   const filterEl=document.getElementById('picker-filter');
   filterEl.innerHTML='<button class="picker-suit-btn active" onclick="filterPickerSuit(null,this)">All</button>';
   if(state.cardSystem==='tarot'){
-    filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('major',this)">${GLYPH.star8} Major Arcana</button>`;
+    filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('major',this)">Major Arcana</button>`;
     TAROT_SUITS.forEach(s=>{
-      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</button>`;
+      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</button>`;
     });
   }else{
     PLAYING_SUITS.forEach(s=>{
-      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${PLAYING_SYM[s]} ${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
+      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
     });
   }
   document.getElementById('card-picker-modal').classList.add('open');
@@ -1023,7 +1033,7 @@ function renderPickerCards(filter){
   const list=document.getElementById('card-picker-list');
   list.innerHTML=cards.map(card=>{
     const esc=card.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    return`<div class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${getSuitSym(card)}<span>${card.name}</span></div>`;
+    return`<div class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${card.name}</span></div>`;
   }).join('');
 }
 function selectPickerCard(name){
@@ -1038,16 +1048,31 @@ function selectPickerCard(name){
 }
 
 // ===== JOURNAL =====
+function renderJournalSection(container){
+  if(!container || container.querySelector('.journal-section'))return;
+  const section=document.createElement('div');
+  section.className='journal-section no-print';
+  section.dataset.premiumFeature='journal';
+  section.innerHTML=`
+    <div class="journal-prompt">Reflection</div>
+    <p class="reflection-question">What stood out most to you?</p>
+    <textarea class="journal-textarea" placeholder="Write your reflection here..."></textarea>
+    <button class="btn btn-sm" onclick="saveJournal()" style="margin-top:8px">Save Reflection</button>`;
+  container.appendChild(section);
+}
+
 function saveJournal(){
   if(!requestPremiumFeature('journal')) return;
-  const txt=document.getElementById('journal-entry').value.trim();
+  const journalRoot=event&&event.currentTarget&&event.currentTarget.closest ? event.currentTarget.closest('.journal-section') : document.getElementById('journal-section');
+  const textarea=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-textarea') : document.getElementById('journal-entry');
+  const txt=textarea?textarea.value.trim():'';
   if(!txt)return;
   const date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-  const spread=getSpread();
+  const spread=getReadingSpread();
   const entry={date,spread:spread?spread.name:'Custom',text:txt};
   const history=JSON.parse(localStorage.getItem('arcana-journal')||'[]');
   history.unshift(entry);
   localStorage.setItem('arcana-journal',JSON.stringify(history.slice(0,50)));
-  const btn=event.currentTarget;
+  const btn=event&&event.currentTarget;
   if(btn){const orig=btn.textContent;btn.textContent='Saved!';setTimeout(()=>{btn.textContent=orig},2000);}
 }

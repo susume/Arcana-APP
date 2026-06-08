@@ -63,7 +63,7 @@ function saveReading(){
   const title=prompt('Give this reading a title:','Reading '+new Date().toLocaleDateString());
   if(!title)return;
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
-  const spread=getSpread();
+  const spread=getReadingSpread();
   readings.unshift({
     id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     title,
@@ -73,7 +73,7 @@ function saveReading(){
     readerAge:state.readerAge||'',
     readerLifeStage:state.readerLifeStage||'',
     cardSystem:state.cardSystem||'tarot',
-    spread:state.spreadId||'quick',
+    spread:spread?spread.id:(state.spreadId||state.quickSpreadId||'quick'),
     spreadName:spread?spread.name:'Quick Reading',
     cards:{...state.cards},
     droppedCard:state.droppedCard,

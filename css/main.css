@@ -686,7 +686,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:13px;margin:18px 0}
 .overview-tile{position:relative;background:oklch(0.16 0.03 278 / .75);backdrop-filter:blur(8px);border:1px solid oklch(0.28 0.04 282 / .50);border-radius:var(--r-md);padding:18px 14px 16px;text-align:center;box-shadow:var(--shadow-card);overflow:hidden}
 .overview-tile::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--aurora);opacity:.8}
-.overview-tile .suit-sym{display:flex;align-items:center;justify-content:center;height:30px;margin-bottom:7px;color:var(--au-violet)}
+.overview-tile .suit-sym{display:flex;align-items:center;justify-content:center;min-height:104px;margin-bottom:10px;color:var(--au-violet)}
 .overview-tile .suit-sym svg{width:24px;height:24px}
 .overview-tile .suit-sym{font-size:23px;line-height:1}
 .search-dropdown .dd-item span{font-size:13.5px}
@@ -868,8 +868,20 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .card-picker-close:hover{color:var(--ink)}
 .card-picker-filter{padding:10px 12px;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);flex-shrink:0}
 .card-picker-list{overflow-y:auto;padding:10px 12px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.card-picker-item{padding:8px 10px;background:oklch(0.16 0.03 278/.75);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;transition:.15s}
+.card-picker-item{padding:8px 10px;background:oklch(0.16 0.03 278/.75);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:8px;transition:.15s;min-width:0}
+.card-picker-item svg{width:18px;height:18px;flex:0 0 18px}
+.card-picker-item span{min-width:0;flex:1;line-height:1.25;overflow-wrap:anywhere}
 .card-picker-item:hover,.card-picker-item:active{background:var(--gold-dim);border-color:var(--au-violet)}
+.card-art-frame{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:6px;overflow:hidden;background:oklch(0.12 0.025 280);border:1px solid oklch(0.50 0.065 82 / .42);box-shadow:0 5px 14px oklch(0 0 0 / .22)}
+.tarot-card-thumb{display:block;width:42px;height:68px;object-fit:cover;border-radius:5px}
+.dropdown-card-art{width:26px;height:42px}
+.picker-card-art{width:30px;height:48px}
+.overview-card-art{width:64px;height:104px}
+.card-art-fallback{display:inline-flex;align-items:center;justify-content:center;width:34px;height:44px;color:var(--au-violet)}
+.card-art-frame .card-art-fallback{display:none}
+.card-art-frame.art-missing .tarot-card-thumb{display:none}
+.card-art-frame.art-missing .card-art-fallback{display:inline-flex}
+.search-dropdown .dd-item .card-art-frame,.card-picker-item .card-art-frame{flex:0 0 auto}
 .picker-suit-btn{padding:4px 10px;border-radius:20px;border:1px solid var(--line-2);background:var(--paper-2);color:var(--ink-faint);font-size:12px;cursor:pointer;white-space:nowrap;transition:.15s;font-family:inherit}
 .picker-suit-btn.active{border-color:var(--au-violet);color:var(--au-violet);background:var(--gold-dim)}
 /* Spread category labels */

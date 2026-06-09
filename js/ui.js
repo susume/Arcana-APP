@@ -242,12 +242,22 @@ function getReadingSpread(){
   return SPREADS.find(s=>s.id===(state.mode==='quick'?(state.quickSpreadId||state.spreadId):state.spreadId));
 }
 
-function shareReading(){
-  const content=document.getElementById('reading-content');
-  const text=state.narrative||(content?content.innerText:'');
+async function shareReading(){
+  const content=[document.getElementById('reading-content'),document.getElementById('quick-reading-content')]
+    .find(el=>el&&el.innerText.trim());
+  const text=state.narrative||(content?content.innerText.trim():'');
   if(!text)return;
   const spread=getReadingSpread();
-  showShareModal({text:state.narrative||text,spread:spread?spread.name:'Reading',cards:Object.values(state.cards)});
+  const title=spread?`Arcana - ${spread.name}`:'Arcana Reading';
+  if(navigator.share){
+    try{
+      await navigator.share({title,text});
+      return;
+    }catch(e){
+      if(e&&e.name==='AbortError')return;
+    }
+  }
+  showShareModal({text,spread:spread?spread.name:'Reading',title});
 }
 
 function printReading(){
@@ -257,25 +267,41 @@ function printReading(){
     showToast('No reading text is ready to print.');
     return;
   }
-  let printRoot=document.getElementById('print-reading-root');
-  if(!printRoot){
-    printRoot=document.createElement('div');
-    printRoot.id='print-reading-root';
-    printRoot.className='print-only';
-    document.body.appendChild(printRoot);
-  }
   const spread=getReadingSpread();
   const title=spread?spread.name:'Arcana Reading';
-  printRoot.innerHTML=`<div class="print-reading-frame"><h1>${title}</h1>${source.innerHTML}</div>`;
-  document.body.classList.add('printing-reading');
+  document.querySelectorAll('.print-frame').forEach(el=>el.remove());
+  const frame=document.createElement('iframe');
+  frame.className='print-frame';
+  frame.setAttribute('aria-hidden','true');
+  frame.srcdoc=`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>
+    @page{margin:14mm}
+    *{box-sizing:border-box}
+    body{margin:0;color:#111;background:#fff;font-family:Georgia,'Times New Roman',serif}
+    .print-reading-frame{border:1.5px solid #222;padding:16px;overflow:visible}
+    h1{font-family:Georgia,'Times New Roman',serif;font-size:20pt;line-height:1.2;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #999}
+    .reading-summary-card,.journal-section,.no-print{display:none!important}
+    .reading-section{display:block;break-inside:auto;page-break-inside:auto;margin:0 0 14px;padding:0;overflow:visible}
+    .reading-section h3{display:block;color:#111;border-bottom:1px solid #ccc;font-size:16pt;line-height:1.25;margin:0 0 8px;padding:0 0 5px}
+    .reading-section h3::before{display:none!important}
+    .reading-section p,.reading-section li{color:#222;font-size:11.5pt;line-height:1.48;margin:0 0 7px;overflow:visible}
+    .reading-section ul{padding-left:18px;list-style:disc}
+    .reading-section li{padding-left:0}
+    .reading-section li::before{display:none!important}
+    strong{font-weight:700} em{font-style:italic}
+  </style></head><body><main class="print-reading-frame"><h1>${escapeHtml(title)}</h1>${source.innerHTML}</main></body></html>`;
   const cleanup=()=>{
-    document.body.classList.remove('printing-reading');
-    printRoot.innerHTML='';
+    frame.remove();
     window.removeEventListener('afterprint',cleanup);
   };
   window.addEventListener('afterprint',cleanup);
-  window.print();
-  setTimeout(cleanup,15000);
+  frame.onload=()=>{
+    const win=frame.contentWindow;
+    if(!win)return;
+    win.addEventListener('afterprint',cleanup);
+    win.focus();
+    win.print();
+  };
+  document.body.appendChild(frame);
 }
 function showShareModal(data){
   let modal=document.getElementById('share-modal');
@@ -283,15 +309,44 @@ function showShareModal(data){
     modal=document.createElement('div');
     modal.id='share-modal';
     modal.className='share-modal-overlay';
-    modal.innerHTML='<div class="share-modal"><h3>Share Your Reading</h3><canvas id="share-canvas" width="600" height="800"></canvas><div class="share-actions"><button class="btn btn-primary" onclick="downloadShareImage()">Download Image</button><button class="btn" onclick="shareNative()">Share</button><button class="btn" onclick="closeShareModal()">Close</button></div></div>';
+    modal.addEventListener('click',e=>{if(e.target===modal)closeShareModal();});
     document.body.appendChild(modal);
   }
-  modal.style.display='flex';
+  modal.innerHTML=`<div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
+    <button class="close-btn" onclick="closeShareModal()" aria-label="Close share options">&times;</button>
+    <h3 id="share-title">Share Reading</h3>
+    <p class="share-help">Use your browser share sheet, copy the text, or download a simple image.</p>
+    <textarea id="share-text" readonly>${escapeHtml(data.text)}</textarea>
+    <canvas id="share-canvas" width="600" height="800"></canvas>
+    <div class="share-actions">
+      <button class="btn btn-primary" onclick="copyShareText()">Copy Text</button>
+      <button class="btn" onclick="downloadShareImage()">Download Image</button>
+      <button class="btn" onclick="closeShareModal()">Close</button>
+    </div>
+  </div>`;
+  modal.classList.add('open');
   renderShareCanvas(data);
 }
 function closeShareModal(){
   const modal=document.getElementById('share-modal');
-  if(modal)modal.style.display='none';
+  if(modal)modal.classList.remove('open');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeShareModal();
+});
+async function copyShareText(){
+  const text=document.getElementById('share-text')?.value||'';
+  if(!text)return;
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('Reading copied.');
+  }catch(e){
+    const input=document.getElementById('share-text');
+    input.focus();
+    input.select();
+    document.execCommand('copy');
+    showToast('Reading copied.');
+  }
 }
 function downloadShareImage(){
   const canvas=document.getElementById('share-canvas');
@@ -309,6 +364,9 @@ function shareNative(){
       downloadShareImage();
     }
   });
+}
+function escapeHtml(value){
+  return String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 function renderShareCanvas(data){
   const canvas=document.getElementById('share-canvas');

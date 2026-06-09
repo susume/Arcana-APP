@@ -506,37 +506,40 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   /* surfaces — deep midnight */
-  --paper:oklch(0.13 0.025 275);
-  --paper-2:oklch(0.16 0.028 278);
-  --paper-3:oklch(0.19 0.032 280);
-  --paper-card:oklch(0.17 0.030 276);
+  --paper:oklch(0.095 0.018 282);
+  --paper-2:oklch(0.13 0.024 282);
+  --paper-3:oklch(0.17 0.030 286);
+  --paper-card:oklch(0.145 0.026 284);
   /* text — silver to lavender */
-  --ink:oklch(0.92 0.015 280);
-  --ink-soft:oklch(0.72 0.025 285);
-  --ink-faint:oklch(0.52 0.022 282);
+  --ink:oklch(0.93 0.018 76);
+  --ink-soft:oklch(0.77 0.030 80);
+  --ink-faint:oklch(0.58 0.026 274);
   /* hairlines */
-  --line:oklch(0.24 0.025 278);
-  --line-2:oklch(0.30 0.030 280);
+  --line:oklch(0.29 0.034 286);
+  --line-2:oklch(0.38 0.046 84);
   /* aurora accents — luminous on dark */
-  --au-violet:oklch(0.72 0.16 300);
-  --au-blue:oklch(0.72 0.14 252);
-  --au-teal:oklch(0.76 0.12 192);
-  --au-rose:oklch(0.76 0.12 16);
-  --au-gold:oklch(0.82 0.12 85);
+  --au-violet:oklch(0.70 0.13 297);
+  --au-blue:oklch(0.69 0.10 250);
+  --au-teal:oklch(0.74 0.08 190);
+  --au-rose:oklch(0.72 0.10 350);
+  --au-gold:oklch(0.78 0.10 82);
+  --moon:oklch(0.91 0.055 83);
+  --moon-dim:oklch(0.76 0.075 84);
+  --velvet:oklch(0.16 0.045 306);
   /* card-back — richer depth */
-  --card-deep-1:oklch(0.22 0.06 280);
-  --card-deep-2:oklch(0.12 0.04 278);
-  --card-line:oklch(0.55 0.10 295 / .45);
-  --card-glow:oklch(0.65 0.16 300 / .40);
+  --card-deep-1:oklch(0.21 0.052 288);
+  --card-deep-2:oklch(0.105 0.030 282);
+  --card-line:oklch(0.64 0.085 82 / .48);
+  --card-glow:oklch(0.76 0.09 82 / .38);
   /* semantic */
   --bg:var(--paper);--surface:var(--paper-2);--surface-2:var(--paper-3);
-  --gold:var(--ink);--gold-light:var(--ink-soft);--gold-dim:oklch(0.72 0.16 300 / .12);
+  --gold:var(--moon);--gold-light:var(--ink-soft);--gold-dim:oklch(0.74 0.09 82 / .13);
   --text:var(--ink);--muted:var(--ink-faint);--border:var(--line);
   --danger:oklch(0.68 0.16 18);--success:oklch(0.68 0.12 172);
   --upright:oklch(0.72 0.10 188);--reversed:oklch(0.72 0.14 20);
-  --aurora:linear-gradient(100deg,var(--au-rose),var(--au-violet) 32%,var(--au-blue) 60%,var(--au-teal));
-  --shadow-card:0 2px 6px oklch(0.05 0.02 275 / .40),0 14px 34px -18px oklch(0.05 0.03 278 / .60);
-  --shadow-pop:0 20px 55px -18px oklch(0.05 0.04 280 / .70);
+  --aurora:linear-gradient(110deg,var(--au-rose),var(--au-violet) 34%,var(--au-blue) 64%,var(--moon));
+  --shadow-card:0 2px 10px oklch(0.03 0.014 282 / .46),0 28px 80px -48px oklch(0.02 0.018 286 / .88);
+  --shadow-pop:0 30px 90px -42px oklch(0.02 0.025 288 / .92),0 0 42px oklch(0.76 0.09 82 / .10);
   --r-sm:9px;--r-md:14px;--r-lg:20px;
   --font-display:'Cormorant Garamond',Georgia,'Times New Roman',serif;
   --font-body:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
@@ -544,10 +547,11 @@
 html,body{height:100%;background:var(--paper);color:var(--text);font-family:var(--font-body);font-size:15.5px;line-height:1.62;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 body{
   background:
-    radial-gradient(900px 500px at 50% -8%, oklch(0.28 0.12 300 / .50), transparent 60%),
-    radial-gradient(700px 400px at 85% 6%, oklch(0.25 0.08 220 / .35), transparent 55%),
-    radial-gradient(600px 350px at 10% 12%, oklch(0.22 0.06 340 / .25), transparent 50%),
-    radial-gradient(1200px 800px at 50% 100%, oklch(0.14 0.04 260 / .60), transparent 50%),
+    radial-gradient(circle at 50% -160px, oklch(0.90 0.05 82 / .22) 0 95px, transparent 96px),
+    radial-gradient(900px 520px at 50% -8%, oklch(0.25 0.075 295 / .54), transparent 62%),
+    radial-gradient(760px 430px at 82% 8%, oklch(0.20 0.055 238 / .38), transparent 58%),
+    radial-gradient(620px 380px at 9% 12%, oklch(0.20 0.060 340 / .25), transparent 52%),
+    radial-gradient(1200px 760px at 50% 100%, oklch(0.13 0.035 266 / .62), transparent 54%),
     var(--paper);
   background-attachment:fixed;
 }
@@ -564,8 +568,10 @@ a:hover{text-decoration:underline;text-underline-offset:3px}
 
 /* starfield + aurora atmosphere */
 .stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.star{position:absolute;width:2px;height:2px;border-radius:50%;background:oklch(0.92 0.02 280);opacity:.35;animation:twinkle 4s infinite alternate ease-in-out}
-@keyframes twinkle{from{opacity:.12}to{opacity:.65}}
+.stars::before{content:"";position:absolute;inset:-20%;background-image:linear-gradient(115deg,transparent 42%,oklch(0.76 0.06 82 / .10) 42.2%,transparent 42.7%,transparent 58%,oklch(0.70 0.08 292 / .10) 58.2%,transparent 58.7%);opacity:.62}
+.stars::after{content:"";position:absolute;right:clamp(18px,8vw,118px);top:clamp(62px,10vw,118px);width:clamp(86px,14vw,154px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 36%,oklch(0.98 0.032 83),var(--moon) 42%,oklch(0.62 0.055 83 / .18) 43%,transparent 66%);box-shadow:0 0 80px oklch(0.82 0.08 82 / .24),inset -22px -10px 34px oklch(0.62 0.07 285 / .22);opacity:.78}
+.star{position:absolute;width:2px;height:2px;border-radius:50%;background:oklch(0.94 0.035 82);opacity:.35;animation:twinkle 5.6s infinite alternate ease-in-out;box-shadow:0 0 10px oklch(0.92 0.04 82 / .42)}
+@keyframes twinkle{from{opacity:.10;transform:scale(.72)}to{opacity:.72;transform:scale(1.18)}}
 
 
 /* ===== Constellation Hero ===== */

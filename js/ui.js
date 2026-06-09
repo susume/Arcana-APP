@@ -248,12 +248,35 @@ function getAppShareUrl(){
 
 function getSharePayload(){
   const spread=getReadingSpread();
+  const positions=(spread&&spread.positions)||[];
+  let cardEntries=Object.entries(state.cards||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+  if(!cardEntries.length && state.narrative){
+    const found=currentCards
+      .map(card=>({card,idx:String(state.narrative).toLowerCase().indexOf(card.name.toLowerCase())}))
+      .filter(item=>item.idx>=0)
+      .sort((a,b)=>a.idx-b.idx)
+      .slice(0,(spread&&spread.cardCount)||12);
+    cardEntries=found.map((item,i)=>[String(i+1),{name:item.card.name,orientation:'upright'}]);
+  }
   return {
     title:spread?`Arcana - ${spread.name}`:'Arcana Reading',
     spreadName:spread?spread.name:'Reading',
+    layout:spread?spread.layout:'grid',
+    cardCount:spread?spread.cardCount:0,
     appUrl:getAppShareUrl(),
-    cards:Object.entries(state.cards||{}).sort((a,b)=>Number(a[0])-Number(b[0])).map(([pos,card])=>({pos,name:card.name,orientation:card.orientation||'upright'})),
-    uploadedImage:state.uploadedImage||''
+    cards:cardEntries.map(([pos,entry])=>{
+      const card=currentCards.find(c=>c.name.toLowerCase()===String(entry.name||'').toLowerCase());
+      const position=positions.find(p=>String(p.id)===String(pos));
+      return {
+        pos,
+        positionName:position?position.name:'',
+        name:entry.name,
+        orientation:entry.orientation||'upright',
+        artUrl:card&&typeof getCardArtUrl==='function'?getCardArtUrl(card,320):'',
+        suit:card&&card.suit?card.suit:'',
+        arcana:card&&card.arcana?card.arcana:''
+      };
+    })
   };
 }
 
@@ -384,15 +407,21 @@ function copyShareCaption(){
   copyTextToClipboard(getShareCaption(),'Caption copied.');
 }
 
-function downloadShareImage(){
+async function downloadShareImage(){
+  await renderShareCanvas(currentShareData());
   const canvas=document.getElementById('share-canvas');
   const link=document.createElement('a');
   link.download='arcana-reading.png';
-  link.href=canvas.toDataURL();
-  link.click();
+  try{
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    showToast('Image could not be downloaded in this browser.');
+  }
 }
 
 async function canvasBlob(){
+  await renderShareCanvas(currentShareData());
   const canvas=document.getElementById('share-canvas');
   return await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
 }
@@ -400,6 +429,10 @@ async function canvasBlob(){
 async function shareSpreadImage(){
   const data=currentShareData();
   const blob=await canvasBlob();
+  if(!blob){
+    showToast('Image could not be shared in this browser.');
+    return;
+  }
   const file=new File([blob],'arcana-spread.png',{type:'image/png'});
   const caption=getShareCaption();
   if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
@@ -448,6 +481,17 @@ function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
   return y;
 }
 
+function loadShareImage(url){
+  return new Promise(resolve=>{
+    if(!url){resolve(null);return;}
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=url;
+  });
+}
+
 function drawRoundedRect(ctx,x,y,w,h,r){
   ctx.beginPath();
   ctx.moveTo(x+r,y);
@@ -465,8 +509,93 @@ function drawCoverImage(ctx,img,x,y,w,h){
   ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
 }
 
-function renderShareCanvas(data){
+function getShareSlots(data){
+  const n=(data.cards||[]).length;
+  const frame={x:42,y:112,w:516,h:414};
+  if(!n)return [];
+  const make=(pos,x,y,w,h)=>({pos,x:frame.x+x*frame.w,y:frame.y+y*frame.h,w:w*frame.w,h:h*frame.h});
+  if(data.layout==='row'||n<=3){
+    const gap=.035;
+    const w=Math.min(.24,(1-gap*(n-1))/Math.max(n,1));
+    const total=w*n+gap*(n-1);
+    const start=(1-total)/2;
+    return data.cards.map((_,i)=>make(i,start+i*(w+gap),.18,w,.64));
+  }
+  if(data.layout==='celtic-simple'&&n>=6){
+    return [
+      make(0,.42,.30,.16,.36),make(1,.39,.47,.22,.22),make(2,.42,.66,.16,.30),
+      make(3,.42,.02,.16,.30),make(4,.18,.30,.16,.36),make(5,.66,.30,.16,.36)
+    ];
+  }
+  if(data.layout==='celtic'&&n>=10){
+    return [
+      make(0,.28,.36,.13,.28),make(1,.27,.46,.16,.14),make(2,.28,.68,.13,.28),make(3,.11,.36,.13,.28),make(4,.28,.04,.13,.28),make(5,.45,.36,.13,.28),
+      make(6,.74,.68,.13,.28),make(7,.74,.46,.13,.28),make(8,.74,.24,.13,.28),make(9,.74,.02,.13,.28)
+    ];
+  }
+  if(data.layout==='yearly'&&n>=12){
+    const cx=.5,cy=.5,r=.38,w=.105,h=.23;
+    return data.cards.map((_,i)=>{
+      const angle=Math.PI+i*(Math.PI*2/n);
+      return make(i,cx+Math.cos(angle)*r-w/2,cy+Math.sin(angle)*r-h/2,w,h);
+    });
+  }
+  const cols=Math.min(5,Math.max(2,Math.ceil(Math.sqrt(n))));
+  const rows=Math.ceil(n/cols);
+  const gap=.025;
+  const w=(.88-gap*(cols-1))/cols;
+  const h=Math.min(.25,(.82-gap*(rows-1))/rows);
+  const startX=(1-(w*cols+gap*(cols-1)))/2;
+  const startY=(1-(h*rows+gap*(rows-1)))/2;
+  return data.cards.map((_,i)=>make(i,startX+(i%cols)*(w+gap),startY+Math.floor(i/cols)*(h+gap),w,h));
+}
+
+function drawShareCardFallback(ctx,card,x,y,w,h){
+  drawRoundedRect(ctx,x,y,w,h,10);
+  ctx.fillStyle='#f4ead8';ctx.fill();
+  ctx.strokeStyle='#c8aa70';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#1f2b33';ctx.font='700 14px Arial, sans-serif';ctx.textAlign='center';
+  ctx.fillText(card.pos,x+w/2,y+22);
+  ctx.font='12px Arial, sans-serif';
+  wrapCanvasText(ctx,card.name,x+8,y+h*.45,w-16,15,3);
+}
+
+async function drawShareSpread(ctx,data){
+  drawRoundedRect(ctx,42,112,516,414,16);
+  ctx.fillStyle='rgba(255,255,255,.055)';ctx.fill();
+  ctx.strokeStyle='rgba(198,170,115,.38)';ctx.lineWidth=1.5;ctx.stroke();
+  const slots=getShareSlots(data);
+  await Promise.all(slots.map(async slot=>{
+    const card=data.cards[slot.pos];
+    if(!card)return;
+    ctx.save();
+    if(card.orientation==='reversed'){
+      ctx.translate(slot.x+slot.w/2,slot.y+slot.h/2);
+      ctx.rotate(Math.PI);
+      ctx.translate(-(slot.x+slot.w/2),-(slot.y+slot.h/2));
+    }
+    const img=await loadShareImage(card.artUrl);
+    if(img){
+      drawRoundedRect(ctx,slot.x,slot.y,slot.w,slot.h,9);
+      ctx.fillStyle='#f7f0e4';ctx.fill();
+      ctx.save();
+      drawRoundedRect(ctx,slot.x+3,slot.y+3,slot.w-6,slot.h-6,7);
+      ctx.clip();
+      drawCoverImage(ctx,img,slot.x+3,slot.y+3,slot.w-6,slot.h-6);
+      ctx.restore();
+      ctx.strokeStyle='#d5b56f';ctx.lineWidth=2;drawRoundedRect(ctx,slot.x,slot.y,slot.w,slot.h,9);ctx.stroke();
+    }else{
+      drawShareCardFallback(ctx,card,slot.x,slot.y,slot.w,slot.h);
+    }
+    ctx.restore();
+    ctx.fillStyle='#f3eadb';ctx.font='700 12px Arial, sans-serif';ctx.textAlign='center';
+    ctx.fillText(card.pos,slot.x+slot.w/2,slot.y-5);
+  }));
+}
+
+async function renderShareCanvas(data){
   const canvas=document.getElementById('share-canvas');
+  if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const comment=getShareComment();
   ctx.fillStyle='#111a20';ctx.fillRect(0,0,600,800);
@@ -477,48 +606,8 @@ function renderShareCanvas(data){
   ctx.fillText('Arcana',42,58);
   ctx.font='15px Arial, sans-serif';ctx.fillStyle='#9dc7c9';
   ctx.fillText(data.spreadName||data.spread||'Tarot Spread',42,84);
-
-  const drawCards=()=>{
-    drawRoundedRect(ctx,42,112,516,430,14);
-    ctx.fillStyle='rgba(255,255,255,.06)';ctx.fill();
-    if(data.cards&&data.cards.length){
-      const cols=Math.min(5,Math.max(1,Math.ceil(Math.sqrt(data.cards.length))));
-      const rows=Math.ceil(data.cards.length/cols);
-      const gap=10;
-      const cardW=(456-gap*(cols-1))/cols;
-      const cardH=Math.min(112,(370-gap*(rows-1))/rows);
-      const startX=72,startY=142;
-      data.cards.slice(0,24).forEach((card,i)=>{
-        const col=i%cols,row=Math.floor(i/cols);
-        const x=startX+col*(cardW+gap),y=startY+row*(cardH+gap);
-        drawRoundedRect(ctx,x,y,cardW,cardH,8);
-        ctx.fillStyle='#f7f0e4';ctx.fill();ctx.strokeStyle='#c6aa73';ctx.stroke();
-        ctx.fillStyle='#1f2a31';ctx.font='700 13px Arial, sans-serif';ctx.textAlign='center';
-        ctx.fillText(card.pos,x+cardW/2,y+19);
-        ctx.font='11px Arial, sans-serif';
-        wrapCanvasText(ctx,card.name,x+8,y+42,cardW-16,14,3);
-      });
-    }else{
-      ctx.fillStyle='#d8cdbd';ctx.font='18px Georgia, serif';ctx.textAlign='center';
-      ctx.fillText('My tarot spread',300,322);
-    }
-    drawShareFooter(ctx,data,comment);
-  };
-
-  if(data.uploadedImage){
-    const img=new Image();
-    img.onload=()=>{
-      ctx.save();
-      drawRoundedRect(ctx,42,112,516,430,14);
-      ctx.clip();
-      drawCoverImage(ctx,img,42,112,516,430);
-      ctx.restore();
-      ctx.strokeStyle='#c6aa73';ctx.lineWidth=2;drawRoundedRect(ctx,42,112,516,430,14);ctx.stroke();
-      drawShareFooter(ctx,data,comment);
-    };
-    img.onerror=drawCards;
-    img.src=data.uploadedImage;
-  }else drawCards();
+  await drawShareSpread(ctx,data);
+  drawShareFooter(ctx,data,comment);
 }
 
 function drawShareFooter(ctx,data,comment){

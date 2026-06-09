@@ -73,19 +73,24 @@ async function switchReadingMode(mode){
 }
 
 function getSpreadLayoutHint(spread){
-  if(spread.layout==='celtic')return 'LAYOUT: A cross with a vertical staff on the right.\nCross — pos 5 (Crown, top), pos 3 (Foundation, bottom), pos 1 (Present, centre), pos 2 (Challenge, crossing centre), pos 4 (Recent Past, left), pos 6 (Near Future, right).\nStaff — right column bottom-to-top: pos 7, 8, 9, 10.';
-  if(spread.layout==='romany')return 'LAYOUT: 7 columns of 3 cards each, left to right.\nCol 1 Emotion: pos 1-3. Col 2 Relationships: pos 4-6. Col 3 Hopes & Career: pos 7-9. Col 4 Finances: pos 10-12. Col 5 Spiritual: pos 13-15. Col 6 Obstacles: pos 16-18. Col 7 Health & Future: pos 19-21.\nWithin each column, top card = Past (lower id), middle = Present, bottom = Future (higher id).';
-  if(spread.layout==='yearly')return 'LAYOUT: 2 rows of 6 cards. Top row left-to-right = January (1) through June (6). Bottom row left-to-right = July (7) through December (12).';
-  if(spread.layout==='celtic')return '';
+  if(spread.layout==='celtic-simple')return 'LAYOUT: 6-card Celtic-style cross. Pos 1 (Present) at center, pos 2 (Challenge) crossing below it horizontally, pos 3 (Subconscious) below, pos 4 (Conscious) above, pos 5 (Past) left, pos 6 (Near Future) right.';
+  if(spread.layout==='celtic')return 'LAYOUT: A cross with a vertical staff on the right. Cross: pos 5 (Crown, top), pos 3 (Foundation, bottom), pos 1 (Present, center), pos 2 (Challenge, crossing center), pos 4 (Recent Past, left), pos 6 (Near Future, right). Staff: right column bottom-to-top: pos 7, 8, 9, 10.';
+  if(spread.layout==='romany')return 'LAYOUT: 7 columns of 3 cards each, left to right. Col 1 Emotion: pos 1-3. Col 2 Relationships: pos 4-6. Col 3 Hopes & Career: pos 7-9. Col 4 Finances: pos 10-12. Col 5 Spiritual: pos 13-15. Col 6 Obstacles: pos 16-18. Col 7 Health & Future: pos 19-21. Within each column, top card = Past, middle = Present, bottom = Future.';
+  if(spread.layout==='yearly')return 'LAYOUT: 12 cards in a clock. Position 1 starts at 9 o clock and represents the current month. Continue counterclockwise through positions 2 to 12 for each successive month.';
+  if(spread.layout==='two-pathways')return 'LAYOUT: Two decision paths. Pos 1 (You) and pos 2 (Problem) sit at top center. Left side: pos 3 Pathway 1, pos 5-6 near future, pos 9-10 distant future, pos 13 result. Right side: pos 4 Pathway 2, pos 7-8 near future, pos 11-12 distant future, pos 14 result.';
+  if(spread.layout==='relationship')return 'LAYOUT: 15-card relationship spread with two mirrored sides and a center future card. Left side is you: pos 1-3, 7, 9, 11, 13. Right side is them: pos 4-6, 8, 10, 12, 14. Pos 15 sits in the center as the future of the relationship.';
   const n=spread.cardCount;
   if(spread.layout==='row'||n<=5)return `LAYOUT: ${n} cards in a single row, left to right, numbered 1 to ${n}.`;
   return `LAYOUT: ${n} cards, positions numbered 1 to ${n} as laid out in the photo.`;
 }
 
 function getCleanSpreadLayoutHint(spread){
-  if(spread.layout==='celtic')return 'LAYOUT: A cross with a vertical staff on the right.\nCross: pos 5 (Crown, top), pos 3 (Foundation, bottom), pos 1 (Present, centre), pos 2 (Challenge, crossing centre), pos 4 (Recent Past, left), pos 6 (Near Future, right).\nStaff: right column bottom-to-top: pos 7, 8, 9, 10.';
-  if(spread.layout==='romany')return 'LAYOUT: 7 columns of 3 cards each, left to right.\nCol 1 Emotion: pos 1-3. Col 2 Relationships: pos 4-6. Col 3 Hopes & Career: pos 7-9. Col 4 Finances: pos 10-12. Col 5 Spiritual: pos 13-15. Col 6 Obstacles: pos 16-18. Col 7 Health & Future: pos 19-21.\nWithin each column, top card = Past (lower id), middle = Present, bottom = Future (higher id).';
-  if(spread.layout==='yearly')return 'LAYOUT: 2 rows of 6 cards. Top row left-to-right = January (1) through June (6). Bottom row left-to-right = July (7) through December (12).';
+  if(spread.layout==='celtic-simple')return 'LAYOUT: 6-card Celtic-style cross. Pos 1 Present at center, pos 2 Challenge crossing below it, pos 3 Subconscious below, pos 4 Conscious above, pos 5 Past left, pos 6 Near Future right.';
+  if(spread.layout==='celtic')return 'LAYOUT: A cross with a vertical staff on the right. Cross: pos 5 (Crown, top), pos 3 (Foundation, bottom), pos 1 (Present, center), pos 2 (Challenge, crossing center), pos 4 (Recent Past, left), pos 6 (Near Future, right). Staff: right column bottom-to-top: pos 7, 8, 9, 10.';
+  if(spread.layout==='romany')return 'LAYOUT: 7 columns of 3 cards each, left to right. Col 1 Emotion: pos 1-3. Col 2 Relationships: pos 4-6. Col 3 Hopes & Career: pos 7-9. Col 4 Finances: pos 10-12. Col 5 Spiritual: pos 13-15. Col 6 Obstacles: pos 16-18. Col 7 Health & Future: pos 19-21. Within each column, top card = Past, middle = Present, bottom = Future.';
+  if(spread.layout==='yearly')return 'LAYOUT: 12 cards in a clock. Position 1 starts at 9 o clock and represents the current month. Continue counterclockwise through positions 2 to 12 for each successive month.';
+  if(spread.layout==='two-pathways')return 'LAYOUT: Two decision paths. Pos 1 (You) and pos 2 (Problem) sit at top center. Left side: pos 3 Pathway 1, pos 5-6 near future, pos 9-10 distant future, pos 13 result. Right side: pos 4 Pathway 2, pos 7-8 near future, pos 11-12 distant future, pos 14 result.';
+  if(spread.layout==='relationship')return 'LAYOUT: 15-card relationship spread with two mirrored sides and a center future card. Left side is you: pos 1-3, 7, 9, 11, 13. Right side is them: pos 4-6, 8, 10, 12, 14. Pos 15 sits in the center as the future of the relationship.';
   const n=spread.cardCount;
   if(spread.layout==='row'||n<=5)return `LAYOUT: ${n} cards in a single row, left to right, numbered 1 to ${n}.`;
   return `LAYOUT: ${n} cards, positions numbered 1 to ${n} as laid out in the photo.`;
@@ -93,17 +98,15 @@ function getCleanSpreadLayoutHint(spread){
 
 function readerContextLine(){
   const parts=[];
-  if(state.readerAge)parts.push(`Age: ${state.readerAge}`);
   if(state.readerLifeStage)parts.push(`Life stage: ${state.readerLifeStage}`);
   return parts.length?parts.join('; '):'Not provided';
 }
 
 function readerSafetyInstruction(){
-  const age=parseInt(state.readerAge,10);
   const stage=String(state.readerLifeStage||'').toLowerCase();
-  const isMinor=(age&&age<18)||stage.includes('child')||stage.includes('teen');
+  const isMinor=stage.includes('child')||stage.includes('teen');
   const minorLine=isMinor?'The reader may be a minor: keep the language especially gentle, age-appropriate, non-alarming, and encourage support from a trusted adult for serious worries. Do not frame romance, sexuality, money, career, or life decisions in an adult way for a child.':'';
-  return `Adapt the interpretation to the reader's age and life stage. A card that suggests independence, work, romance, conflict, or responsibility should be interpreted differently for a child, teen, adult, or older adult. Keep the reading reflective and empowering, not deterministic. ${minorLine}`.trim();
+  return `Adapt the interpretation to the reader's life stage. A card that suggests independence, work, romance, conflict, or responsibility should be interpreted differently for a child, teen, young adult, adult, or senior. Keep the reading reflective and empowering, not deterministic. ${minorLine}`.trim();
 }
 
 function buildAIReadingPrompt(settings){
@@ -131,12 +134,11 @@ Generate a complete reading with these sections, using markdown headers (##):
 ## Position-by-Position - Each card interpreted in the specific meaning of its position
 ## Pattern Analysis - Dominant suits, major arcana influence, repeated numbers, reversals, card interactions
 ## Guidance - Practical, actionable advice
-## Reflection Questions - 3-5 thoughtful journaling prompts as a bulleted list
 
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 ${state.concerns.length?'Concerns: '+state.concerns.join(', '):'No specific concerns - provide general guidance.'}
 Reader context: ${readerContextLine()}
-Age/life-stage guidance: ${readerSafetyInstruction()}
+Life-stage guidance: ${readerSafetyInstruction()}
 Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 
 Spread: ${spread.name} - ${spread.description}
@@ -211,14 +213,6 @@ function generateClassicReading(){
   reading+=`Based on this reading, consider taking time to reflect on the themes that have emerged. `;
   if(state.concerns.length)reading+=`In relation to your concerns about ${state.concerns.join(' and ')}, the cards suggest paying attention to the areas highlighted above. `;
   reading+=`Trust your intuition as you move forward, and remember that the cards reflect possibilities, not certainties. Your choices shape your path.\n\n`;
-
-  // Reflection Questions
-  reading+=`## Reflection Questions\n\n`;
-  reading+=`- What emotions arise as you look at this spread?\n`;
-  reading+=`- Which card surprised you the most, and why?\n`;
-  reading+=`- What is one small action you can take today based on this guidance?\n`;
-  if(reversedCount>0)reading+=`- What blocked energy do the reversed cards point to, and how might you release it?\n`;
-  if(state.concerns.length)reading+=`- How does this reading shift your perspective on ${state.concerns[0]}?\n`;
 
   return reading;
 }

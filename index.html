@@ -135,13 +135,9 @@
   <div class="context-panel">
     <div>
       <h3>Reading Context</h3>
-      <p>Optional, but helpful. Age and life stage can change how a card should be interpreted.</p>
+      <p>Optional, but helpful. Life stage can change how a card should be interpreted.</p>
     </div>
     <div class="context-grid">
-      <label>
-        Age
-        <input type="number" id="reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
-      </label>
       <label>
         Life stage
         <select id="reader-life-stage">
@@ -188,6 +184,9 @@
       </div>
       <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
+      </div>
+      <div class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+        <h3>Relationship Spread</h3><span class="rc-cards">15 Cards</span>
       </div>
     </div>
   </div>
@@ -331,7 +330,7 @@
   <div class="nav-row no-print" style="flex-wrap:wrap;gap:8px">
     <button class="btn" onclick="goScreen('screen-welcome')">New Reading</button>
     <button class="btn" onclick="shareReading()">Share</button>
-    <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
+    <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
     <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
   </div>
 </div>
@@ -340,7 +339,7 @@
 <div class="screen" id="screen-history">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Reading History</h2>
   <div class="onboard">
-    Premium reading history is stored on this device. Revisit readings, add journal notes, and compare patterns over time.
+    Free history keeps your latest 3 readings on this device. Premium keeps the full reading history with journal notes and comparison.
   </div>
   <div id="history-list"></div>
   <div style="text-align:center;margin-top:16px">
@@ -358,13 +357,9 @@
   <div class="context-panel quick-context">
     <div>
       <h3>Reading Context</h3>
-      <p>Optional, but age and life stage help Arcana interpret the cards appropriately.</p>
+      <p>Optional, but life stage helps Arcana interpret the cards appropriately.</p>
     </div>
     <div class="context-grid">
-      <label>
-        Age
-        <input type="number" id="quick-reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
-      </label>
       <label>
         Life stage
         <select id="quick-reader-life-stage">
@@ -416,6 +411,10 @@
     <select id="reading-tone">
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
+    <label>Narrator Voice</label>
+    <select id="narrator-voice">
+      <option value="">Browser default</option>
+    </select>
     <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
       <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear Saved Data</button>
     </div>
@@ -461,7 +460,7 @@
     "id": "three-card",
     "name": "Three Card (Past/Present/Future)",
     "category": "Daily",
-    "description": "Past - Present - Future",
+    "description": "Past · Present · Future",
     "cardCount": 3,
     "positions": [
       {
@@ -481,6 +480,46 @@
       }
     ],
     "layout": "row"
+  },
+  "six-card": {
+    "id": "six-card",
+    "name": "Heart of the Matter",
+    "category": "Classic",
+    "description": "6-card Celtic-style cross for the heart of a situation",
+    "cardCount": 6,
+    "positions": [
+      {
+        "id": 1,
+        "name": "The Present",
+        "description": "The heart of the matter right now"
+      },
+      {
+        "id": 2,
+        "name": "Challenge",
+        "description": "What crosses or challenges the present situation"
+      },
+      {
+        "id": 3,
+        "name": "The Subconscious",
+        "description": "Underlying roots, feelings, or unseen influences"
+      },
+      {
+        "id": 4,
+        "name": "The Conscious",
+        "description": "What is clear, visible, or occupying your mind"
+      },
+      {
+        "id": 5,
+        "name": "The Past",
+        "description": "What has shaped this situation"
+      },
+      {
+        "id": 6,
+        "name": "The Near Future",
+        "description": "What is beginning to approach"
+      }
+    ],
+    "layout": "celtic-simple"
   },
   "celtic-cross": {
     "id": "celtic-cross",
@@ -561,133 +600,133 @@
       },
       {
         "id": 3,
-        "name": "Choice 1",
+        "name": "Pathway 1",
         "description": "First option"
       },
       {
         "id": 4,
-        "name": "C1 Near Future A",
-        "description": "Choice 1 -near future"
-      },
-      {
-        "id": 5,
-        "name": "C1 Near Future B",
-        "description": "Choice 1 -near future"
-      },
-      {
-        "id": 6,
-        "name": "C1 Far Future A",
-        "description": "Choice 1 -far future"
-      },
-      {
-        "id": 7,
-        "name": "C1 Far Future B",
-        "description": "Choice 1 -far future"
-      },
-      {
-        "id": 8,
-        "name": "C1 Outcome",
-        "description": "Choice 1 -outcome"
-      },
-      {
-        "id": 9,
-        "name": "Choice 2",
+        "name": "Pathway 2",
         "description": "Second option"
       },
       {
+        "id": 5,
+        "name": "Near Future: Pathway 1",
+        "description": "Near future for pathway 1"
+      },
+      {
+        "id": 6,
+        "name": "Near Future: Pathway 1",
+        "description": "Near future for pathway 1"
+      },
+      {
+        "id": 7,
+        "name": "Near Future: Pathway 2",
+        "description": "Near future for pathway 2"
+      },
+      {
+        "id": 8,
+        "name": "Near Future: Pathway 2",
+        "description": "Near future for pathway 2"
+      },
+      {
+        "id": 9,
+        "name": "Distant Future: Pathway 1",
+        "description": "Distant future for pathway 1"
+      },
+      {
         "id": 10,
-        "name": "C2 Near Future A",
-        "description": "Choice 2 -near future"
+        "name": "Distant Future: Pathway 1",
+        "description": "Distant future for pathway 1"
       },
       {
         "id": 11,
-        "name": "C2 Near Future B",
-        "description": "Choice 2 -near future"
+        "name": "Distant Future: Pathway 2",
+        "description": "Distant future for pathway 2"
       },
       {
         "id": 12,
-        "name": "C2 Far Future A",
-        "description": "Choice 2 -far future"
+        "name": "Distant Future: Pathway 2",
+        "description": "Distant future for pathway 2"
       },
       {
         "id": 13,
-        "name": "C2 Far Future B",
-        "description": "Choice 2 -far future"
+        "name": "Pathway 1 Result",
+        "description": "Likely result of pathway 1"
       },
       {
         "id": 14,
-        "name": "C2 Outcome",
-        "description": "Choice 2 -outcome"
+        "name": "Pathway 2 Result",
+        "description": "Likely result of pathway 2"
       }
     ],
-    "layout": "grid"
+    "layout": "two-pathways"
   },
   "yearly": {
     "id": "yearly",
-    "name": "Yearly Spread",
+    "name": "Yearly Clock Spread",
     "category": "Classic",
-    "description": "12-card year-ahead reading, one card per month",
+    "description": "12-card year-ahead reading in a clock, starting with the current month",
     "cardCount": 12,
     "positions": [
       {
         "id": 1,
-        "name": "January",
-        "description": "The energy and themes that open your year"
+        "name": "Current Month",
+        "description": "The first month for which you are doing the reading"
       },
       {
         "id": 2,
-        "name": "February",
-        "description": "What February holds in store"
+        "name": "Month 2",
+        "description": "The second month in the yearly cycle"
       },
       {
         "id": 3,
-        "name": "March",
-        "description": "Energies arriving as winter turns to spring"
+        "name": "Month 3",
+        "description": "The third month in the yearly cycle"
       },
       {
         "id": 4,
-        "name": "April",
-        "description": "What April brings into focus"
+        "name": "Month 4",
+        "description": "The fourth month in the yearly cycle"
       },
       {
         "id": 5,
-        "name": "May",
-        "description": "The opportunities and challenges of May"
+        "name": "Month 5",
+        "description": "The fifth month in the yearly cycle"
       },
       {
         "id": 6,
-        "name": "June",
-        "description": "Mid-year energies and turning points"
+        "name": "Month 6",
+        "description": "The sixth month in the yearly cycle"
       },
       {
         "id": 7,
-        "name": "July",
-        "description": "What July reveals at the heart of summer"
+        "name": "Month 7",
+        "description": "The seventh month in the yearly cycle"
       },
       {
         "id": 8,
-        "name": "August",
-        "description": "The energy of late summer and harvest"
+        "name": "Month 8",
+        "description": "The eighth month in the yearly cycle"
       },
       {
         "id": 9,
-        "name": "September",
-        "description": "Themes arriving as the year begins to close"
+        "name": "Month 9",
+        "description": "The ninth month in the yearly cycle"
       },
       {
         "id": 10,
-        "name": "October",
-        "description": "What October stirs up for you"
+        "name": "Month 10",
+        "description": "The tenth month in the yearly cycle"
       },
       {
         "id": 11,
-        "name": "November",
-        "description": "Energies drawing the year toward its end"
+        "name": "Month 11",
+        "description": "The eleventh month in the yearly cycle"
       },
       {
         "id": 12,
-        "name": "December",
-        "description": "How the year closes and what carries forward"
+        "name": "Month 12",
+        "description": "The twelfth month in the yearly cycle"
       }
     ],
     "layout": "yearly"
@@ -807,46 +846,6 @@
     ],
     "layout": "romany"
   },
-  "six-card": {
-    "id": "six-card",
-    "name": "Simple Celtic Cross",
-    "category": "Classic",
-    "description": "6-card overview of your situation",
-    "cardCount": 6,
-    "positions": [
-      {
-        "id": 1,
-        "name": "The Querent",
-        "description": "You and your situation until now"
-      },
-      {
-        "id": 2,
-        "name": "Surroundings",
-        "description": "Your current surroundings and present location"
-      },
-      {
-        "id": 3,
-        "name": "Current Influences",
-        "description": "What is influencing you now"
-      },
-      {
-        "id": 4,
-        "name": "External Events",
-        "description": "Current events related to your question"
-      },
-      {
-        "id": 5,
-        "name": "Passing Away",
-        "description": "Circumstances that are transitioning"
-      },
-      {
-        "id": 6,
-        "name": "Near Future",
-        "description": "Influences that may occur soon"
-      }
-    ],
-    "layout": "celtic-simple"
-  },
   "custom": {
     "id": "custom",
     "name": "Custom Spread",
@@ -875,7 +874,7 @@
     "id": "standardReading",
     "name": "Standard Reading",
     "category": "Classic",
-    "description": "Past ? Present ? Future",
+    "description": "Past · Present · Future",
     "cardCount": 3,
     "positions": [
       {
@@ -899,36 +898,127 @@
   "deepExploration": {
     "id": "deepExploration",
     "name": "Deep Exploration",
-    "category": "Life & Decisions",
-    "description": "Current Situation ? Challenge ? Past Influence ? Near Future ? Advice ? Outcome",
+    "category": "Classic",
+    "description": "Current Situation · Challenge · Past Influence · Near Future · Advice · Outcome",
     "cardCount": 6,
     "positions": [
       {
         "id": 1,
-        "name": "Current Situation"
+        "name": "Current Situation",
+        "description": "Where you stand right now"
       },
       {
         "id": 2,
-        "name": "Challenge"
+        "name": "Challenge",
+        "description": "What stands in your way"
       },
       {
         "id": 3,
-        "name": "Past Influence"
+        "name": "Past Influence",
+        "description": "What has shaped the situation"
       },
       {
         "id": 4,
-        "name": "Near Future"
+        "name": "Near Future",
+        "description": "What is approaching"
       },
       {
         "id": 5,
-        "name": "Advice"
+        "name": "Advice",
+        "description": "Guidance for your path"
       },
       {
         "id": 6,
-        "name": "Outcome"
+        "name": "Outcome",
+        "description": "The likely result"
       }
     ],
     "layout": "grid"
+  },
+  "relationship": {
+    "id": "relationship",
+    "name": "Relationship Spread",
+    "category": "Life & Decisions",
+    "description": "15-card relationship reading for both people, influences, and future",
+    "cardCount": 15,
+    "positions": [
+      {
+        "id": 1,
+        "name": "What You Provide",
+        "description": "What you provide to the relationship"
+      },
+      {
+        "id": 2,
+        "name": "Your Present Stand",
+        "description": "Where you stand in the present"
+      },
+      {
+        "id": 3,
+        "name": "Your Future Hope",
+        "description": "Where you hope to stand in the future"
+      },
+      {
+        "id": 4,
+        "name": "Their Hope",
+        "description": "What they are hoping for"
+      },
+      {
+        "id": 5,
+        "name": "Their Present Stand",
+        "description": "Where they stand in the present"
+      },
+      {
+        "id": 6,
+        "name": "What They Provide",
+        "description": "What they provide to the relationship"
+      },
+      {
+        "id": 7,
+        "name": "How You View Them",
+        "description": "How the other person is viewed"
+      },
+      {
+        "id": 8,
+        "name": "How They View You",
+        "description": "How the other person views you"
+      },
+      {
+        "id": 9,
+        "name": "Your Past Perception",
+        "description": "How you perceived them in the past"
+      },
+      {
+        "id": 10,
+        "name": "Their Past Perception",
+        "description": "How they perceived you in the past"
+      },
+      {
+        "id": 11,
+        "name": "Your Doubts and Fears",
+        "description": "Your present doubts and fears"
+      },
+      {
+        "id": 12,
+        "name": "Their Doubts and Fears",
+        "description": "Their present doubts and fears"
+      },
+      {
+        "id": 13,
+        "name": "Your External Influences",
+        "description": "External influences motivating you"
+      },
+      {
+        "id": 14,
+        "name": "Their External Influences",
+        "description": "External forces motivating them"
+      },
+      {
+        "id": 15,
+        "name": "Relationship Future",
+        "description": "The future of the relationship"
+      }
+    ],
+    "layout": "relationship"
   }
 }</script>
   <div id="card-picker-modal" class="card-picker-modal" onclick="if(event.target===this)closeCardPicker()">

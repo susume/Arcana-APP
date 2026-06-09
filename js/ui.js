@@ -59,7 +59,6 @@ function startGuided(){
   state.hasDroppedCard=false;
   state.uploadedImage=null;
   state.spreadId=null;
-  state.readerAge='';
   state.readerLifeStage='';
   state.guidedStep=0;
   state.readingUsageRecorded=false;
@@ -72,9 +71,7 @@ function startGuided(){
   const cl=document.getElementById('concern-list');
   cl.innerHTML='<div class="concern-row"><input type="text" placeholder="What\'s on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button></div>';
   document.querySelectorAll('.tag-chip').forEach(t=>t.classList.remove('active'));
-  const age=document.getElementById('reader-age');
   const lifeStage=document.getElementById('reader-life-stage');
-  if(age)age.value='';
   if(lifeStage)lifeStage.value='';
   state.cardSystem='tarot';
   currentCards=getCards();
@@ -87,13 +84,10 @@ function startQuick(){
   state.narrative='';
   state.readingUsageRecorded=false;
   state.cards={};
-  state.readerAge='';
   state.readerLifeStage='';
   document.getElementById('quick-results').innerHTML='';
   document.getElementById('quick-concern').value='';
-  const age=document.getElementById('quick-reader-age');
   const lifeStage=document.getElementById('quick-reader-life-stage');
-  if(age)age.value='';
   if(lifeStage)lifeStage.value='';
   const zone=document.getElementById('quick-upload-zone');
   zone.classList.remove('has-image');
@@ -147,7 +141,7 @@ function confirmSystem(){
 }
 
 // ===== SPREADS =====
-const ACTIVE_SPREAD_IDS=['one-card','three-card','six-card','celtic-cross','romany','yearly','two-pathways'];
+const ACTIVE_SPREAD_IDS=['one-card','three-card','six-card','celtic-cross','romany','yearly','two-pathways','relationship'];
 
 function renderSpreads(){
   const grid=document.getElementById('spread-grid');
@@ -192,15 +186,12 @@ function buildCustomPositions(){
 }
 function confirmSpread(){
   if(!state.spreadId){alert('Please select a reading type.');return;}
-  saveReaderContext('reader-age','reader-life-stage');
+  saveReaderContext('reader-life-stage');
   goScreen('screen-reflection');
 }
 
-function saveReaderContext(ageId, lifeStageId){
-  const ageEl=document.getElementById(ageId);
+function saveReaderContext(lifeStageId){
   const stageEl=document.getElementById(lifeStageId);
-  const age=ageEl?ageEl.value.trim():'';
-  state.readerAge=age?String(Math.max(1,Math.min(120,parseInt(age,10)||0))):'';
   state.readerLifeStage=stageEl?stageEl.value.trim():'';
 }
 
@@ -257,6 +248,12 @@ function shareReading(){
   if(!text)return;
   const spread=getReadingSpread();
   showShareModal({text:state.narrative||text,spread:spread?spread.name:'Reading',cards:Object.values(state.cards)});
+}
+
+function printReading(){
+  document.body.classList.add('printing-reading');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('printing-reading'),500);
 }
 function showShareModal(data){
   let modal=document.getElementById('share-modal');
@@ -330,7 +327,7 @@ function enhanceReadingOutput(){
   h+='<p class="summary-copy">'+(spread?spread.name:'Your reading')+' with '+cardNames.length+' card'+(cardNames.length===1?'':'s')+' drawn. Review the key themes first, then continue into the full reading.</p>';
   h+='<div class="summary-meta">';
   h+='<span class="summary-cards">'+(spread?spread.name:'Reading')+'</span>';
-  if(state.readerAge||state.readerLifeStage)h+='<span class="major-badge">'+[state.readerAge?'Age '+state.readerAge:'',state.readerLifeStage||''].filter(Boolean).join(' / ')+'</span>';
+  if(state.readerLifeStage)h+='<span class="major-badge">'+state.readerLifeStage+'</span>';
   if(hasMajor)h+='<span class="major-badge">Major Arcana Present</span>';
   if(reversedCount)h+='<span class="major-badge">'+reversedCount+' Reversed</span>';
   h+='</div>';
@@ -385,15 +382,26 @@ function renderSpreadDiagram(spread,activeIdx){
   }else if(spread.layout==='celtic'){
     const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
     return`<div class="spread-diagram celtic-layout"><div class="celtic-cross"><div class="spread-row">${ms(4)}</div><div class="spread-row">${ms(3)}${ms(0)}${ms(1)}${ms(5)}</div><div class="spread-row">${ms(2)}</div></div><div class="celtic-staff">${ms(9)}${ms(8)}${ms(7)}${ms(6)}</div></div>`;
+  }else if(spread.layout==='celtic-simple'){
+    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    return`<div class="spread-diagram celtic-simple-layout"><div class="spread-row">${ms(3)}</div><div class="spread-row">${ms(4)}${ms(0)}${ms(5)}</div><div class="spread-row">${ms(1,true)}</div><div class="spread-row">${ms(2)}</div></div>`;
   }else if(spread.layout==='yearly'){
-    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}" style="width:62px;height:86px"><div class="slot-num">${pos.id}</div><div class="slot-label">${months[idx]}</div></div>`;};
-    const row=(start,end)=>`<div class="spread-row" style="gap:7px">${Array.from({length:end-start},(_,i)=>ms(start+i)).join('')}</div>`;
-    return`<div class="spread-diagram" style="max-width:600px;margin:0 auto">${row(0,6)}${row(6,12)}</div>`;
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot clock-slot clock-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    return`<div class="spread-diagram yearly-clock-layout">${spread.positions.map((_,i)=>ms(i)).join('')}</div>`;
   }else if(spread.layout==='romany'){
     const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
     const mkCol=(label,...idxs)=>`<div class="romany-col"><div class="romany-col-label">${label}</div>${idxs.map(ms).join('')}</div>`;
     return`<div class="spread-diagram romany-layout">${mkCol('Emotion',0,1,2)}${mkCol('Relationships',3,4,5)}${mkCol('Hopes & Career',6,7,8)}${mkCol('Finances',9,10,11)}${mkCol('Spiritual',12,13,14)}${mkCol('Obstacles',15,16,17)}${mkCol('Health & Future',18,19,20)}</div>`;
+  }else if(spread.layout==='two-pathways'){
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot two-path-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    return`<div class="spread-diagram two-pathways-layout">${spread.positions.map((_,i)=>ms(i)).join('')}</div>`;
+  }else if(spread.layout==='relationship'){
+    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    return`<div class="spread-diagram relationship-layout">
+      <div class="relationship-side">${ms(6)}<div class="spread-row">${ms(0)}${ms(1)}${ms(2)}</div>${ms(8)}${ms(10)}${ms(12,true)}</div>
+      <div class="relationship-center">${ms(14)}</div>
+      <div class="relationship-side">${ms(7)}<div class="spread-row">${ms(3)}${ms(4)}${ms(5)}</div>${ms(9)}${ms(11)}${ms(13,true)}</div>
+    </div>`;
   }else if(spread.layout==='pyramid'&&n===6){
     rows=[[0],[1,2],[3,4,5]];
   }else if(n===7){
@@ -821,7 +829,7 @@ async function quickRead(){
   if(!state.uploadedImage){alert('Please upload a photo first.');return;}
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
-  saveReaderContext('quick-reader-age','quick-reader-life-stage');
+  saveReaderContext('quick-reader-life-stage');
   state.cardSystem=state.cardSystem||'tarot';
   const results=document.getElementById('quick-results');
   results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
@@ -844,11 +852,10 @@ For each visible card, identify its name, orientation (upright/reversed), and po
 ## Position-by-Position  - Card name + orientation + position meaning + interpretation
 ## Pattern Analysis  - Dominant suits, Major Arcana presence, reversals, key interactions
 ## Guidance  - Practical, actionable advice
-## Reflection Questions  - 3-5 journaling prompts as a bulleted list
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
 Reader context: ${readerContextLine()}
-Age/life-stage guidance: ${readerSafetyInstruction()}
+Life-stage guidance: ${readerSafetyInstruction()}
 Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
@@ -872,11 +879,10 @@ Generate a complete reading using ## markdown headers:
 ## Position-by-Position - For each card, name the position and its meaning in this spread, then interpret the card through that positional lens
 ## Pattern Analysis - Dominant suits, Major Arcana presence, reversals, card interactions
 ## Guidance - Practical, actionable advice
-## Reflection Questions - 3-5 journaling prompts as a bulleted list
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
 Reader context: ${readerContextLine()}
-Age/life-stage guidance: ${readerSafetyInstruction()}
+Life-stage guidance: ${readerSafetyInstruction()}
 Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
@@ -895,7 +901,7 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
     renderReadingInto(content,narrative);
     results.insertAdjacentHTML('beforeend',`
       <div class="nav-row" style="margin-top:16px">
-        <button class="btn" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
+        <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
         <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
       </div>`);
     renderJournalSection(results);
@@ -946,14 +952,15 @@ function showToast(msg){
 
 // ===== HISTORY =====
 function renderHistory(){
-  if(!requestPremiumFeature('history')) return;
   const list=document.getElementById('history-list');
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
   if(!readings.length){list.innerHTML='<p style="text-align:center;color:var(--muted);padding:40px">No saved readings yet. Complete a reading and save it to see it here.</p>';return;}
-  list.innerHTML='<div class="history-tools"><button class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button></div><div id="comparison-output"></div>';
-  readings.forEach((r,i)=>{
+  const visibleReadings=isPremium()?readings:readings.slice(0,3);
+  const freeNote=!isPremium()&&readings.length>3?'<p class="history-limit-note">Showing your latest 3 readings. Premium unlocks the full saved history.</p>':'';
+  list.innerHTML=freeNote+'<div class="history-tools"><button class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button></div><div id="comparison-output"></div>';
+  visibleReadings.forEach((r,i)=>{
     const d=new Date(r.date);
-    const readerContext=[r.readerAge?'Age '+r.readerAge:'',r.readerLifeStage||''].filter(Boolean).join(' / ');
+    const readerContext=[r.readerLifeStage||''].filter(Boolean).join(' / ');
     const item=document.createElement('div');
     item.className='history-item';
     item.innerHTML=`

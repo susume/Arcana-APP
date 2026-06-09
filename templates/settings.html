@@ -20,6 +20,10 @@
     <select id="reading-tone">
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
+    <label>Narrator Voice</label>
+    <select id="narrator-voice">
+      <option value="">Browser default</option>
+    </select>
     <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
       <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear Saved Data</button>
     </div>

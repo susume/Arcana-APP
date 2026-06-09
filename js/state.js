@@ -3,7 +3,7 @@ let state={
   mode:'guided',concerns:[],cardSystem:'tarot',spreadId:null,
   cards:{},droppedCard:null,hasDroppedCard:false,
   uploadedImage:null,narrative:'',readingMode:'ai',
-  readerAge:'',readerLifeStage:'',
+  readerLifeStage:'',
   guidedStep:0,reversals:false,quickSpreadId:null,
   readingUsageRecorded:false
 };

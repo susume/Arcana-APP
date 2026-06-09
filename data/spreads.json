@@ -41,40 +41,40 @@
   },
   "six-card": {
     "id": "six-card",
-    "name": "Simple Celtic Cross",
+    "name": "Heart of the Matter",
     "category": "Classic",
-    "description": "6-card overview of your situation",
+    "description": "6-card Celtic-style cross for the heart of a situation",
     "cardCount": 6,
     "positions": [
       {
         "id": 1,
-        "name": "The Querent",
-        "description": "You and your situation until now"
+        "name": "The Present",
+        "description": "The heart of the matter right now"
       },
       {
         "id": 2,
-        "name": "Surroundings",
-        "description": "Your current surroundings and present location"
+        "name": "Challenge",
+        "description": "What crosses or challenges the present situation"
       },
       {
         "id": 3,
-        "name": "Current Influences",
-        "description": "What is influencing you now"
+        "name": "The Subconscious",
+        "description": "Underlying roots, feelings, or unseen influences"
       },
       {
         "id": 4,
-        "name": "External Events",
-        "description": "Current events related to your question"
+        "name": "The Conscious",
+        "description": "What is clear, visible, or occupying your mind"
       },
       {
         "id": 5,
-        "name": "Passing Away",
-        "description": "Circumstances that are transitioning"
+        "name": "The Past",
+        "description": "What has shaped this situation"
       },
       {
         "id": 6,
-        "name": "Near Future",
-        "description": "Influences that may occur soon"
+        "name": "The Near Future",
+        "description": "What is beginning to approach"
       }
     ],
     "layout": "celtic-simple"
@@ -158,133 +158,133 @@
       },
       {
         "id": 3,
-        "name": "Choice 1",
+        "name": "Pathway 1",
         "description": "First option"
       },
       {
         "id": 4,
-        "name": "C1 Near Future A",
-        "description": "Choice 1 — near future"
-      },
-      {
-        "id": 5,
-        "name": "C1 Near Future B",
-        "description": "Choice 1 — near future"
-      },
-      {
-        "id": 6,
-        "name": "C1 Far Future A",
-        "description": "Choice 1 — far future"
-      },
-      {
-        "id": 7,
-        "name": "C1 Far Future B",
-        "description": "Choice 1 — far future"
-      },
-      {
-        "id": 8,
-        "name": "C1 Outcome",
-        "description": "Choice 1 — outcome"
-      },
-      {
-        "id": 9,
-        "name": "Choice 2",
+        "name": "Pathway 2",
         "description": "Second option"
       },
       {
+        "id": 5,
+        "name": "Near Future: Pathway 1",
+        "description": "Near future for pathway 1"
+      },
+      {
+        "id": 6,
+        "name": "Near Future: Pathway 1",
+        "description": "Near future for pathway 1"
+      },
+      {
+        "id": 7,
+        "name": "Near Future: Pathway 2",
+        "description": "Near future for pathway 2"
+      },
+      {
+        "id": 8,
+        "name": "Near Future: Pathway 2",
+        "description": "Near future for pathway 2"
+      },
+      {
+        "id": 9,
+        "name": "Distant Future: Pathway 1",
+        "description": "Distant future for pathway 1"
+      },
+      {
         "id": 10,
-        "name": "C2 Near Future A",
-        "description": "Choice 2 — near future"
+        "name": "Distant Future: Pathway 1",
+        "description": "Distant future for pathway 1"
       },
       {
         "id": 11,
-        "name": "C2 Near Future B",
-        "description": "Choice 2 — near future"
+        "name": "Distant Future: Pathway 2",
+        "description": "Distant future for pathway 2"
       },
       {
         "id": 12,
-        "name": "C2 Far Future A",
-        "description": "Choice 2 — far future"
+        "name": "Distant Future: Pathway 2",
+        "description": "Distant future for pathway 2"
       },
       {
         "id": 13,
-        "name": "C2 Far Future B",
-        "description": "Choice 2 — far future"
+        "name": "Pathway 1 Result",
+        "description": "Likely result of pathway 1"
       },
       {
         "id": 14,
-        "name": "C2 Outcome",
-        "description": "Choice 2 — outcome"
+        "name": "Pathway 2 Result",
+        "description": "Likely result of pathway 2"
       }
     ],
-    "layout": "grid"
+    "layout": "two-pathways"
   },
   "yearly": {
     "id": "yearly",
-    "name": "Yearly Spread",
+    "name": "Yearly Clock Spread",
     "category": "Classic",
-    "description": "12-card year-ahead reading, one card per month",
+    "description": "12-card year-ahead reading in a clock, starting with the current month",
     "cardCount": 12,
     "positions": [
       {
         "id": 1,
-        "name": "January",
-        "description": "The energy and themes that open your year"
+        "name": "Current Month",
+        "description": "The first month for which you are doing the reading"
       },
       {
         "id": 2,
-        "name": "February",
-        "description": "What February holds in store"
+        "name": "Month 2",
+        "description": "The second month in the yearly cycle"
       },
       {
         "id": 3,
-        "name": "March",
-        "description": "Energies arriving as winter turns to spring"
+        "name": "Month 3",
+        "description": "The third month in the yearly cycle"
       },
       {
         "id": 4,
-        "name": "April",
-        "description": "What April brings into focus"
+        "name": "Month 4",
+        "description": "The fourth month in the yearly cycle"
       },
       {
         "id": 5,
-        "name": "May",
-        "description": "The opportunities and challenges of May"
+        "name": "Month 5",
+        "description": "The fifth month in the yearly cycle"
       },
       {
         "id": 6,
-        "name": "June",
-        "description": "Mid-year energies and turning points"
+        "name": "Month 6",
+        "description": "The sixth month in the yearly cycle"
       },
       {
         "id": 7,
-        "name": "July",
-        "description": "What July reveals at the heart of summer"
+        "name": "Month 7",
+        "description": "The seventh month in the yearly cycle"
       },
       {
         "id": 8,
-        "name": "August",
-        "description": "The energy of late summer and harvest"
+        "name": "Month 8",
+        "description": "The eighth month in the yearly cycle"
       },
       {
         "id": 9,
-        "name": "September",
-        "description": "Themes arriving as the year begins to close"
+        "name": "Month 9",
+        "description": "The ninth month in the yearly cycle"
       },
       {
         "id": 10,
-        "name": "October",
-        "description": "What October stirs up for you"
+        "name": "Month 10",
+        "description": "The tenth month in the yearly cycle"
       },
       {
         "id": 11,
-        "name": "November",
-        "description": "Energies drawing the year toward its end"
+        "name": "Month 11",
+        "description": "The eleventh month in the yearly cycle"
       },
       {
         "id": 12,
-        "name": "December",
-        "description": "How the year closes and what carries forward"
+        "name": "Month 12",
+        "description": "The twelfth month in the yearly cycle"
       }
     ],
     "layout": "yearly"
@@ -492,5 +492,90 @@
       }
     ],
     "layout": "grid"
+  },
+  "relationship": {
+    "id": "relationship",
+    "name": "Relationship Spread",
+    "category": "Life & Decisions",
+    "description": "15-card relationship reading for both people, influences, and future",
+    "cardCount": 15,
+    "positions": [
+      {
+        "id": 1,
+        "name": "What You Provide",
+        "description": "What you provide to the relationship"
+      },
+      {
+        "id": 2,
+        "name": "Your Present Stand",
+        "description": "Where you stand in the present"
+      },
+      {
+        "id": 3,
+        "name": "Your Future Hope",
+        "description": "Where you hope to stand in the future"
+      },
+      {
+        "id": 4,
+        "name": "Their Hope",
+        "description": "What they are hoping for"
+      },
+      {
+        "id": 5,
+        "name": "Their Present Stand",
+        "description": "Where they stand in the present"
+      },
+      {
+        "id": 6,
+        "name": "What They Provide",
+        "description": "What they provide to the relationship"
+      },
+      {
+        "id": 7,
+        "name": "How You View Them",
+        "description": "How the other person is viewed"
+      },
+      {
+        "id": 8,
+        "name": "How They View You",
+        "description": "How the other person views you"
+      },
+      {
+        "id": 9,
+        "name": "Your Past Perception",
+        "description": "How you perceived them in the past"
+      },
+      {
+        "id": 10,
+        "name": "Their Past Perception",
+        "description": "How they perceived you in the past"
+      },
+      {
+        "id": 11,
+        "name": "Your Doubts and Fears",
+        "description": "Your present doubts and fears"
+      },
+      {
+        "id": 12,
+        "name": "Their Doubts and Fears",
+        "description": "Their present doubts and fears"
+      },
+      {
+        "id": 13,
+        "name": "Your External Influences",
+        "description": "External influences motivating you"
+      },
+      {
+        "id": 14,
+        "name": "Their External Influences",
+        "description": "External forces motivating them"
+      },
+      {
+        "id": 15,
+        "name": "Relationship Future",
+        "description": "The future of the relationship"
+      }
+    ],
+    "layout": "relationship"
   }
 }

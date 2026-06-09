@@ -3,7 +3,7 @@ const ARCANA_ACTIVATION_KEYS = [
   'ARCANA-FOUNDER-4F99-2026'
 ];
 const FREE_DAILY_READING_LIMIT = 1;
-const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways'];
+const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship'];
 
 function todayKey(){
   const d = new Date();
@@ -89,7 +89,7 @@ function recordCompletedReading(){
 }
 
 function premiumFeature(name){
-  return isPremium() || !['history', 'journal', 'voice', 'advanced-spreads', 'comparison', 'unlimited'].includes(name);
+  return isPremium() || !['journal', 'voice', 'advanced-spreads', 'comparison', 'unlimited'].includes(name);
 }
 
 function requestPremiumFeature(name){
@@ -206,17 +206,33 @@ function renderEntitlementsUI(){
 
 function narrateReading(){
   if(!requestPremiumFeature('voice')) return;
-  const content = document.getElementById('reading-content');
+  const content = document.getElementById('reading-content') || document.getElementById('quick-reading-content');
   if(!content || !('speechSynthesis' in window)) return showToast('Voice narration is not available in this browser.');
   if(window.speechSynthesis.speaking){
     window.speechSynthesis.cancel();
     showToast('Narration stopped.');
     return;
   }
-  const utterance = new SpeechSynthesisUtterance(content.innerText);
+  const text = getNarrationText(content);
+  if(!text) return showToast('No reading text is ready to narrate.');
+  const utterance = new SpeechSynthesisUtterance(text);
+  const settings = loadSettings();
+  const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+  const selectedVoice = voices.find(v => v.name === settings.narratorVoice);
+  if(selectedVoice) utterance.voice = selectedVoice;
   utterance.rate = 0.92;
   utterance.pitch = 0.96;
   window.speechSynthesis.speak(utterance);
+}
+
+function getNarrationText(content){
+  const sections = Array.from(content.querySelectorAll('.reading-section'));
+  if(!sections.length) return content.innerText.trim();
+  const start = sections.findIndex(section => /introduction/i.test(section.querySelector('h3')?.textContent || ''));
+  const end = sections.findIndex(section => /guidance/i.test(section.querySelector('h3')?.textContent || ''));
+  const from = start >= 0 ? start : 0;
+  const to = end >= 0 ? end : sections.length - 1;
+  return sections.slice(from, to + 1).map(section => section.innerText.trim()).filter(Boolean).join('\n\n');
 }
 
 function compareSelectedReadings(){

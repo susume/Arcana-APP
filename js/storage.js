@@ -19,8 +19,12 @@ function clearAutoSave(){
 function loadSettings(){
   try{
     const saved=JSON.parse(localStorage.getItem('arcana_settings'))||{};
-    return {readingStyle:saved.readingStyle||'Traditional',readingTone:saved.readingTone||'Gentle'};
-  }catch(e){return{readingStyle:'Traditional',readingTone:'Gentle'}}
+    return {
+      readingStyle:saved.readingStyle||'Traditional',
+      readingTone:saved.readingTone||'Gentle',
+      narratorVoice:saved.narratorVoice||''
+    };
+  }catch(e){return{readingStyle:'Traditional',readingTone:'Gentle',narratorVoice:''}}
 }
 function saveSettings(){
   const activationInput=document.getElementById('premium-key-input');
@@ -36,7 +40,8 @@ function saveSettings(){
   }
   const s={
     readingStyle:document.getElementById('reading-style').value,
-    readingTone:document.getElementById('reading-tone').value
+    readingTone:document.getElementById('reading-tone').value,
+    narratorVoice:document.getElementById('narrator-voice')?.value||''
   };
   localStorage.setItem('arcana_settings',JSON.stringify(s));
   renderEntitlementsUI();
@@ -53,13 +58,25 @@ function loadSettingsUI(){
   const s=loadSettings();
   document.getElementById('reading-style').value=s.readingStyle;
   document.getElementById('reading-tone').value=s.readingTone;
+  populateNarratorVoiceOptions(s.narratorVoice);
   const keyInput=document.getElementById('premium-key-input');
   if(keyInput)keyInput.value='';
   renderEntitlementsUI();
 }
 
+function populateNarratorVoiceOptions(selected){
+  const voiceSelect=document.getElementById('narrator-voice');
+  if(!voiceSelect)return;
+  const voices=('speechSynthesis' in window && window.speechSynthesis.getVoices)?window.speechSynthesis.getVoices():[];
+  voiceSelect.innerHTML='<option value="">Browser default</option>'+voices.map(v=>`<option value="${v.name.replace(/"/g,'&quot;')}">${v.name} (${v.lang})</option>`).join('');
+  voiceSelect.value=selected||'';
+}
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
+}
+
 function saveReading(){
-  if(!requestPremiumFeature('history')) return;
+  const freeLimit=3;
   const title=prompt('Give this reading a title:','Reading '+new Date().toLocaleDateString());
   if(!title)return;
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
@@ -70,7 +87,6 @@ function saveReading(){
     date:new Date().toISOString(),
     mode:state.mode,
     concerns:[...state.concerns],
-    readerAge:state.readerAge||'',
     readerLifeStage:state.readerLifeStage||'',
     cardSystem:state.cardSystem||'tarot',
     spread:spread?spread.id:(state.spreadId||state.quickSpreadId||'quick'),
@@ -81,7 +97,8 @@ function saveReading(){
     narrative:state.narrative,
     notes:''
   });
-  if(readings.length>50)readings.pop();
+  const maxReadings=isPremium()?50:freeLimit;
+  while(readings.length>maxReadings)readings.pop();
   localStorage.setItem('arcana_readings',JSON.stringify(readings));
-  showToast('Reading saved!');
+  showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
 }

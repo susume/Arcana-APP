@@ -6,13 +6,9 @@
   <div class="context-panel">
     <div>
       <h3>Reading Context</h3>
-      <p>Optional, but helpful. Age and life stage can change how a card should be interpreted.</p>
+      <p>Optional, but helpful. Life stage can change how a card should be interpreted.</p>
     </div>
     <div class="context-grid">
-      <label>
-        Age
-        <input type="number" id="reader-age" min="1" max="120" inputmode="numeric" placeholder="Optional">
-      </label>
       <label>
         Life stage
         <select id="reader-life-stage">
@@ -59,6 +55,9 @@
       </div>
       <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
+      </div>
+      <div class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+        <h3>Relationship Spread</h3><span class="rc-cards">15 Cards</span>
       </div>
     </div>
   </div>

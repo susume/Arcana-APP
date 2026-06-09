@@ -1,4 +1,6 @@
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+const RETRYABLE_GEMINI_STATUSES = [429, 500, 502, 503, 504];
+const MAX_MODEL_ATTEMPTS = 2;
 
 function corsHeaders(origin) {
   return {
@@ -17,6 +19,17 @@ function json(data, status = 200, origin = '*') {
       ...corsHeaders(origin)
     }
   });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(status, attempt, responseText) {
+  const retryDelay = String(responseText || '').match(/retryDelay.*?(\d+)s?/);
+  if (retryDelay) return Math.min((Number(retryDelay[1]) + 1) * 1000, 8000);
+  if (status === 429) return 1200 * (attempt + 1);
+  return 700 * (attempt + 1);
 }
 
 export default {
@@ -45,17 +58,26 @@ export default {
     }
 
     const body = JSON.stringify({ contents: [{ parts }] });
+    const failures = [];
     for (const model of GEMINI_MODELS) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GOOGLE_API_KEY}`;
-      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-      const text = await resp.text();
-      if (resp.ok) {
-        const data = JSON.parse(text);
-        return json({ text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.', model }, 200, origin);
+      for (let attempt = 0; attempt < MAX_MODEL_ATTEMPTS; attempt++) {
+        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+        const text = await resp.text();
+        if (resp.ok) {
+          const data = JSON.parse(text);
+          return json({ text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.', model }, 200, origin);
+        }
+
+        failures.push({ model, status: resp.status });
+        if (resp.status === 400) break;
+        if (!RETRYABLE_GEMINI_STATUSES.includes(resp.status)) {
+          return json({ error: `Gemini API error ${resp.status}` }, resp.status, origin);
+        }
+        if (attempt < MAX_MODEL_ATTEMPTS - 1) await sleep(retryDelayMs(resp.status, attempt, text));
       }
-      if (![400, 429].includes(resp.status)) return json({ error: `Gemini API error ${resp.status}` }, resp.status, origin);
     }
 
-    return json({ error: 'All Gemini models failed or were rate limited.' }, 503, origin);
+    return json({ error: 'Gemini is temporarily busy. Please try again in a moment.', failures }, 503, origin);
   }
 };

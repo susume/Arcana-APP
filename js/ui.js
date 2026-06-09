@@ -251,9 +251,31 @@ function shareReading(){
 }
 
 function printReading(){
+  const source=[document.getElementById('reading-content'),document.getElementById('quick-reading-content')]
+    .find(el=>el&&el.innerText.trim());
+  if(!source || !source.innerText.trim()){
+    showToast('No reading text is ready to print.');
+    return;
+  }
+  let printRoot=document.getElementById('print-reading-root');
+  if(!printRoot){
+    printRoot=document.createElement('div');
+    printRoot.id='print-reading-root';
+    printRoot.className='print-only';
+    document.body.appendChild(printRoot);
+  }
+  const spread=getReadingSpread();
+  const title=spread?spread.name:'Arcana Reading';
+  printRoot.innerHTML=`<div class="print-reading-frame"><h1>${title}</h1>${source.innerHTML}</div>`;
   document.body.classList.add('printing-reading');
+  const cleanup=()=>{
+    document.body.classList.remove('printing-reading');
+    printRoot.innerHTML='';
+    window.removeEventListener('afterprint',cleanup);
+  };
+  window.addEventListener('afterprint',cleanup);
   window.print();
-  setTimeout(()=>document.body.classList.remove('printing-reading'),500);
+  setTimeout(cleanup,15000);
 }
 function showShareModal(data){
   let modal=document.getElementById('share-modal');

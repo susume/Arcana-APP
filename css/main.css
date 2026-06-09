@@ -824,6 +824,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 /* ===== Print ===== */
 .print-only{display:none}
 @media print{
+  @page{margin:14mm}
   :root{
     --ink:#111;--ink-soft:#333;--ink-faint:#555;
     --paper:#fff;--paper-2:#f4f4f6;--paper-3:#eeeef2;--paper-card:#fff;
@@ -832,20 +833,27 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
     --upright:#0d7a6b;--reversed:#9b2c2c;
     --muted:#666;--text:#111;
   }
+  *{animation:none!important;transition:none!important;filter:none!important;box-shadow:none!important}
+  html,body{height:auto!important;min-height:0!important;overflow:visible!important}
   .no-print{display:none!important}
   .print-only{display:block}
   body{background:#fff!important}
   .stars{display:none!important}
-  #app{max-width:100%;padding:16px}
-  .screen{display:none!important}
-  .screen.active{display:block!important}
-  body.printing-reading .screen.active{border:2px solid #222!important;padding:20px!important;max-width:7.5in;margin:0 auto!important}
-  body.printing-reading #reading-content,
-  body.printing-reading #quick-reading-content{border:1px solid #999!important;padding:18px!important;overflow:visible!important}
-  .reading-section{break-inside:auto;page-break-inside:auto;background:none!important;box-shadow:none!important;border:0!important}
-  .reading-section h3{color:#111!important;border-bottom:1px solid #ccc}
-  .reading-section p,.reading-section li{color:#222!important;font-size:13pt;line-height:1.7}
-  #reading-content{display:block!important;overflow:visible!important}
+  body.printing-reading #app{display:none!important}
+  body:not(.printing-reading) #app{max-width:100%;padding:16px}
+  body:not(.printing-reading) .screen{display:none!important}
+  body:not(.printing-reading) .screen.active{display:block!important}
+  #print-reading-root{display:block!important;position:static!important;width:100%!important;overflow:visible!important}
+  .print-reading-frame{display:block!important;width:100%!important;box-sizing:border-box;border:1.5px solid #222!important;padding:16px!important;overflow:visible!important;background:#fff!important;color:#111!important}
+  .print-reading-frame h1{font-size:20pt!important;line-height:1.2!important;margin:0 0 14px!important;padding-bottom:8px!important;border-bottom:1px solid #999!important;color:#111!important}
+  .reading-section{display:block!important;break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;background:none!important;border:0!important;margin:0 0 14px!important;padding:0!important}
+  .reading-section h3{display:block!important;color:#111!important;border-bottom:1px solid #ccc!important;font-size:16pt!important;line-height:1.25!important;margin:0 0 8px!important;padding:0 0 5px!important}
+  .reading-section h3::before{display:none!important}
+  .reading-section p,.reading-section li{color:#222!important;font-family:Georgia,'Times New Roman',serif!important;font-size:11.5pt!important;line-height:1.48!important;margin-bottom:7px!important;overflow:visible!important}
+  .reading-section ul{padding-left:18px!important;list-style:disc!important}
+  .reading-section li{padding-left:0!important}
+  .reading-section li::before{display:none!important}
+  #reading-content,#quick-reading-content{display:block!important;overflow:visible!important}
   h1,h2,h3,h4{color:#111!important}
   .overview-tile{box-shadow:none!important;background:#f9f9f9!important}
   .overview-tile .c-name{color:#111!important}

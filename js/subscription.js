@@ -206,7 +206,8 @@ function renderEntitlementsUI(){
 
 function narrateReading(){
   if(!requestPremiumFeature('voice')) return;
-  const content = document.getElementById('reading-content') || document.getElementById('quick-reading-content');
+  const content = [document.getElementById('reading-content'), document.getElementById('quick-reading-content')]
+    .find(el => el && el.innerText.trim());
   if(!content || !('speechSynthesis' in window)) return showToast('Voice narration is not available in this browser.');
   if(window.speechSynthesis.speaking){
     window.speechSynthesis.cancel();

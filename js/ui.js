@@ -242,22 +242,23 @@ function getReadingSpread(){
   return SPREADS.find(s=>s.id===(state.mode==='quick'?(state.quickSpreadId||state.spreadId):state.spreadId));
 }
 
-async function shareReading(){
-  const content=[document.getElementById('reading-content'),document.getElementById('quick-reading-content')]
-    .find(el=>el&&el.innerText.trim());
-  const text=state.narrative||(content?content.innerText.trim():'');
-  if(!text)return;
+function getAppShareUrl(){
+  return 'https://www.arcanaguide.com';
+}
+
+function getSharePayload(){
   const spread=getReadingSpread();
-  const title=spread?`Arcana - ${spread.name}`:'Arcana Reading';
-  if(navigator.share){
-    try{
-      await navigator.share({title,text});
-      return;
-    }catch(e){
-      if(e&&e.name==='AbortError')return;
-    }
-  }
-  showShareModal({text,spread:spread?spread.name:'Reading',title});
+  return {
+    title:spread?`Arcana - ${spread.name}`:'Arcana Reading',
+    spreadName:spread?spread.name:'Reading',
+    appUrl:getAppShareUrl(),
+    cards:Object.entries(state.cards||{}).sort((a,b)=>Number(a[0])-Number(b[0])).map(([pos,card])=>({pos,name:card.name,orientation:card.orientation||'upright'})),
+    uploadedImage:state.uploadedImage||''
+  };
+}
+
+function shareReading(){
+  showShareModal(getSharePayload());
 }
 
 function printReading(){
@@ -314,18 +315,29 @@ function showShareModal(data){
   }
   modal.innerHTML=`<div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
     <button class="close-btn" onclick="closeShareModal()" aria-label="Close share options">&times;</button>
-    <h3 id="share-title">Share Reading</h3>
-    <p class="share-help">Use your browser share sheet, copy the text, or download a simple image.</p>
-    <textarea id="share-text" readonly>${escapeHtml(data.text)}</textarea>
+    <h3 id="share-title">Share Your Spread</h3>
+    <p class="share-help">Add a short note, then share the image or post the app link to your social channels.</p>
+    <label class="share-label" for="share-comment">Comment</label>
+    <textarea id="share-comment" maxlength="180" placeholder="Add a short reflection..." oninput="updateSharePreview()"></textarea>
     <canvas id="share-canvas" width="600" height="800"></canvas>
+    <p class="share-help">Social buttons share your comment and app link. Use Share Image or Download Image for the spread image.</p>
+    <div class="share-platforms">
+      <button class="btn btn-sm" onclick="openSocialShare('facebook')">Facebook</button>
+      <button class="btn btn-sm" onclick="openSocialShare('line')">LINE</button>
+      <button class="btn btn-sm" onclick="openSocialShare('x')">X</button>
+      <button class="btn btn-sm" onclick="openSocialShare('whatsapp')">WhatsApp</button>
+      <button class="btn btn-sm" onclick="openSocialShare('threads')">Threads</button>
+    </div>
     <div class="share-actions">
-      <button class="btn btn-primary" onclick="copyShareText()">Copy Text</button>
+      <button class="btn btn-primary" onclick="shareSpreadImage()">Share Image</button>
+      <button class="btn" onclick="copyShareCaption()">Copy Caption</button>
       <button class="btn" onclick="downloadShareImage()">Download Image</button>
       <button class="btn" onclick="closeShareModal()">Close</button>
     </div>
   </div>`;
   modal.classList.add('open');
-  renderShareCanvas(data);
+  modal.dataset.sharePayload=JSON.stringify(data);
+  updateSharePreview();
 }
 function closeShareModal(){
   const modal=document.getElementById('share-modal');
@@ -334,20 +346,44 @@ function closeShareModal(){
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeShareModal();
 });
-async function copyShareText(){
-  const text=document.getElementById('share-text')?.value||'';
+function currentShareData(){
+  const modal=document.getElementById('share-modal');
+  if(!modal || !modal.dataset.sharePayload)return getSharePayload();
+  try{return JSON.parse(modal.dataset.sharePayload);}catch(e){return getSharePayload();}
+}
+
+function getShareComment(){
+  return (document.getElementById('share-comment')?.value||'').trim();
+}
+
+function getShareCaption(){
+  const data=currentShareData();
+  const comment=getShareComment();
+  return [comment, `Try Arcana: ${data.appUrl}`].filter(Boolean).join('\n\n');
+}
+
+async function copyTextToClipboard(text,toastText){
   if(!text)return;
   try{
     await navigator.clipboard.writeText(text);
-    showToast('Reading copied.');
+    showToast(toastText);
   }catch(e){
-    const input=document.getElementById('share-text');
-    input.focus();
-    input.select();
+    const input=document.createElement('textarea');
+    input.value=text;
+    input.style.position='fixed';
+    input.style.opacity='0';
+    document.body.appendChild(input);
+    input.focus();input.select();
     document.execCommand('copy');
-    showToast('Reading copied.');
+    input.remove();
+    showToast(toastText);
   }
 }
+
+function copyShareCaption(){
+  copyTextToClipboard(getShareCaption(),'Caption copied.');
+}
+
 function downloadShareImage(){
   const canvas=document.getElementById('share-canvas');
   const link=document.createElement('a');
@@ -355,33 +391,150 @@ function downloadShareImage(){
   link.href=canvas.toDataURL();
   link.click();
 }
-function shareNative(){
+
+async function canvasBlob(){
   const canvas=document.getElementById('share-canvas');
-  canvas.toBlob(function(blob){
-    if(navigator.share){
-      navigator.share({files:[new File([blob],'arcana-reading.png',{type:'image/png'})],title:'My Arcana Reading'}).catch(function(){});
-    }else{
-      downloadShareImage();
-    }
-  });
+  return await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
 }
+
+async function shareSpreadImage(){
+  const data=currentShareData();
+  const blob=await canvasBlob();
+  const file=new File([blob],'arcana-spread.png',{type:'image/png'});
+  const caption=getShareCaption();
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+    try{
+      await navigator.share({title:data.title,text:caption,url:data.appUrl,files:[file]});
+      return;
+    }catch(e){
+      if(e&&e.name==='AbortError')return;
+    }
+  }
+  await copyTextToClipboard(caption,'Caption copied. Image downloaded.');
+  downloadShareImage();
+}
+
+function openSocialShare(platform){
+  const data=currentShareData();
+  const caption=getShareCaption();
+  const encodedUrl=encodeURIComponent(data.appUrl);
+  const encodedText=encodeURIComponent(caption);
+  const urls={
+    facebook:`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    line:`https://social-plugins.line.me/lineit/share?url=${encodedUrl}&text=${encodedText}`,
+    x:`https://twitter.com/intent/tweet?text=${encodedText}`,
+    whatsapp:`https://api.whatsapp.com/send?text=${encodedText}`,
+    threads:`https://www.threads.net/intent/post?text=${encodedText}`
+  };
+  const url=urls[platform];
+  if(url)window.open(url,'_blank','noopener,noreferrer');
+}
+
 function escapeHtml(value){
   return String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+
+function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
+  const words=String(text||'').split(/\s+/).filter(Boolean);
+  let line='',lines=0;
+  for(const word of words){
+    const test=line?line+' '+word:word;
+    if(ctx.measureText(test).width>maxWidth&&line){
+      ctx.fillText(line,x,y);y+=lineHeight;lines++;line=word;
+      if(maxLines&&lines>=maxLines)return y;
+    }else line=test;
+  }
+  if(line&&(!maxLines||lines<maxLines)){ctx.fillText(line,x,y);y+=lineHeight;}
+  return y;
+}
+
+function drawRoundedRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawCoverImage(ctx,img,x,y,w,h){
+  const scale=Math.max(w/img.width,h/img.height);
+  const sw=w/scale,sh=h/scale;
+  const sx=(img.width-sw)/2,sy=(img.height-sh)/2;
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+
 function renderShareCanvas(data){
   const canvas=document.getElementById('share-canvas');
   const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#1a1025';ctx.fillRect(0,0,600,800);
-  ctx.fillStyle='#e8dff0';ctx.font='bold 28px serif';ctx.textAlign='center';
-  ctx.fillText('Arcana Reading',300,50);
-  ctx.font='16px sans-serif';ctx.fillStyle='#a88bc4';
-  ctx.fillText(data.spread,300,80);
-  ctx.textAlign='left';ctx.fillStyle='#d4c5e0';ctx.font='14px sans-serif';
-  const lines=data.text.split('\n').slice(0,30);
-  let y=120;
-  lines.forEach(function(line){
-    if(y<780){ctx.fillText(line.substring(0,70),30,y);y+=20;}
-  });
+  const comment=getShareComment();
+  ctx.fillStyle='#111a20';ctx.fillRect(0,0,600,800);
+  const grd=ctx.createLinearGradient(0,0,600,800);
+  grd.addColorStop(0,'#152b34');grd.addColorStop(.55,'#111826');grd.addColorStop(1,'#24172c');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,600,800);
+  ctx.fillStyle='#f3eadb';ctx.font='700 34px Georgia, serif';ctx.textAlign='left';
+  ctx.fillText('Arcana',42,58);
+  ctx.font='15px Arial, sans-serif';ctx.fillStyle='#9dc7c9';
+  ctx.fillText(data.spreadName||data.spread||'Tarot Spread',42,84);
+
+  const drawCards=()=>{
+    drawRoundedRect(ctx,42,112,516,430,14);
+    ctx.fillStyle='rgba(255,255,255,.06)';ctx.fill();
+    if(data.cards&&data.cards.length){
+      const cols=Math.min(5,Math.max(1,Math.ceil(Math.sqrt(data.cards.length))));
+      const rows=Math.ceil(data.cards.length/cols);
+      const gap=10;
+      const cardW=(456-gap*(cols-1))/cols;
+      const cardH=Math.min(112,(370-gap*(rows-1))/rows);
+      const startX=72,startY=142;
+      data.cards.slice(0,24).forEach((card,i)=>{
+        const col=i%cols,row=Math.floor(i/cols);
+        const x=startX+col*(cardW+gap),y=startY+row*(cardH+gap);
+        drawRoundedRect(ctx,x,y,cardW,cardH,8);
+        ctx.fillStyle='#f7f0e4';ctx.fill();ctx.strokeStyle='#c6aa73';ctx.stroke();
+        ctx.fillStyle='#1f2a31';ctx.font='700 13px Arial, sans-serif';ctx.textAlign='center';
+        ctx.fillText(card.pos,x+cardW/2,y+19);
+        ctx.font='11px Arial, sans-serif';
+        wrapCanvasText(ctx,card.name,x+8,y+42,cardW-16,14,3);
+      });
+    }else{
+      ctx.fillStyle='#d8cdbd';ctx.font='18px Georgia, serif';ctx.textAlign='center';
+      ctx.fillText('My tarot spread',300,322);
+    }
+    drawShareFooter(ctx,data,comment);
+  };
+
+  if(data.uploadedImage){
+    const img=new Image();
+    img.onload=()=>{
+      ctx.save();
+      drawRoundedRect(ctx,42,112,516,430,14);
+      ctx.clip();
+      drawCoverImage(ctx,img,42,112,516,430);
+      ctx.restore();
+      ctx.strokeStyle='#c6aa73';ctx.lineWidth=2;drawRoundedRect(ctx,42,112,516,430,14);ctx.stroke();
+      drawShareFooter(ctx,data,comment);
+    };
+    img.onerror=drawCards;
+    img.src=data.uploadedImage;
+  }else drawCards();
+}
+
+function drawShareFooter(ctx,data,comment){
+  ctx.textAlign='left';
+  ctx.fillStyle='#f3eadb';ctx.font='700 24px Georgia, serif';
+  ctx.fillText(comment?'My reflection':'My tarot spread',42,590);
+  ctx.fillStyle='#d8cdbd';ctx.font='18px Georgia, serif';
+  const nextY=wrapCanvasText(ctx,comment||'A spread created with Arcana.',42,624,516,26,4);
+  ctx.fillStyle='#9dc7c9';ctx.font='15px Arial, sans-serif';
+  ctx.fillText('Try your own reading:',42,724);
+  ctx.fillStyle='#f3eadb';ctx.font='700 18px Arial, sans-serif';
+  ctx.fillText(data.appUrl||getAppShareUrl(),42,752);
+}
+
+function updateSharePreview(){
+  renderShareCanvas(currentShareData());
 }
 
 

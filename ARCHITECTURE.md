@@ -1,8 +1,12 @@
-# Arcana — Architecture
+# Arcana - Architecture
 
 ## Overview
 
-Arcana is a **client-side-only Single-Page Application** for tarot and playing-card cartomancy readings. It has no backend, no build step, and no framework dependencies. It can be served as static files over HTTP or opened directly via `file://`. AI features require a Google Gemini API key supplied by the user; everything else runs entirely offline.
+Arcana is a **client-side-only Single-Page Application** for tarot and playing-card cartomancy readings. It has no backend and no runtime app framework dependency. The app runs as static HTML, CSS, and plain global JavaScript, with a small build step that generates static CSS and JavaScript assets.
+
+The product model is a **physical-card reflection tool**, not a digital card-drawing game. Users handle their own deck, choose a spread, create a quiet space, formulate a question, shuffle and draw real cards, lay out the spread, then upload a photo for AI identification and interpretation. Manual entry remains available for correction and non-AI use.
+
+The app can be served over HTTP or opened directly via `file://` as long as the compiled assets are present. AI features require a Google Gemini API key supplied by the user; everything else runs entirely offline.
 
 ---
 
@@ -10,53 +14,133 @@ Arcana is a **client-side-only Single-Page Application** for tarot and playing-c
 
 | Layer | Choice |
 |---|---|
-| Language | Vanilla JavaScript (ES2020 — async/await, optional chaining) |
-| Markup | HTML5 with `<template>` elements for screen partials |
-| Styling | CSS3 with custom properties (no preprocessor) |
-| AI | Google Gemini REST API (multimodal, via `fetch`) |
+| Runtime language | Vanilla JavaScript, ES2020 globals |
+| Build-time language | Small TypeScript helper compiled to plain JS |
+| Markup | HTML5 with embedded `<template>` fallbacks and external template partials |
+| Styling | CSS custom properties + Tailwind CLI-generated premium override layer |
+| AI | Google Gemini REST API, including multimodal image input |
 | Persistence | `localStorage` only |
-| Fonts | Cormorant Garamond WOFF2 (self-hosted) |
-| Build | None |
+| Fonts | Cormorant Garamond WOFF2, self-hosted |
+| Build | `npm run build` for CSS and TypeScript assets |
+| Runtime frameworks | None. Do not use React/Vue/Angular/Vite unless product direction explicitly changes. |
+
+---
+
+## Current Design Direction
+
+The visual system should feel like:
+
+- Premium self-reflection tool wrapped in celestial luxury
+- Dark celestial atmosphere
+- Modern mysticism, luxury occult, celestial minimalism
+- Spiritual editorial, dark academia meets astrology
+- Calm, slow UX with breathing room and low visual noise
+- Editorial typography closer to luxury magazines, book publishing, and premium blogs
+
+The redesign is a **theme layer**, not a product rewrite. Preserve the physical-card reading workflow and the existing onboarding length.
 
 ---
 
 ## Directory Layout
 
-```
+```text
 Arcana APP/
-├── index.html              # Shell + embedded fallback templates + script tags
-├── assets/
-│   └── fonts/              # 14 WOFF2 files — Cormorant Garamond (subsets × weights)
-├── css/
-│   ├── main.css            # All active styles + @font-face declarations
-│   ├── onboarding.css      # Placeholder (stub, empty)
-│   ├── reading.css         # Placeholder (stub, empty)
-│   └── settings.css        # Placeholder (stub, empty)
-├── data/
-│   └── spreads.json        # Spread definitions (authoritative source for HTTP)
-├── js/
-│   ├── tarot.js            # Card database, glyphs, constants  [loads first]
-│   ├── spreads.js          # Spread loader (JSON fetch + fallback)
-│   ├── state.js            # Global state singleton + card helpers
-│   ├── storage.js          # localStorage read/write
-│   ├── ui.js               # All screen rendering + event handlers
-│   ├── reading-engine.js   # Reading generation (AI + classic) + markdown renderer
-│   ├── ai.js               # Gemini API client
-│   └── app.js              # Entry point (init, routing, star animation)
-└── templates/              # Partials fetched at runtime over HTTP
-    ├── welcome.html
-    ├── concerns.html
-    ├── card-system.html
-    ├── choose-reading.html
-    ├── reflection.html
-    ├── placement.html
-    ├── overview.html
-    ├── results.html
-    ├── history.html
-    ├── quick.html
-    ├── settings.html
-    └── help.html
+  index.html                 # Static shell, embedded fallbacks, stylesheet/script tags
+  ARCHITECTURE.md            # This file
+  package.json               # Tailwind/TypeScript build scripts only
+  package-lock.json          # Locked build-tool dependency versions
+  tsconfig.json              # Compiles src/*.ts into js/
+  .gitignore                 # Ignores env files, node_modules, dist, logs
+
+  assets/
+    fonts/                   # Cormorant Garamond WOFF2 files
+
+  css/
+    main.css                 # Original core styles and font-face declarations
+    onboarding.css           # Stub placeholder
+    reading.css              # Stub placeholder
+    settings.css             # Stub placeholder
+    premium.css              # Compiled premium celestial/luxury theme override
+
+  data/
+    spreads.json             # Spread definitions for HTTP loading
+
+  js/
+    tarot.js                 # Card database, glyphs, constants
+    spreads.js               # Spread loader with JSON + embedded fallback
+    state.js                 # Global state singleton and card helpers
+    card-art.js              # Public-domain card art helpers
+    subscription.js          # Premium/entitlement UI helpers
+    config.js                # Runtime config and local config override point
+    storage.js               # localStorage persistence
+    ai-identification.js     # Compiled TypeScript AI card-identification parser
+    ui.js                    # Screen rendering, navigation, interactions
+    reading-engine.js        # AI/classic reading generation and markdown rendering
+    ai.js                    # Gemini API client
+    app.js                   # App initialization, routing, star animation
+
+  src/
+    premium-theme.css        # Tailwind source for premium theme layer
+    ai-identification.ts     # TypeScript source for AI identification parser
+
+  scripts/
+    serve-static.mjs         # Local static preview server for project root
+
+  templates/
+    welcome.html
+    concerns.html
+    card-system.html
+    choose-reading.html
+    reflection.html
+    placement.html
+    overview.html
+    results.html
+    history.html
+    quick.html
+    settings.html
+    help.html
+
+  tests/
+    journal-ui.ps1
+    reading-actions.ps1
 ```
+
+---
+
+## Build & Preview
+
+The app remains deployable as static files. Build tools only generate assets loaded by `index.html`.
+
+| Command | Purpose |
+|---|---|
+| `npm run build:css` | Compiles `src/premium-theme.css` to minified `css/premium.css` |
+| `npm run build:ts` | Compiles `src/ai-identification.ts` to `js/ai-identification.js` |
+| `npm run build` | Runs CSS and TypeScript builds |
+| `npm test` | Runs TypeScript compile plus journal and reading-action regression checks |
+| `npm run serve` | Serves the static project root at `http://127.0.0.1:4173/` |
+
+Generated files that must exist for the static app:
+
+- `css/premium.css`
+- `js/ai-identification.js`
+
+The build does **not** bundle the app and does **not** replace the original HTML/templates/global JS runtime.
+
+---
+
+## Stylesheet Load Order
+
+Stylesheets are declared in `index.html` in this order:
+
+```html
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/onboarding.css">
+<link rel="stylesheet" href="css/reading.css">
+<link rel="stylesheet" href="css/settings.css">
+<link rel="stylesheet" href="css/premium.css">
+```
+
+`premium.css` intentionally loads last. It is an override/theme layer over the original app, not a replacement for `main.css`.
 
 ---
 
@@ -64,73 +148,66 @@ Arcana APP/
 
 Scripts are declared at the bottom of `index.html` and loaded in dependency order:
 
-```
-tarot.js          → card data, GLYPH/ICON/SUIT constants, buildPlayingCards()
-spreads.js        → SPREADS array loader (depends on DOM for embedded fallback)
-state.js          → global `state` object, getCards(), getSpread() (depends on tarot.js)
-storage.js        → localStorage helpers (depends on state.js)
-ui.js             → navigation, all screen rendering, event handlers (depends on all above)
-reading-engine.js → reading generation + markdown rendering (depends on ui.js, ai.js)
-ai.js             → callGemini(), testApiKey() (standalone, only needs fetch)
-app.js            → initApp() entry point (depends on everything)
+```text
+tarot.js              card data, glyphs, constants, buildPlayingCards()
+spreads.js            SPREADS array loader
+state.js              global state object, getCards(), getSpread()
+card-art.js           public-domain card art URL/render helpers
+subscription.js       entitlement/premium UI helpers
+config.js             runtime config
+storage.js            localStorage helpers
+ai-identification.js  window.ArcanaAI.parseIdentifiedCards()
+ui.js                 navigation, screen rendering, event handlers
+reading-engine.js     reading generation and markdown rendering
+ai.js                 callGemini(), testApiKey()
+app.js                initApp(), routing, star animation
 ```
 
-All scripts are plain globals — no module system. Functions are shared across files via the global scope.
+All runtime scripts are plain globals. There is no browser module system. TypeScript is used only at build time to produce `js/ai-identification.js`.
 
 ---
 
 ## Template Loading Strategy
 
-`renderScreen()` in `ui.js` runs once on init and populates `<main id="app">`:
+`renderScreen()` in `ui.js` runs once on init and populates `<main id="app">`.
 
-- **`file://` protocol**: reads content from `<template id="template-*">` tags embedded in `index.html` — ensures the app works as a local file with no server.
-- **`http(s)://` protocol**: fetches each partial from `templates/<name>.html`, with embedded template as fallback if the fetch fails.
+- `file://` protocol: reads content from embedded `<template id="template-*">` tags in `index.html`, so the app can open locally without a server.
+- `http(s)://` protocol: fetches each partial from `templates/<name>.html`, with embedded template fallback if fetch fails.
 
-The 12 template names are: `welcome`, `concerns`, `card-system`, `choose-reading`, `reflection`, `placement`, `overview`, `results`, `history`, `quick`, `settings`, `help`.
+Template names:
+
+```text
+welcome
+concerns
+card-system
+choose-reading
+reflection
+placement
+overview
+results
+history
+quick
+settings
+help
+```
 
 ---
 
-## Global State
+## Core User Flow
 
-Defined in `state.js`. One mutable singleton; no reactivity system.
+The app should preserve this physical-card workflow:
 
-```js
-let state = {
-  mode:           'guided' | 'quick',
-  concerns:       string[],            // user-supplied focus topics
-  cardSystem:     'tarot' | 'playing' | 'playing-joker',
-  spreadId:       string | null,       // key into SPREADS array
-  cards:          { [positionId]: { name: string, orientation: 'upright'|'reversed' } },
-  droppedCard:    { name, orientation } | null,
-  hasDroppedCard: boolean,
-  uploadedImage:  string | null,       // base64 data URL
-  narrative:      string,              // markdown text of generated reading
-  readingMode:    'ai' | 'classic',
-  guidedStep:     number,              // current position index in guided draw
-  reversals:      boolean,
-  quickSpreadId:  string | null
-};
-let currentCards = [];                 // active card array (tarot or playing)
-```
+1. Choose the deck/spread path: Quick Insight, Standard Reading, Deep Exploration, or an advanced spread.
+2. Create the reading space: quiet place, optionally candle/incense/music, clear the deck.
+3. Formulate the question or intention.
+4. Shuffle and draw real cards from the user's physical deck.
+5. Lay out the spread position by position.
+6. Take a clear photo of the completed spread and upload it, or enter cards manually.
+7. Let AI identify/analyze the spread, or use classic offline interpretation.
+8. Read or listen to results.
+9. Write a journal entry to track progress and build a relationship with the deck.
 
-State is mutated directly throughout `ui.js` and `reading-engine.js`. `autoSaveState()` serialises it to `localStorage` on every screen navigation.
-
----
-
-## Navigation & Routing
-
-Hash-based SPA routing, managed in `ui.js`:
-
-- URL format: `index.html#<route>` (e.g. `#spread`, `#reading`, `#welcome`)
-- `goScreen(screenId)` — hides all `.screen` elements, shows the target, updates `location.hash`, triggers screen-specific side effects (render history, update dots, autosave)
-- `window.addEventListener('hashchange', ...)` in `app.js` handles back/forward navigation
-- `GUIDED_SCREENS` array drives the step-dot progress indicator:
-
-```
-['screen-spread', 'screen-reflection', 'screen-card-entry', 'screen-overview', 'screen-reading']
-```
-
-Modals (`modal-settings`, `modal-help`) are overlays toggled via `openModal()` / `closeModal()` — they are not screens and do not affect routing.
+The app must not become a random-card generator unless explicitly requested as a new product feature.
 
 ---
 
@@ -138,220 +215,273 @@ Modals (`modal-settings`, `modal-help`) are overlays toggled via `openModal()` /
 
 ### Guided Mode
 
-```
+```text
 screen-welcome
-  → [optional] screen-concerns       (topic / focus input)
-  → [optional] screen-card-system    (tarot vs playing cards)
-  → screen-spread                    (choose reading type)
-  → screen-reflection                (mindfulness pause)
-  → screen-card-entry                (enter cards — 3 tabs)
-  → screen-overview                  (review spread)
-  → screen-reading                   (AI or classic reading output)
+  -> screen-spread        choose Quick/Standard/Deep or advanced spread
+  -> screen-reflection    preparation and mindfulness pause
+  -> screen-card-entry    guided draw, upload photo, or manual entry
+  -> screen-overview      review spread before reading
+  -> screen-reading       AI/classic reading output and journal
 ```
 
-`startGuided()` resets state and navigates directly to `screen-spread`. Concerns and card-system screens are accessible via back-navigation but not part of the default guided path.
+`startGuided()` resets state and navigates directly to `screen-spread`.
+
+Optional/legacy screens still exist:
+
+- `screen-concerns`: topic/focus input
+- `screen-card-system`: tarot vs playing cards
+
+They are available in the codebase, but the default guided onboarding should remain short.
 
 ### Quick Mode
 
-```
+```text
 screen-welcome
-  → screen-quick    (choose spread + upload photo → AI reads inline)
+  -> screen-quick         choose spread + upload photo; AI reads inline
 ```
 
 ### Utility Screens
 
-- `screen-history` — accessible from welcome footer link; loads saved readings from localStorage
-- `modal-settings` — API key, reading style, reading tone
-- `modal-help` — tarot guide / FAQ
+- `screen-history`: premium reading archive and journal history
+- `modal-settings`: API key, reading style, reading tone
+- `modal-help`: tarot guide and FAQ
+
+---
+
+## Global State
+
+Defined in `state.js`. One mutable singleton; no reactivity framework.
+
+```js
+let state = {
+  mode:           'guided' | 'quick',
+  concerns:       string[],
+  cardSystem:     'tarot' | 'playing' | 'playing-joker',
+  spreadId:       string | null,
+  cards:          { [positionId]: { name: string, orientation: 'upright'|'reversed' } },
+  droppedCard:    { name, orientation } | null,
+  hasDroppedCard: boolean,
+  uploadedImage:  string | null,
+  narrative:      string,
+  readingMode:    'ai' | 'classic',
+  guidedStep:     number,
+  reversals:      boolean,
+  quickSpreadId:  string | null
+};
+
+let currentCards = [];
+```
+
+State is mutated directly throughout `ui.js` and `reading-engine.js`. `autoSaveState()` serializes it to `localStorage` on screen navigation.
+
+---
+
+## Navigation & Routing
+
+Hash-based SPA routing is managed in `ui.js`.
+
+- URL format: `index.html#<route>`, for example `#spread`, `#reading`, `#welcome`
+- `goScreen(screenId)` hides inactive `.screen` elements, shows the target, updates the hash, triggers screen-specific side effects, and autosaves
+- `window.addEventListener('hashchange', ...)` in `app.js` handles back/forward navigation
+- `GUIDED_SCREENS` drives progress dots:
+
+```js
+['screen-spread', 'screen-reflection', 'screen-card-entry', 'screen-overview', 'screen-reading']
+```
+
+Modals are overlays and do not affect routing.
 
 ---
 
 ## Card Systems
 
-Defined entirely in `tarot.js` (no network fetch):
+Defined in `tarot.js`.
 
-### Tarot (78 cards)
-- `TAROT_MAJOR`: 22 Major Arcana cards (hardcoded objects with `keywords`, `upright`, `reversed`)
-- `buildTarotMinor()`: generates 56 Minor Arcana from `MINOR_MEANINGS` (Ace–Ten) and `COURT_MEANINGS` (Page, Knight, Queen, King) for 4 suits
-- `TAROT_CARDS = [...TAROT_MAJOR, ...buildTarotMinor()]`
+### Tarot
 
-### Playing Cards (52 / 53 cards)
-- `buildPlayingCards(includeJoker)` — constructs from `PLAYING_MEANINGS` keyed by suit + rank index
-- Upright = meaning string; Reversed = auto-generated blocked/shadow variant
-- Optional Joker with its own meaning
+- 78 cards total
+- Major Arcana hardcoded
+- Minor Arcana generated from suit/rank meaning maps
 
-### Card Object Shape
+### Playing Cards
+
+- 52-card and 53-card-with-Joker modes
+- Meanings generated from playing-card suit/rank maps
+
+### Card Shape
 
 ```js
 {
   system:    'tarot' | 'playing',
-  name:      string,               // e.g. "The Fool", "Ace of Cups", "King of Hearts"
-  arcana:    'major' | 'minor',    // tarot only
-  suit:      string | null,        // 'wands'|'cups'|'swords'|'pentacles' | 'hearts'|'spades'|'diamonds'|'clubs'
-  number:    number,               // 0–14
+  name:      string,
+  arcana:    'major' | 'minor',
+  suit:      string | null,
+  number:    number,
   keywords:  string[],
   upright:   string,
   reversed:  string
 }
 ```
 
-`currentCards` (in `state.js`) holds the active array and is rebuilt whenever `cardSystem` changes.
+`currentCards` holds the active card array and is rebuilt when `cardSystem` changes.
 
 ---
 
 ## Spreads
 
-Defined in `data/spreads.json` (loaded by `spreads.js`):
-
-```js
-// spreads.js
-let SPREADS = [];
-async function loadSpreads() { /* fetch JSON, fallback to embedded <script> tag */ }
-```
-
-The JSON is also embedded verbatim in `index.html` as `<script type="application/json" id="spreads-data">` for the `file://` protocol fallback — same dual-source pattern as the HTML templates.
-
-### Spread Object Shape
+Spread definitions live in `data/spreads.json` and are also embedded in `index.html` as `<script type="application/json" id="spreads-data">` for `file://` fallback.
 
 ```js
 {
-  id:          string,          // e.g. 'three-card', 'celtic-cross'
+  id:          string,
   name:        string,
   category:    'Daily' | 'Classic' | 'Relationships' | 'Life & Decisions' | 'Custom',
   description: string,
   cardCount:   number,
   positions:   [{ id: number, name: string, description: string }],
-  layout:      'row' | 'celtic' | 'celtic-simple' | 'romany' | 'yearly' | 'pyramid' | 'grid' | 'custom'
+  layout:      string
 }
 ```
 
-### Available Spreads
+Core visible spread choices in default guided mode:
 
-| ID | Cards | Category |
-|---|---|---|
-| one-card / quickInsight | 1 | Daily |
-| three-card / standardReading | 3 | Daily / Classic |
-| three-card-sao | 3 | Daily |
-| five-card | 5 | Classic |
-| six-card / deepExploration | 6 | Classic |
-| celtic-cross | 10 | Classic |
-| romany | 21 | Classic |
-| yearly | 12 | Classic |
-| relationship | 5 | Relationships |
-| future-love | 6 | Relationships |
-| career | 5 | Life & Decisions |
-| two-pathways | 14 | Life & Decisions |
-| timeline | 5 | Classic |
-| custom | variable | Custom |
+- `one-card`: Quick Insight
+- `three-card`: Standard Reading
+- `six-card`: Deep Exploration
+
+Advanced spreads are kept behind the advanced/premium panel.
 
 ---
 
-## Card Entry Screen (screen-card-entry)
+## Card Entry Screen
 
-Three tabs implemented in `ui.js`:
+`screen-card-entry` has three tabs, all writing to the same `state.cards` object.
 
-### 1. Guided Draw (default tab)
-- Steps through each spread position one at a time with ritual prompts
-- Renders a visual spread diagram (`renderSpreadDiagram`) with active/done slot highlighting
-- After all positions are placed, reveals a photo upload section
-- AI identification populates `state.cards` then switches to Manual Entry for review
+### Guided Draw
 
-### 2. Upload Photo
-- Drag-and-drop or click-to-upload (JPG/PNG/WEBP)
-- File read as base64 → stored in `state.uploadedImage`
-- "Identify Cards with AI" calls Gemini vision with a structured prompt listing spread positions
-- Response parsed as JSON array `[{position, card, orientation}]` → populates `state.cards`
+- Steps through spread positions one by one.
+- Shows ritual prompts and a visual spread diagram.
+- User physically draws and places each card.
+- After all positions are placed, the photo upload section is shown.
 
-### 3. Manual Entry
-- One row per spread position; searchable text input with live dropdown (max 8 results)
-- Suit filter buttons narrow the picker
-- Upright/reversed toggle button per card (`↑` / `↓`)
-- Card Picker modal — full grid of cards filtered by suit, click to select
+### Upload Photo
 
-All three tabs write to the same `state.cards` object, so switching tabs preserves selections.
+- Drag-and-drop or click-to-upload for JPG, PNG, WEBP.
+- File is read as base64 and stored in `state.uploadedImage`.
+- "Identify Cards with AI" sends the photo plus spread/position context to Gemini.
+- Returned JSON is parsed into `state.cards`.
+
+### Manual Entry
+
+- One row per spread position.
+- Card picker/search uses the active deck.
+- Orientation toggle supports upright/reversed.
+- Manual review remains important because photo recognition can be imperfect.
 
 ---
 
-## Reading Generation (reading-engine.js)
+## AI Card Identification Helper
 
-`generateReading()` runs when the user reaches `screen-reading`:
+Source: `src/ai-identification.ts`
 
-```
-Has geminiKey AND readingMode !== 'classic-forced'?
-  YES → generateAIReading()  → callGemini() → renderReading()
-         [on failure] → generateClassicReading() → renderReading()
-  NO  → generateClassicReading() → renderReading()
+Build output: `js/ai-identification.js`
+
+Runtime API:
+
+```js
+window.ArcanaAI.parseIdentifiedCards(responseText, currentCards)
 ```
 
-### AI Reading (`generateAIReading`)
-1. Builds a structured markdown-headed prompt with:
-   - Spread name and layout hint (`getSpreadLayoutHint()`)
-   - Each position + card name + orientation + keywords
-   - Dropped card (if any)
-   - User concerns, reading style, tone
-   - Special notes for Romany / Yearly / Celtic Cross spreads
-2. Calls `callGemini()` with optional `state.uploadedImage`
-3. Stores result in `state.narrative`, renders via `renderReading()`
+Purpose:
 
-### Classic Reading (`generateClassicReading`)
-Generates reading entirely offline:
-- Pattern analysis: dominant suit, Major Arcana count, reversal count, repeated numbers
-- Sections: Dropped Card → Introduction → Position-by-Position → Pattern Analysis → Guidance → Reflection Questions
-- Uses `card.upright` / `card.reversed` strings from the card database
+- Extracts the first JSON array from Gemini's response.
+- Normalizes orientation to `upright` or `reversed`.
+- Canonicalizes card names against the active deck when possible.
+- Returns `{ [position]: { name, orientation } }`.
 
-### Markdown Renderer (`renderReading` / `renderReadingInto`)
-Converts the narrative markdown to HTML:
-- `## Header` → `<div class="reading-section"><h3>`
-- `- item` → `<ul><li>`
-- `**text**` → `<strong>`, `*text*` → `<em>`
-- Empty lines → paragraph breaks
-
-> **Note**: This renderer is duplicated — `renderReading()` targets `#reading-content`, `renderReadingInto(container, text)` in `ui.js` is used for history items and quick reading output.
+`ui.js` uses this helper when available and keeps the original inline JSON parsing as fallback.
 
 ---
 
-## AI Layer (ai.js)
+## Reading Generation
+
+`generateReading()` in `reading-engine.js` runs when the user reaches `screen-reading`.
+
+```text
+Gemini key available and not classic-forced?
+  yes -> generateAIReading()
+         on failure -> generateClassicReading()
+  no  -> generateClassicReading()
+```
+
+### AI Reading
+
+`generateAIReading()` builds a structured markdown prompt with:
+
+- Spread name and layout hint
+- Each position, card name, orientation, and keywords
+- Dropped card, if any
+- User concerns, reading style, and tone
+- Special spread notes for larger layouts
+
+The result is stored in `state.narrative` and rendered as markdown sections.
+
+### Classic Reading
+
+`generateClassicReading()` works fully offline using:
+
+- Card upright/reversed meaning text
+- Dominant suit analysis
+- Major Arcana count
+- Reversal count
+- Repeated numbers
+- Reflection questions
+
+---
+
+## AI Layer
+
+`ai.js` contains the Gemini API client.
 
 `callGemini(prompt, apiKey, imageData, statusEl)`:
 
-- **Model fallback chain**: `gemini-2.5-flash → gemini-2.5-flash-lite → gemini-3.5-flash → gemini-3.1-flash-lite`
-- Each model gets 2 attempts before falling to the next
-- Rate limit (HTTP 429): waits with a countdown display, retries once; if `limit: 0` skips immediately
-- 403 → throws "API key invalid" with setup instructions
-- Multimodal: if `imageData` is provided, appends `inline_data` part with base64 + MIME type
+- Sends text-only or multimodal text+image requests.
+- Adds `inline_data` when `imageData` is provided.
+- Handles model fallback and retry behavior.
+- Handles API key validation and rate-limit messaging.
 
-`testApiKey()` validates the key with a minimal prompt (`"Say 'hello' in one word."`) and auto-saves settings on success.
+`testApiKey()` validates the key with a minimal prompt and saves settings on success.
 
 ---
 
-## Persistence (storage.js)
+## Persistence
 
-All persistence is `localStorage` with no expiry except the autosave:
+All persistence is `localStorage`.
 
 | Key | Contents | Notes |
 |---|---|---|
-| `arcana_autosave` | `{ state, timestamp }` | Expires after 1 hour; restored on app load |
+| `arcana_autosave` | `{ state, timestamp }` | Expires after 1 hour |
 | `arcana_settings` | `{ geminiKey, readingStyle, readingTone }` | Persists indefinitely |
-| `arcana_readings` | Array of reading records | Capped at 50 entries (oldest dropped) |
-| `arcana-journal` | Array of journal entries | Capped at 50 entries |
+| `arcana_readings` | Reading history records | Capped at 50 |
+| `arcana-journal` | Journal entries | Capped at 50 |
 
-### Reading Record Shape
+Reading records include:
 
 ```js
 {
-  id:           string,          // Date.now().toString(36) + random suffix
-  title:        string,
-  date:         ISO string,
-  mode:         'guided' | 'quick',
-  concerns:     string[],
-  cardSystem:   string,
-  spread:       string,          // spreadId
-  spreadName:   string,
-  cards:        object,          // snapshot of state.cards
-  droppedCard:  object | null,
+  id: string,
+  title: string,
+  date: string,
+  mode: 'guided' | 'quick',
+  concerns: string[],
+  cardSystem: string,
+  spread: string,
+  spreadName: string,
+  cards: object,
+  droppedCard: object | null,
   hasDroppedCard: boolean,
-  narrative:    string,          // full markdown text
-  notes:        string           // user journal entry, editable in history
+  narrative: string,
+  notes: string
 }
 ```
 
@@ -359,51 +489,57 @@ All persistence is `localStorage` with no expiry except the autosave:
 
 ## CSS Architecture
 
-`main.css` carries all active styles. The three other CSS files (`onboarding.css`, `reading.css`, `settings.css`) are empty stubs with a comment indicating planned extraction.
+`main.css` contains the original core styling and font declarations. `premium.css` is the current premium theme override layer and should be edited via `src/premium-theme.css`, then rebuilt.
 
-### Design Tokens (CSS custom properties)
+The theme uses:
 
-```css
---au-violet     /* primary accent — deep purple */
---gold          /* secondary accent — gold/amber */
---gold-dim      /* muted gold background */
---fg            /* foreground text */
---muted         /* secondary text */
---border        /* border color */
---success       /* green */
---danger        /* red */
---font-display  /* Cormorant Garamond (serif, display) */
+- Deep charcoal/near-black backgrounds
+- Soft celestial gradients
+- Star and moon-like CSS atmosphere
+- Gold, violet, and teal accents
+- Cormorant Garamond display typography
+- Larger negative space and slow transitions
+- 8px border radius for premium, restrained UI surfaces
+
+`onboarding.css`, `reading.css`, and `settings.css` remain stubs unless the styling is later split by domain.
+
+---
+
+## Tests
+
+Current regression checks:
+
+- `tests/journal-ui.ps1`
+- `tests/reading-actions.ps1`
+
+Run:
+
+```powershell
+npm test
 ```
 
-### Font Loading
-- Cormorant Garamond, italic, weights 400 and 500
-- 14 WOFF2 files cover 5 Unicode subsets: cyrillic-ext, cyrillic, vietnamese, latin-ext, latin
+The test command also compiles TypeScript first.
 
 ---
 
-## Social Sharing
+## Key Constraints & Decisions
 
-Implemented in `ui.js`:
+1. **Static runtime**: The app must remain plain HTML/CSS/global JS at runtime.
 
-- `shareReading()` — reads narrative text + spread name + card list
-- `renderShareCanvas()` — draws a 600×800px canvas with dark background, spread title, and truncated narrative text (max 30 lines × 70 chars)
-- `downloadShareImage()` — exports canvas as PNG via `<a download>`
-- `shareNative()` — uses Web Share API with `File` attachment; falls back to download
+2. **No React/Vue/Angular/Vite rewrite**: The user requested a redesign of the existing app, not a rebuilt product or generated-card game.
 
----
+3. **Physical cards first**: Users draw and lay out real cards. AI analyzes the uploaded photo and/or manually entered cards.
 
-## Key Constraints & Design Decisions
+4. **Short default onboarding**: Default guided mode starts at choosing a spread, then preparation, card placement/upload/manual entry, overview, reading, and journal.
 
-1. **No build tooling** — all files are plain JS/CSS/HTML. A developer can open `index.html` directly in a browser.
+5. **Dual-source templates/data**: Templates and spreads exist as external files and embedded fallbacks, supporting both HTTP and `file://`.
 
-2. **Dual-source data** — Spreads JSON and HTML templates are both embedded in `index.html` AND available as separate files, supporting both `file://` and HTTP delivery without code branching at the call site.
+6. **Generated assets must be committed/deployed**: Because the app can run without a build server, `css/premium.css` and `js/ai-identification.js` must exist alongside their `src/` sources.
 
-3. **Global scope everywhere** — Functions are global variables. There is no module system, no namespacing, and no encapsulation. This keeps the code simple to trace but creates implicit inter-file dependencies on load order.
+7. **Mutable singleton state**: No framework reactivity. UI updates are imperative.
 
-4. **State is a mutable singleton** — No reactive framework. UI is re-rendered imperatively on each navigation or user action.
+8. **API key in localStorage**: Gemini key is stored in plaintext in `arcana_settings`; users should use a dedicated key.
 
-5. **Markdown renderer is duplicated** — `renderReading()` and `renderReadingInto()` contain identical logic. This is a known refactor opportunity.
+9. **Manual review matters**: AI identification can be wrong, especially on larger spreads. The UI must preserve review/correction.
 
-6. **API key stored in localStorage** — The Gemini API key is plaintext in `arcana_settings`. Users are advised to use free-tier keys created specifically for this app.
-
-7. **CSS stub files** — `onboarding.css`, `reading.css`, `settings.css` are placeholders. All styles currently live in `main.css`.
+10. **Theme is layered**: Premium visual changes should prefer the theme layer and existing class names before changing product markup or flow.

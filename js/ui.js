@@ -260,6 +260,7 @@ function getSharePayload(){
   }
   return {
     title:spread?`Arcana - ${spread.name}`:'Arcana Reading',
+    text:state.narrative||'',
     spreadName:spread?spread.name:'Reading',
     layout:spread?spread.layout:'grid',
     cardCount:spread?spread.cardCount:0,
@@ -821,6 +822,14 @@ Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of C
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
     const result=await callGemini(prompt,null,state.uploadedImage);
+    const parsedByArcana=window.ArcanaAI&&window.ArcanaAI.parseIdentifiedCards
+      ? window.ArcanaAI.parseIdentifiedCards(result,currentCards)
+      : null;
+    if(parsedByArcana){
+      Object.assign(state.cards,parsedByArcana);
+      buildManualEntries(spread);
+      document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified! Click "Review Cards" below to verify and continue.</p>';
+    }else{
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -831,6 +840,7 @@ Return ONLY a valid JSON array with no other text:
       });
       buildManualEntries(spread);
       document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">✓ Cards identified! Click "Review Cards" below to verify and continue.</p>';
+    }
     }
   }catch(err){
     document.getElementById('guided-identify-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try switching to Manual Entry tab.</p>`;
@@ -1034,6 +1044,14 @@ Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of C
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
     const result=await callGemini(prompt,null,state.uploadedImage);
+    const parsedByArcana=window.ArcanaAI&&window.ArcanaAI.parseIdentifiedCards
+      ? window.ArcanaAI.parseIdentifiedCards(result,currentCards)
+      : null;
+    if(parsedByArcana){
+      Object.assign(state.cards,parsedByArcana);
+      buildManualEntries(spread);
+      document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
+    }else{
     const match=result.match(/\[[\s\S]*?\]/);
     if(match){
       const identified=JSON.parse(match[0]);
@@ -1044,6 +1062,7 @@ Return ONLY a valid JSON array with no other text:
       });
       buildManualEntries(spread);
       document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
+    }
     }
   }catch(err){
     document.getElementById('upload-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try manual entry instead.</p>`;

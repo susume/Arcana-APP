@@ -1,6 +1,6 @@
 // Public-domain Rider-Waite-Smith card art via Wikimedia Commons.
 const CARD_ART_BASE_URL = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
-const CARD_ART_UPLOAD_BASE_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/';
+const CARD_ART_UPLOAD_BASE_URL = 'https://upload.wikimedia.org/wikipedia/commons/';
 
 const CARD_ART_MAJOR_FILES = {
   0: 'RWS Tarot 00 Fool.jpg',
@@ -178,7 +178,7 @@ function getCardArtUrl(card, width = 180) {
   const normalized = fileName.replace(/\s+/g, '_');
   const hash = md5(normalized);
   const encoded = encodeURIComponent(normalized);
-  return `${CARD_ART_UPLOAD_BASE_URL}${hash[0]}/${hash.slice(0, 2)}/${encoded}/${width}px-${encoded}`;
+  return `${CARD_ART_UPLOAD_BASE_URL}${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
 }
 
 function renderCardFallback(card) {

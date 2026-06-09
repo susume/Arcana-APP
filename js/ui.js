@@ -273,8 +273,10 @@ function getSharePayload(){
         name:entry.name,
         orientation:entry.orientation||'upright',
         artUrl:card&&typeof getCardArtUrl==='function'?getCardArtUrl(card,320):'',
+        system:card&&card.system?card.system:'',
         suit:card&&card.suit?card.suit:'',
-        arcana:card&&card.arcana?card.arcana:''
+        arcana:card&&card.arcana?card.arcana:'',
+        number:card&&card.number?card.number:0
       };
     })
   };
@@ -494,6 +496,57 @@ function drawShareCardFallback(ctx,card,x,y,w,h){
   wrapCanvasText(ctx,card.name,x+8,y+h*.45,w-16,15,3);
 }
 
+function getPlayingRankLabel(card){
+  if(!card)return '';
+  if(/joker/i.test(card.name||''))return 'JOKER';
+  const labels={1:'A',11:'J',12:'Q',13:'K'};
+  return labels[card.number]||String(card.number||'');
+}
+
+function getPlayingSuitLabel(card){
+  const suit=String(card&&card.suit||'').toLowerCase();
+  return {hearts:'♥',diamonds:'♦',clubs:'♣',spades:'♠'}[suit]||'';
+}
+
+function drawSharePlayingCard(ctx,card,x,y,w,h){
+  const rank=getPlayingRankLabel(card);
+  const suit=getPlayingSuitLabel(card);
+  const isRed=card.suit==='hearts'||card.suit==='diamonds';
+  const ink=isRed?'#b62934':'#17212a';
+  drawRoundedRect(ctx,x,y,w,h,10);
+  ctx.fillStyle='#fffaf0';ctx.fill();
+  ctx.strokeStyle='#d5b56f';ctx.lineWidth=2;ctx.stroke();
+  drawRoundedRect(ctx,x+5,y+5,w-10,h-10,7);
+  ctx.strokeStyle='rgba(31,43,51,.18)';ctx.lineWidth=1;ctx.stroke();
+
+  ctx.fillStyle=ink;
+  ctx.textAlign='center';
+  ctx.font=`700 ${Math.max(11,Math.round(w*.25))}px Georgia, serif`;
+  ctx.fillText(rank,x+w*.18,y+h*.19);
+  ctx.font=`700 ${Math.max(14,Math.round(w*.31))}px Georgia, serif`;
+  ctx.fillText(suit,x+w*.18,y+h*.34);
+
+  ctx.save();
+  ctx.translate(x+w*.82,y+h*.81);
+  ctx.rotate(Math.PI);
+  ctx.font=`700 ${Math.max(11,Math.round(w*.25))}px Georgia, serif`;
+  ctx.fillText(rank,0,0);
+  ctx.font=`700 ${Math.max(14,Math.round(w*.31))}px Georgia, serif`;
+  ctx.fillText(suit,0,h*.15);
+  ctx.restore();
+
+  if(rank==='JOKER'){
+    ctx.font=`700 ${Math.max(13,Math.round(w*.22))}px Georgia, serif`;
+    wrapCanvasText(ctx,'JOKER',x+w*.12,y+h*.46,w*.76,Math.max(14,h*.13),2);
+    return;
+  }
+
+  ctx.font=`700 ${Math.max(26,Math.round(w*.58))}px Georgia, serif`;
+  ctx.fillText(suit,x+w/2,y+h*.54);
+  ctx.font=`700 ${Math.max(13,Math.round(w*.22))}px Arial, sans-serif`;
+  ctx.fillText(rank,x+w/2,y+h*.74);
+}
+
 async function drawShareSpread(ctx,data){
   drawRoundedRect(ctx,42,112,516,414,16);
   ctx.fillStyle='rgba(255,255,255,.055)';ctx.fill();
@@ -518,6 +571,8 @@ async function drawShareSpread(ctx,data){
       drawCoverImage(ctx,img,slot.x+3,slot.y+3,slot.w-6,slot.h-6);
       ctx.restore();
       ctx.strokeStyle='#d5b56f';ctx.lineWidth=2;drawRoundedRect(ctx,slot.x,slot.y,slot.w,slot.h,9);ctx.stroke();
+    }else if(card.system==='playing'){
+      drawSharePlayingCard(ctx,card,slot.x,slot.y,slot.w,slot.h);
     }else{
       drawShareCardFallback(ctx,card,slot.x,slot.y,slot.w,slot.h);
     }

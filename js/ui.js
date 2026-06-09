@@ -339,23 +339,15 @@ function showShareModal(data){
   modal.innerHTML=`<div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
     <button class="close-btn" onclick="closeShareModal()" aria-label="Close share options">&times;</button>
     <h3 id="share-title">Share Your Spread</h3>
-    <p class="share-help">Add a short note, then share the image or post the app link to your social channels.</p>
     <label class="share-label" for="share-comment">Comment</label>
-    <textarea id="share-comment" maxlength="180" placeholder="Add a short reflection..." oninput="updateSharePreview()"></textarea>
+    <textarea id="share-comment" maxlength="180" placeholder="${escapeHtml(defaultShareComment())}" oninput="updateSharePreview()">${escapeHtml(defaultShareComment())}</textarea>
     <canvas id="share-canvas" width="600" height="800"></canvas>
-    <p class="share-help">Social buttons share your comment and app link. Use Share Image or Download Image for the spread image.</p>
     <div class="share-platforms">
       <button class="btn btn-sm" onclick="openSocialShare('facebook')">Facebook</button>
       <button class="btn btn-sm" onclick="openSocialShare('line')">LINE</button>
       <button class="btn btn-sm" onclick="openSocialShare('x')">X</button>
       <button class="btn btn-sm" onclick="openSocialShare('whatsapp')">WhatsApp</button>
       <button class="btn btn-sm" onclick="openSocialShare('threads')">Threads</button>
-    </div>
-    <div class="share-actions">
-      <button class="btn btn-primary" onclick="shareSpreadImage()">Share Image</button>
-      <button class="btn" onclick="copyShareCaption()">Copy Caption</button>
-      <button class="btn" onclick="downloadShareImage()">Download Image</button>
-      <button class="btn" onclick="closeShareModal()">Close</button>
     </div>
   </div>`;
   modal.classList.add('open');
@@ -375,76 +367,18 @@ function currentShareData(){
   try{return JSON.parse(modal.dataset.sharePayload);}catch(e){return getSharePayload();}
 }
 
+function defaultShareComment(){
+  return 'The cards found me at the right moment.';
+}
+
 function getShareComment(){
-  return (document.getElementById('share-comment')?.value||'').trim();
+  return (document.getElementById('share-comment')?.value||defaultShareComment()).trim()||defaultShareComment();
 }
 
 function getShareCaption(){
   const data=currentShareData();
   const comment=getShareComment();
   return [comment, `Try Arcana: ${data.appUrl}`].filter(Boolean).join('\n\n');
-}
-
-async function copyTextToClipboard(text,toastText){
-  if(!text)return;
-  try{
-    await navigator.clipboard.writeText(text);
-    showToast(toastText);
-  }catch(e){
-    const input=document.createElement('textarea');
-    input.value=text;
-    input.style.position='fixed';
-    input.style.opacity='0';
-    document.body.appendChild(input);
-    input.focus();input.select();
-    document.execCommand('copy');
-    input.remove();
-    showToast(toastText);
-  }
-}
-
-function copyShareCaption(){
-  copyTextToClipboard(getShareCaption(),'Caption copied.');
-}
-
-async function downloadShareImage(){
-  await renderShareCanvas(currentShareData());
-  const canvas=document.getElementById('share-canvas');
-  const link=document.createElement('a');
-  link.download='arcana-reading.png';
-  try{
-    link.href=canvas.toDataURL('image/png');
-    link.click();
-  }catch(e){
-    showToast('Image could not be downloaded in this browser.');
-  }
-}
-
-async function canvasBlob(){
-  await renderShareCanvas(currentShareData());
-  const canvas=document.getElementById('share-canvas');
-  return await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-}
-
-async function shareSpreadImage(){
-  const data=currentShareData();
-  const blob=await canvasBlob();
-  if(!blob){
-    showToast('Image could not be shared in this browser.');
-    return;
-  }
-  const file=new File([blob],'arcana-spread.png',{type:'image/png'});
-  const caption=getShareCaption();
-  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-    try{
-      await navigator.share({title:data.title,text:caption,url:data.appUrl,files:[file]});
-      return;
-    }catch(e){
-      if(e&&e.name==='AbortError')return;
-    }
-  }
-  await copyTextToClipboard(caption,'Caption copied. Image downloaded.');
-  downloadShareImage();
 }
 
 function openSocialShare(platform){
@@ -613,9 +547,9 @@ async function renderShareCanvas(data){
 function drawShareFooter(ctx,data,comment){
   ctx.textAlign='left';
   ctx.fillStyle='#f3eadb';ctx.font='700 24px Georgia, serif';
-  ctx.fillText(comment?'My reflection':'My tarot spread',42,590);
+  ctx.fillText('A message from the cards',42,590);
   ctx.fillStyle='#d8cdbd';ctx.font='18px Georgia, serif';
-  const nextY=wrapCanvasText(ctx,comment||'A spread created with Arcana.',42,624,516,26,4);
+  wrapCanvasText(ctx,comment,42,624,516,26,4);
   ctx.fillStyle='#9dc7c9';ctx.font='15px Arial, sans-serif';
   ctx.fillText('Try your own reading:',42,724);
   ctx.fillStyle='#f3eadb';ctx.font='700 18px Arial, sans-serif';

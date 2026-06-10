@@ -1,13 +1,13 @@
 <div class="screen" id="screen-quick">
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Quick Reading</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Upload a tarot spread for an AI reading</h2>
   <div class="onboard">
-    Select your spread below, then upload a photo. AI reads each position with full context.
+    Choose the spread you laid out, upload a clear photo from above, and Arcana will identify the cards by position before generating your reading.
   </div>
-  <input type="text" id="quick-concern" placeholder="Optional: what's on your mind?" style="margin-bottom:16px">
+  <input type="text" id="quick-concern" placeholder="Optional: what question should this reading explore?" style="margin-bottom:16px">
   <div class="context-panel quick-context">
     <div>
-      <h3>Reading Context</h3>
-      <p>Optional, but life stage helps Arcana interpret the cards appropriately.</p>
+      <h3>What context helps the AI reading?</h3>
+      <p>Life stage is optional, but it helps Arcana keep the language relevant, gentle, and age-aware.</p>
     </div>
     <div class="context-grid">
       <label>
@@ -24,14 +24,14 @@
     </div>
     <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
   </div>
-  <div class="quick-step-label">Choose your spread</div>
+  <div class="quick-step-label">Choose the spread you used</div>
   <div class="spread-grid" id="quick-spread-grid"></div>
-  <div class="quick-step-label" style="margin-top:14px">Upload your photo</div>
+  <div class="quick-step-label" style="margin-top:14px">Upload a clear spread photo</div>
   <div class="upload-zone" id="quick-upload-zone" onclick="document.getElementById('quick-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleQuickDrop(event)">
-    <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+    <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
   </div>
   <input type="file" id="quick-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleQuickUpload(this)">
-  <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Read My Cards</button>
+  <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate My Tarot Reading</button>
   <div id="quick-results"></div>
   <div style="margin-top:16px">
     <button class="btn" onclick="goScreen('screen-welcome')">Back</button>

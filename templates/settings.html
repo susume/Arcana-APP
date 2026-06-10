@@ -1,26 +1,26 @@
 <div class="modal-overlay" id="modal-settings">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
-    <h2>Settings</h2>
+    <h2>Reading Settings</h2>
 
     <div class="settings-section">
-      <h3>Subscription</h3>
+      <h3>How do Premium tarot features unlock?</h3>
       <p id="premium-settings-status" class="settings-status">Free plan active</p>
-      <label>Activation Key</label>
-      <input type="text" id="premium-key-input" placeholder="Enter premium activation key">
+      <label>Premium activation key</label>
+      <input type="text" id="premium-key-input" placeholder="Enter your premium activation key">
       <p id="premium-key-status" class="activation-status"></p>
       <button class="btn btn-sm" onclick="deactivatePremium();renderEntitlementsUI();showToast('Premium deactivated on this device.')">Deactivate Premium</button>
     </div>
 
-    <label>Reading Style</label>
+    <label>AI tarot reading style</label>
     <select id="reading-style">
       <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
     </select>
-    <label>Reading Tone</label>
+    <label>AI reading tone</label>
     <select id="reading-tone">
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
-    <label>Narrator Voice</label>
+    <label>Narrator voice</label>
     <select id="narrator-voice">
       <option value="">Browser default</option>
     </select>

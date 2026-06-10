@@ -1,13 +1,13 @@
 <div class="screen" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your Concerns</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question should your tarot reading explore?</h2>
   <div class="onboard">
-    What's weighing on your mind? A focus helps shape the reading, or <strong>skip this</strong> for open guidance.
+    A clear focus helps Arcana interpret the cards in context. You can name a relationship, decision, career question, or emotional pattern, or skip this for open guidance.
   </div>
   <div id="concern-list">
-    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
+    <div class="concern-row"><input type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
   </div>
-  <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">+ Add Another</button>
+  <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
   <div class="tag-chips">
     <span class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</span>
     <span class="tag-chip" onclick="tagConcern(this)">Career</span>

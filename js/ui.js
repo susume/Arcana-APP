@@ -69,7 +69,7 @@ function startGuided(){
   document.getElementById('drop-card-entry').style.display='none';
   // Reset concern inputs
   const cl=document.getElementById('concern-list');
-  cl.innerHTML='<div class="concern-row"><input type="text" placeholder="What\'s on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button></div>';
+  cl.innerHTML='<div class="concern-row"><input type="text" placeholder="What\'s on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>';
   document.querySelectorAll('.tag-chip').forEach(t=>t.classList.remove('active'));
   const lifeStage=document.getElementById('reader-life-stage');
   if(lifeStage)lifeStage.value='';
@@ -102,7 +102,7 @@ function addConcern(){
   const list=document.getElementById('concern-list');
   const row=document.createElement('div');
   row.className='concern-row';
-  row.innerHTML='<input type="text" placeholder="Another concern…" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">✕</button>';
+  row.innerHTML='<input type="text" placeholder="Another concern…" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button>';
   list.appendChild(row);
 }
 function removeConcern(btn){
@@ -232,7 +232,7 @@ function updateProgressEstimate(screenId){
   const remaining=total-idx-1;
   const minsPerStep=1;
   const minsLeft=remaining*minsPerStep;
-  const text='Step '+(idx+1)+' of '+total+(minsLeft>0?' — About '+minsLeft+' minute'+(minsLeft>1?'s':'')+' remaining':'');
+  const text='Step '+(idx+1)+' of '+total+(minsLeft>0?'  - About '+minsLeft+' minute'+(minsLeft>1?'s':'')+' remaining':'');
   const el=document.getElementById('progress-'+screenId.replace('screen-',''));
   if(el)el.textContent=text;
 }
@@ -477,6 +477,39 @@ function getShareSlots(data){
       return make(i,cx+Math.cos(angle)*r-w/2,cy+Math.sin(angle)*r-h/2,w,h);
     });
   }
+  if(data.layout==='romany'&&n>=21){
+    const slots=[];
+    const w=.105,h=.25,gx=.03,gy=.035,startX=(1-(w*7+gx*6))/2,startY=.09;
+    for(let col=0;col<7;col++){
+      for(let row=0;row<3;row++){
+        const idx=col*3+row;
+        slots.push(make(idx,startX+col*(w+gx),startY+row*(h+gy),w,h));
+      }
+    }
+    return slots;
+  }
+  if(data.layout==='two-pathways'&&n>=14){
+    return [
+      make(0,.43,.02,.14,.27),make(1,.43,.33,.14,.27),
+      make(2,.18,.18,.13,.25),make(3,.69,.18,.13,.25),
+      make(4,.08,.46,.13,.25),make(5,.25,.46,.13,.25),
+      make(6,.62,.46,.13,.25),make(7,.79,.46,.13,.25),
+      make(8,.08,.72,.13,.25),make(9,.25,.72,.13,.25),
+      make(10,.62,.72,.13,.25),make(11,.79,.72,.13,.25),
+      make(12,.18,.02,.13,.25),make(13,.69,.02,.13,.25)
+    ];
+  }
+  if(data.layout==='relationship'&&n>=15){
+    return [
+      make(0,.10,.22,.11,.24),make(1,.24,.22,.11,.24),make(2,.38,.22,.11,.24),
+      make(3,.51,.22,.11,.24),make(4,.65,.22,.11,.24),make(5,.79,.22,.11,.24),
+      make(6,.18,.02,.11,.24),make(7,.71,.02,.11,.24),
+      make(8,.18,.48,.11,.24),make(9,.71,.48,.11,.24),
+      make(10,.18,.74,.11,.24),make(11,.71,.74,.11,.24),
+      make(12,.32,.74,.13,.24),make(13,.55,.74,.13,.24),
+      make(14,.445,.48,.11,.24)
+    ];
+  }
   const cols=Math.min(5,Math.max(2,Math.ceil(Math.sqrt(n))));
   const rows=Math.ceil(n/cols);
   const gap=.025;
@@ -677,7 +710,7 @@ const GUIDED_PROMPTS=[
   'Let the energy of the deck flow through you…',
   'Close your eyes for a moment, then draw…',
   'The next card is ready to reveal itself…',
-  'Almost there — this card holds deep meaning…'
+  'Almost there  - this card holds deep meaning…'
 ];
 
 function buildGuidedDraw(spread){
@@ -733,7 +766,7 @@ function renderSpreadDiagram(spread,activeIdx){
       const pos=spread.positions[idx];
       if(!pos)return;
       const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';
-      const check=idx<activeIdx?'✓':'';
+      const check=idx<activeIdx?'?':'';
       html+=`<div class="slot ${cls}">
         <div class="slot-num">${check||pos.id}</div>
         <div class="slot-label">${pos.name}</div>
@@ -756,7 +789,7 @@ function renderGuidedRitual(spread){
   diagram.innerHTML=renderSpreadDiagram(spread,state.guidedStep);
 
   if(!pos){
-    // All cards placed — show photo upload
+    // All cards placed  - show photo upload
     prompt.innerHTML=`<div class="guided-ritual">
       <div class="ritual-text">✦ All ${spread.cardCount} cards have been placed ✦</div>
       <div class="ritual-desc">Your spread is complete. Now take a clear photo of all your cards face-up, and AI will read them for you.</div>
@@ -781,8 +814,8 @@ function renderGuidedRitual(spread){
     <p style="font-size:11px;color:var(--muted)">Draw a card from your deck and place it face-up in position <strong style="color:var(--gold)">${pos.id}</strong> (highlighted above).</p>
   </div>`;
 
-  actions.innerHTML=`<button class="btn btn-primary" onclick="nextGuidedPosition()">${GLYPH.star4} Card Placed — Next</button>
-    ${state.guidedStep>0?'<button class="btn btn-sm" onclick="prevGuidedPosition()" style="margin-left:8px">← Back</button>':''}`;
+  actions.innerHTML=`<button class="btn btn-primary" onclick="nextGuidedPosition()">${GLYPH.star4} Card Placed  - Next</button>
+    ${state.guidedStep>0?'<button class="btn btn-sm" onclick="prevGuidedPosition()" style="margin-left:8px">? Back</button>':''}`;
 }
 
 function nextGuidedPosition(){
@@ -808,10 +841,10 @@ async function identifyGuidedCards(){
   const btn=document.getElementById('guided-identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
   try{
-    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name} — ${p.description}`).join('\n');
+    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
     const prompt=`You are identifying tarot cards in a photograph of a spread.
 
-SPREAD: ${spread.name} (${spread.cardCount} cards) — ${spread.description}
+SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
 
 POSITIONS:
@@ -839,7 +872,7 @@ Return ONLY a valid JSON array with no other text:
         }
       });
       buildManualEntries(spread);
-      document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">✓ Cards identified! Click "Review Cards" below to verify and continue.</p>';
+      document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">? Cards identified! Click "Review Cards" below to verify and continue.</p>';
     }
     }
   }catch(err){
@@ -856,14 +889,14 @@ function buildManualEntries(spread){
     const row=document.createElement('div');
     row.className='card-entry-row';
     const existing=state.cards[pos.id];
+    const orientation=existing&&existing.orientation==='reversed'?'reversed':'upright';
     row.innerHTML=`
       <span class="pos-name">${pos.name}</span><span class="pos-desc-hint">${pos.description}</span>
       <button class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?existing.name:'Choose card...'}</button>
-      <div class="orient-btn ${existing&&existing.orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${existing?existing.orientation:'upright'}" title="Toggle orientation">${existing&&existing.orientation==='reversed'?'↓':'↑'}</div>`;
+      <div class="orient-btn ${orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" title="Toggle orientation">${orientation==='reversed'?'R':'U'}</div>`;
     container.appendChild(row);
   });
 }
-
 function buildSuitFilter(){
   const container=document.getElementById('suit-filter');
   container.innerHTML='<span class="suit-btn active" onclick="filterSuit(null,this)">All</span>';
@@ -888,15 +921,28 @@ function filterSuit(suit,el){
 function toggleOrient(el){
   if(el.dataset.orient==='upright'){
     el.dataset.orient='reversed';
-    el.textContent='↓';
+    el.textContent='R';
     el.classList.add('reversed');
   }else{
     el.dataset.orient='upright';
-    el.textContent='↑';
+    el.textContent='U';
     el.classList.remove('reversed');
   }
+  syncOrientationState(el);
 }
-function toggleDrop(){
+
+function syncOrientationState(el){
+  const row=el.closest('.card-entry-row');
+  const picker=row&&row.querySelector('.card-pick-btn[data-pos]');
+  const posId=el.dataset.pos||(picker&&picker.dataset.pos);
+  if(!posId)return;
+  const orientation=el.dataset.orient||'upright';
+  if(posId==='drop'){
+    if(state.droppedCard)state.droppedCard.orientation=orientation;
+    return;
+  }
+  if(state.cards[posId])state.cards[posId].orientation=orientation;
+}function toggleDrop(){
   const tog=document.getElementById('drop-toggle');
   tog.classList.toggle('on');
   state.hasDroppedCard=tog.classList.contains('on');
@@ -1030,10 +1076,10 @@ async function identifyCards(){
   const btn=document.getElementById('identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
   try{
-    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name} — ${p.description}`).join('\n');
+    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
     const prompt=`You are identifying tarot cards in a photograph of a spread.
 
-SPREAD: ${spread.name} (${spread.cardCount} cards) — ${spread.description}
+SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
 
 POSITIONS:
@@ -1072,24 +1118,30 @@ Return ONLY a valid JSON array with no other text:
 
 function confirmCards(){
   const spread=getSpread();
-  // Collect from manual entries if not yet stored
+  // Collect from manual picker entries so orientation changes are persisted.
   document.querySelectorAll('#manual-entries .card-entry-row').forEach(row=>{
     const inp=row.querySelector('input[data-pos]');
-    if(!inp)return;
-    const posId=inp.dataset.pos;
-    const val=inp.value.trim();
+    const picker=row.querySelector('.card-pick-btn[data-pos]');
+    const posId=picker?picker.dataset.pos:(inp&&inp.dataset.pos);
+    if(!posId)return;
+    const picked=picker&&picker.classList.contains('selected')?picker.textContent.trim():'';
+    const val=inp?inp.value.trim():picked;
     const orient=row.querySelector('.orient-btn').dataset.orient;
     if(val)state.cards[posId]={name:val,orientation:orient};
   });
   // Check drop card
   if(state.hasDroppedCard){
     const dropInput=document.querySelector('#drop-card-entry input[data-pos="drop"]');
+    const dropPicker=document.querySelector('#drop-card-entry .card-pick-btn[data-pos="drop"]');
     const dropOrient=document.querySelector('#drop-card-entry .orient-btn');
-    if(dropInput&&dropInput.value.trim()){
-      state.droppedCard={name:dropInput.value.trim(),orientation:dropOrient.dataset.orient};
+    const dropName=dropInput&&dropInput.value.trim()
+      ? dropInput.value.trim()
+      : (dropPicker&&dropPicker.classList.contains('selected')?dropPicker.textContent.trim():'');
+    if(dropName){
+      state.droppedCard={name:dropName,orientation:dropOrient.dataset.orient};
     }
   }
-  // Validate — check both numeric and string keys since positions use numeric ids
+  // Validate - check both numeric and string keys since positions use numeric ids
   let filled=0;
   spread.positions.forEach(p=>{if(state.cards[p.id]||state.cards[String(p.id)])filled++});
   if(filled<spread.cardCount){
@@ -1098,7 +1150,6 @@ function confirmCards(){
   renderOverview();
   goScreen('screen-overview');
 }
-
 // ===== OVERVIEW =====
 function renderOverview(){
   const spread=getSpread();
@@ -1110,7 +1161,7 @@ function renderOverview(){
     const tile=document.createElement('div');
     tile.className='overview-tile';
     if(!entry){
-      tile.innerHTML=`<div class="c-pos">${pos.name}</div><div style="color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer" onclick="goScreen('screen-card-entry')">Unknown — tap to set</div>`;
+      tile.innerHTML=`<div class="c-pos">${pos.name}</div><div style="color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer" onclick="goScreen('screen-card-entry')">Unknown  - tap to set</div>`;
     }else{
       const art=card?renderCardArt(card,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>';
       const kws=card?card.keywords.slice(0,3):[];
@@ -1118,7 +1169,7 @@ function renderOverview(){
         <div class="suit-sym">${art}</div>
         <div class="c-name">${entry.name}</div>
         <div class="c-pos">${pos.name}</div>
-        <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'↑ Upright':'↓ Reversed'}</span>
+        <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'? Upright':'? Reversed'}</span>
         <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>`;
     }
     grid.appendChild(tile);
@@ -1133,9 +1184,9 @@ function renderOverview(){
       <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
       <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
       <div class="c-name">${state.droppedCard.name}</div>
-      <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'↑ Upright':'↓ Reversed'}</span>
+      <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'? Upright':'? Reversed'}</span>
       <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>
-      <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling — it may reveal an underlying theme influencing your reading.</p>
+      <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling  - it may reveal an underlying theme influencing your reading.</p>
     </div>`;
   }else{
     dropDiv.style.display='none';
@@ -1232,6 +1283,7 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
     results.insertAdjacentHTML('beforeend',`
       <div class="nav-row" style="margin-top:16px">
         <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
+        <button class="btn" onclick="shareReading()">Share</button>
         <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
       </div>`);
     renderJournalSection(results);

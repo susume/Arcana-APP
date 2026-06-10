@@ -5,7 +5,7 @@
         <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
         <div>
           <h1>Arcana</h1>
-          <p>Insight Through the Cards</p>
+          <p>AI Tarot Reading With Your Real Deck</p>
         </div>
       </div>
       <button class="icon-btn" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
@@ -13,46 +13,88 @@
       </button>
     </div>
 
-    <div class="landing-command">
+    <section class="landing-command">
       <div class="landing-copy">
         <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
-        <h2>Take a moment with the cards</h2>
-        <p>A quiet space for relationships, decisions, career questions, and personal growth through guided AI-assisted reflection.</p>
+        <h2>Free AI tarot with your own cards</h2>
+        <p>Arcana helps you read a physical tarot spread by guiding the ritual, identifying cards from a photo, and turning the layout into a clear reflection you can save, revisit, and learn from.</p>
+        <div class="hero-cta-row">
+          <button class="btn btn-primary" onclick="startGuided()">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+            Start a Free Reading
+          </button>
+          <button class="btn" onclick="startQuick()">Upload a Spread</button>
+        </div>
       </div>
 
       <div class="card-stage" aria-hidden="true">
-        <div class="stage-card card-a"></div>
-        <div class="stage-card card-b"></div>
-        <div class="stage-card card-c"></div>
+        <div class="moon-disc"></div>
+        <div class="constellation-line line-one"></div>
+        <div class="constellation-line line-two"></div>
+        <div class="stage-card card-a"><span>I</span></div>
+        <div class="stage-card card-b"><span>XVII</span></div>
+        <div class="stage-card card-c"><span>III</span></div>
         <div class="stage-line"></div>
+        <div class="phase-row"><i></i><i></i><i></i><i></i><i></i></div>
       </div>
-    </div>
+    </section>
 
-    <div class="landing-actions-panel">
+    <section class="landing-actions-panel" aria-label="Start options">
       <button class="action-tile primary-action" onclick="startGuided()">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg></span>
-        <span><strong>Begin Reading</strong><small>A slow guided ritual</small></span>
+        <span><strong>Guided Tarot Reading</strong><small>Choose a spread, draw real cards, then interpret them</small></span>
       </button>
       <button class="action-tile" onclick="startQuick()">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg></span>
-        <span><strong>Upload Spread</strong><small>For a layout already drawn</small></span>
+        <span><strong>AI Card Identification</strong><small>Upload a photo of your completed tarot spread</small></span>
       </button>
       <button class="action-tile" onclick="goScreen('screen-history')" data-premium-feature="history">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>
-        <span><strong>Journal</strong><small>Premium reading archive</small></span>
+        <span><strong>Tarot Journal</strong><small>Track readings, patterns, notes, and themes</small></span>
       </button>
-    </div>
+    </section>
 
-    <div class="plan-preview premium-strip">
+    <section class="landing-editorial">
+      <div class="editorial-copy">
+        <span class="section-kicker">What is Arcana?</span>
+        <h3>Arcana is an AI tarot reading app for physical cards</h3>
+        <p>Arcana is built for people who already own a tarot deck or want to practice with real cards. Instead of simulating a random draw, it helps you choose a spread, lay out your own cards, upload a photo, and receive an interpretation shaped by the positions in your spread.</p>
+      </div>
+      <div class="ritual-steps">
+        <div><span>01</span><h4>How does an AI tarot reading work?</h4><p>You focus on a question, draw cards from your own deck, photograph the spread, and let Arcana identify each card before creating a reflective reading.</p></div>
+        <div><span>02</span><h4>What can a tarot reading tell you?</h4><p>A reading can highlight emotions, patterns, choices, and possible next steps. It is best used as a mirror for reflection, not as a fixed prediction.</p></div>
+        <div><span>03</span><h4>Which tarot spread should I choose?</h4><p>Use one card for a quick daily focus, three cards for past-present-future context, and deeper spreads when a situation has several moving parts.</p></div>
+      </div>
+    </section>
+
+    <section class="landing-answer-panel">
+      <span class="section-kicker">Free online tarot reading</span>
+      <h3>What makes Arcana different from a random card generator?</h3>
+      <p>Arcana keeps the reading grounded in your real deck. You shuffle, draw, and place the cards yourself; the app supports interpretation, photo identification, journaling, and review. That makes it useful for beginners learning tarot meanings and experienced readers who want a polished reflection tool.</p>
+      <ul class="answer-list">
+        <li>Use real tarot or playing cards instead of an automatic digital draw.</li>
+        <li>Upload a spread photo so AI can identify cards by position.</li>
+        <li>Choose AI interpretation or classic offline meanings.</li>
+        <li>Save reflections to build a personal tarot journal over time.</li>
+      </ul>
+    </section>
+
+    <section class="plan-preview premium-strip">
       <div>
-        <h3>Daily Reflection</h3>
-        <p>One complimentary reading each day, with guided spreads and a clear summary to sit with afterward.</p>
+        <h3>Is Arcana free?</h3>
+        <p>Arcana includes a free daily tarot reading with guided spreads, AI card identification, and a clear summary you can reflect on afterward.</p>
       </div>
       <div>
-        <h3>Extended Practice</h3>
-        <p>Unlimited readings, journal history, narration, advanced spreads, comparison tools, and priority AI processing.</p>
+        <h3>What does Premium include?</h3>
+        <p>Premium supports unlimited readings, journal history, narration, advanced spreads, comparison tools, and priority AI processing.</p>
       </div>
-    </div>
+    </section>
+
+    <section class="final-cta-panel">
+      <span class="section-kicker">Start your reading</span>
+      <h3>Ask a question, shuffle your deck, and let the cards answer.</h3>
+      <button class="btn btn-primary" onclick="startGuided()">Start a Free Tarot Reading</button>
+    </section>
 
     <div class="footer-links">
       <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</span>

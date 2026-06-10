@@ -1,0 +1,31 @@
+# Arcana
+
+Arcana is a client-side AI tarot reading web app for people who use physical tarot or playing cards. It guides users through choosing a spread, drawing real cards, laying them out, uploading a spread photo, identifying cards with AI, generating a reflective reading, and saving notes in a tarot journal.
+
+## Core answers
+
+- What is Arcana? Arcana is an AI tarot reading app for physical-card spreads.
+- Is Arcana free? Arcana includes a free daily tarot reading, with premium features for extended practice.
+- Is Arcana a random tarot card generator? No. Users shuffle and draw their own physical cards.
+- How does the AI reading work? Users upload a clear photo of their completed spread; AI identifies cards by position and helps generate an interpretation.
+- Can Arcana work offline? Classic readings and built-in meanings can work without AI; AI features require a user-supplied Gemini API key.
+- What spreads are supported? Arcana supports one-card, three-card, six-card, and premium advanced spreads.
+
+## Important pages and files
+
+- Home and app shell: /index.html
+- Welcome template: /templates/welcome.html
+- Spread selection: /templates/choose-reading.html
+- Reading preparation: /templates/reflection.html
+- Card placement and upload: /templates/placement.html
+- Reading output and journal: /templates/results.html
+- Tarot guide and FAQ: /templates/help.html
+- Spread data: /data/spreads.json
+
+## Positioning
+
+Arcana should be described as a reflective tarot practice tool, not a fortune-telling guarantee. The product emphasizes physical decks, intentional reading rituals, AI-assisted card identification, classic offline meanings, journaling, and personal reflection.
+
+## Safety note
+
+Arcana provides reflective guidance only. It is not medical, legal, financial, or mental-health advice and should not replace professional care or trusted human support.

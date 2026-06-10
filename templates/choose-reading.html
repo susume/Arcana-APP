@@ -1,12 +1,12 @@
 <div class="screen" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Choose Your Reading</h2>
-  <div class="onboard compact-onboard">Free readings include Quick Insight, Standard Reading, and Deep Exploration. Advanced readings unlock with Premium.</div>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which tarot spread should you use?</h2>
+  <div class="onboard compact-onboard">Choose the smallest spread that can answer your question. One card is best for a daily focus, three cards give simple context, and six cards explore a situation in more depth.</div>
   <div class="context-panel">
     <div>
-      <h3>Reading Context</h3>
-      <p>Optional, but helpful. Life stage can change how a card should be interpreted.</p>
+      <h3>What context helps a tarot reading?</h3>
+      <p>Life stage is optional, but it helps Arcana phrase the interpretation with appropriate care and perspective.</p>
     </div>
     <div class="context-grid">
       <label>
@@ -26,18 +26,18 @@
   <div class="reading-choices" id="reading-choices">
     <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
-      <p>Fast guidance for a single question</p>
+      <p>Best for a daily tarot reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
     </div>
     <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
-      <p>Past, Present, Future</p>
+      <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
     </div>
     <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
-      <p>Comprehensive insight into a situation</p>
+      <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
     </div>
     <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">

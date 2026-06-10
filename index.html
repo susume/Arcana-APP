@@ -3,12 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arcana - Tarot & Cartomancy Reading</title>
+  <title>Arcana - Free AI Tarot Reading With Your Own Cards</title>
+  <meta name="description" content="Arcana is a free AI tarot reading app for physical cards. Choose a spread, draw your own deck, upload a photo, identify cards with AI, and save your reflection.">
+  <meta name="keywords" content="free tarot reading, AI tarot reading, online tarot reading, tarot spread, tarot card meanings, physical tarot deck, tarot journal">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/onboarding.css">
   <link rel="stylesheet" href="css/reading.css">
   <link rel="stylesheet" href="css/settings.css">
   <link rel="stylesheet" href="css/premium.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Arcana",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "description": "Arcana is an AI tarot reading app for physical cards. Users choose a spread, draw real cards, upload a spread photo, identify cards with AI, and save reflections in a tarot journal.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Free daily tarot reading",
+          "AI card identification from spread photos",
+          "Guided tarot spreads",
+          "Classic offline tarot meanings",
+          "Tarot journal and reading history"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Arcana?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Arcana is an AI tarot reading app for people using physical tarot or playing cards. It guides the spread, identifies cards from a photo, and creates a reflective interpretation."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does an AI tarot reading work in Arcana?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You choose a spread, draw real cards from your own deck, place them by position, upload a clear photo, and Arcana uses AI to identify the cards before generating a reading."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Arcana a random tarot card generator?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Arcana is designed for physical-card readings. Users shuffle and draw their own deck; the app supports interpretation, AI identification, and journaling."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <div class="stars" id="stars"></div>
@@ -21,7 +78,7 @@
         <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
         <div>
           <h1>Arcana</h1>
-          <p>Insight Through the Cards</p>
+          <p>AI Tarot Reading With Your Real Deck</p>
         </div>
       </div>
       <button class="icon-btn" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
@@ -29,46 +86,88 @@
       </button>
     </div>
 
-    <div class="landing-command">
+    <section class="landing-command">
       <div class="landing-copy">
         <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
-        <h2>Take a moment with the cards</h2>
-        <p>A quiet space for relationships, decisions, career questions, and personal growth through guided AI-assisted reflection.</p>
+        <h2>Free AI tarot with your own cards</h2>
+        <p>Arcana helps you read a physical tarot spread by guiding the ritual, identifying cards from a photo, and turning the layout into a clear reflection you can save, revisit, and learn from.</p>
+        <div class="hero-cta-row">
+          <button class="btn btn-primary" onclick="startGuided()">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+            Start a Free Reading
+          </button>
+          <button class="btn" onclick="startQuick()">Upload a Spread</button>
+        </div>
       </div>
 
       <div class="card-stage" aria-hidden="true">
-        <div class="stage-card card-a"></div>
-        <div class="stage-card card-b"></div>
-        <div class="stage-card card-c"></div>
+        <div class="moon-disc"></div>
+        <div class="constellation-line line-one"></div>
+        <div class="constellation-line line-two"></div>
+        <div class="stage-card card-a"><span>I</span></div>
+        <div class="stage-card card-b"><span>XVII</span></div>
+        <div class="stage-card card-c"><span>III</span></div>
         <div class="stage-line"></div>
+        <div class="phase-row"><i></i><i></i><i></i><i></i><i></i></div>
       </div>
-    </div>
+    </section>
 
-    <div class="landing-actions-panel">
+    <section class="landing-actions-panel" aria-label="Start options">
       <button class="action-tile primary-action" onclick="startGuided()">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg></span>
-        <span><strong>Begin Reading</strong><small>A slow guided ritual</small></span>
+        <span><strong>Guided Tarot Reading</strong><small>Choose a spread, draw real cards, then interpret them</small></span>
       </button>
       <button class="action-tile" onclick="startQuick()">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg></span>
-        <span><strong>Upload Spread</strong><small>For a layout already drawn</small></span>
+        <span><strong>AI Card Identification</strong><small>Upload a photo of your completed tarot spread</small></span>
       </button>
       <button class="action-tile" onclick="goScreen('screen-history')" data-premium-feature="history">
         <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>
-        <span><strong>Journal</strong><small>Premium reading archive</small></span>
+        <span><strong>Tarot Journal</strong><small>Track readings, patterns, notes, and themes</small></span>
       </button>
-    </div>
+    </section>
 
-    <div class="plan-preview premium-strip">
+    <section class="landing-editorial">
+      <div class="editorial-copy">
+        <span class="section-kicker">What is Arcana?</span>
+        <h3>Arcana is an AI tarot reading app for physical cards</h3>
+        <p>Arcana is built for people who already own a tarot deck or want to practice with real cards. Instead of simulating a random draw, it helps you choose a spread, lay out your own cards, upload a photo, and receive an interpretation shaped by the positions in your spread.</p>
+      </div>
+      <div class="ritual-steps">
+        <div><span>01</span><h4>How does an AI tarot reading work?</h4><p>You focus on a question, draw cards from your own deck, photograph the spread, and let Arcana identify each card before creating a reflective reading.</p></div>
+        <div><span>02</span><h4>What can a tarot reading tell you?</h4><p>A reading can highlight emotions, patterns, choices, and possible next steps. It is best used as a mirror for reflection, not as a fixed prediction.</p></div>
+        <div><span>03</span><h4>Which tarot spread should I choose?</h4><p>Use one card for a quick daily focus, three cards for past-present-future context, and deeper spreads when a situation has several moving parts.</p></div>
+      </div>
+    </section>
+
+    <section class="landing-answer-panel">
+      <span class="section-kicker">Free online tarot reading</span>
+      <h3>What makes Arcana different from a random card generator?</h3>
+      <p>Arcana keeps the reading grounded in your real deck. You shuffle, draw, and place the cards yourself; the app supports interpretation, photo identification, journaling, and review. That makes it useful for beginners learning tarot meanings and experienced readers who want a polished reflection tool.</p>
+      <ul class="answer-list">
+        <li>Use real tarot or playing cards instead of an automatic digital draw.</li>
+        <li>Upload a spread photo so AI can identify cards by position.</li>
+        <li>Choose AI interpretation or classic offline meanings.</li>
+        <li>Save reflections to build a personal tarot journal over time.</li>
+      </ul>
+    </section>
+
+    <section class="plan-preview premium-strip">
       <div>
-        <h3>Daily Reflection</h3>
-        <p>One complimentary reading each day, with guided spreads and a clear summary to sit with afterward.</p>
+        <h3>Is Arcana free?</h3>
+        <p>Arcana includes a free daily tarot reading with guided spreads, AI card identification, and a clear summary you can reflect on afterward.</p>
       </div>
       <div>
-        <h3>Extended Practice</h3>
-        <p>Unlimited readings, journal history, narration, advanced spreads, comparison tools, and priority AI processing.</p>
+        <h3>What does Premium include?</h3>
+        <p>Premium supports unlimited readings, journal history, narration, advanced spreads, comparison tools, and priority AI processing.</p>
       </div>
-    </div>
+    </section>
+
+    <section class="final-cta-panel">
+      <span class="section-kicker">Start your reading</span>
+      <h3>Ask a question, shuffle your deck, and let the cards answer.</h3>
+      <button class="btn btn-primary" onclick="startGuided()">Start a Free Tarot Reading</button>
+    </section>
 
     <div class="footer-links">
       <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</span>
@@ -79,14 +178,14 @@
   <template id="template-concerns">
 <div class="screen" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your Concerns</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question should your tarot reading explore?</h2>
   <div class="onboard">
-    What's weighing on your mind? A focus helps shape the reading, or <strong>skip this</strong> for open guidance.
+    A clear focus helps Arcana interpret the cards in context. You can name a relationship, decision, career question, or emotional pattern, or skip this for open guidance.
   </div>
   <div id="concern-list">
-    <div class="concern-row"><input type="text" placeholder="What's on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
+    <div class="concern-row"><input type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>
   </div>
-  <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">+ Add Another</button>
+  <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
   <div class="tag-chips">
     <span class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</span>
     <span class="tag-chip" onclick="tagConcern(this)">Career</span>
@@ -105,21 +204,21 @@
   <template id="template-card-system">
 <div class="screen" id="screen-card-system">
   <div class="step-dots" id="dots-system"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Card System</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which deck are you reading with?</h2>
   <div class="onboard">
-    Which deck are you holding?
+    Arcana can interpret traditional tarot cards or playing cards used for cartomancy. Choose the deck in your hands so card meanings and suits match your reading.
   </div>
   <div class="card-opt" onclick="selectSystem('tarot',this)">
     <h3>Traditional Tarot</h3>
-    <p>78 cards: 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
+    <p>Use this for a 78-card tarot deck with 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
   </div>
   <div class="card-opt" onclick="selectSystem('playing',this)">
     <h3>Playing Cards</h3>
-    <p>Standard 52-card deck: Hearts, Diamonds, Clubs, and Spades for classic cartomancy readings.</p>
+    <p>Use this for a standard 52-card deck. Arcana reads Hearts, Diamonds, Clubs, and Spades through classic cartomancy meanings.</p>
   </div>
   <div class="card-opt" onclick="selectSystem('playing-joker',this)">
     <h3>Playing Cards + Joker</h3>
-    <p>53 cards. The Joker represents unlimited potential, risk, and trust in the unknown.</p>
+    <p>Use this for a 53-card deck. The Joker adds themes of possibility, risk, surprise, and trust in the unknown.</p>
   </div>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-concerns')">Back</button>
@@ -131,12 +230,12 @@
 <div class="screen" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Choose Your Reading</h2>
-  <div class="onboard compact-onboard">Free readings include Quick Insight, Standard Reading, and Deep Exploration. Advanced readings unlock with Premium.</div>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which tarot spread should you use?</h2>
+  <div class="onboard compact-onboard">Choose the smallest spread that can answer your question. One card is best for a daily focus, three cards give simple context, and six cards explore a situation in more depth.</div>
   <div class="context-panel">
     <div>
-      <h3>Reading Context</h3>
-      <p>Optional, but helpful. Life stage can change how a card should be interpreted.</p>
+      <h3>What context helps a tarot reading?</h3>
+      <p>Life stage is optional, but it helps Arcana phrase the interpretation with appropriate care and perspective.</p>
     </div>
     <div class="context-grid">
       <label>
@@ -156,18 +255,18 @@
   <div class="reading-choices" id="reading-choices">
     <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
-      <p>Fast guidance for a single question</p>
+      <p>Best for a daily tarot reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
     </div>
     <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
-      <p>Past, Present, Future</p>
+      <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
     </div>
     <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
-      <p>Comprehensive insight into a situation</p>
+      <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
     </div>
     <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
@@ -205,16 +304,16 @@
     <div class="reflection-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;color:var(--au-violet)"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l2 2"></path></svg>
     </div>
-    <h2 style="text-align:center;font-size:24px;font-weight:600;margin:20px 0 12px;letter-spacing:.2px;font-family:var(--font-display)">Prepare Your Reading</h2>
+    <h2 style="text-align:center;font-size:24px;font-weight:600;margin:20px 0 12px;letter-spacing:.2px;font-family:var(--font-display)">How should you prepare for a tarot reading?</h2>
     <div class="prepare-list">
-      <p>Find a quiet space.</p>
-      <p>Think about the situation you'd like insight into.</p>
-      <p>Shuffle your deck while focusing on your question.</p>
-      <p>Draw your cards and place them according to the spread.</p>
+      <p>Start by choosing one question or situation you want the cards to reflect back.</p>
+      <p>Find a quiet place where you can shuffle, draw, and photograph your spread clearly.</p>
+      <p>Shuffle your deck while holding the question in mind; the wording can be simple.</p>
+      <p>Draw your cards and place them in the spread positions shown in the next step.</p>
     </div>
     <div class="reflection-breathe">
       <div class="breathe-circle"></div>
-      <span>Breathe and focus...</span>
+      <span>Breathe, ask, and shuffle...</span>
     </div>
   </div>
   <div class="nav-row" style="margin-top:32px">
@@ -226,20 +325,20 @@
   <template id="template-placement">
 <div class="screen" id="screen-card-entry">
   <div class="step-dots" id="dots-entry"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Lay Out Your Cards</h2>
-  <div class="onboard compact-onboard">Use the visual guide to place each card by position. When your spread is ready, upload a clear photo from above or enter the cards manually.</div>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How do you lay out a tarot spread?</h2>
+  <div class="onboard compact-onboard">Place one real card in each position shown below. When the spread is complete, upload a clear photo from above so Arcana can identify the cards, or enter them manually.</div>
 
   <div class="dropped-card-section">
     <div class="toggle-row">
       <div class="toggle" id="drop-toggle" onclick="toggleDrop()"></div>
-      <h4>Did a card fall out during shuffling?</h4>
+      <h4>Did a card fall out while you shuffled?</h4>
     </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A card that drops while shuffling can carry special significance. It may reveal an underlying theme or energy influencing your entire reading.</p>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A dropped or jumper card can be recorded as an extra message. Many readers treat it as an underlying theme rather than part of the main spread.</p>
     <div id="drop-card-entry" style="display:none">
       <div class="card-entry-row">
         <span class="pos-name">Dropped Card</span>
         <button class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
-        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" title="Click to toggle orientation">U</div>
+        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" title="Click to toggle orientation">U</div>
       </div>
     </div>
   </div>
@@ -252,16 +351,16 @@
 
   <div id="tab-guided">
     <div class="onboard">
-      Draw cards <strong>one at a time</strong>. The app guides each position. When finished, <strong>photograph your spread</strong> and AI identifies them.
+      Draw cards <strong>one at a time</strong> from your physical deck. Arcana guides each spread position; when finished, <strong>photograph the whole layout</strong> so AI can identify the cards.
     </div>
     <div id="guided-ritual-prompt"></div>
     <div id="guided-spread-diagram"></div>
     <div id="guided-actions" style="text-align:center;margin-top:12px"></div>
     <div id="guided-photo-section" style="display:none;margin-top:16px">
       <div class="divider" style="margin-bottom:16px"></div>
-      <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards placed. Now photograph your spread.</p>
+      <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards are placed. Take one clear photo from above.</p>
       <div class="upload-zone" id="guided-upload-zone" onclick="document.getElementById('guided-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleGuidedDrop(event)">
-        <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo of your completed spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+        <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
       </div>
       <input type="file" id="guided-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleGuidedUpload(this)">
       <button class="btn btn-primary" id="guided-identify-btn" style="display:none;width:100%;margin-top:8px" onclick="identifyGuidedCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
@@ -272,19 +371,19 @@
 
   <div id="tab-upload" style="display:none">
     <div class="onboard">
-      Take a clear photo from above. Ensure all cards are visible, and avoid shadows or glare.
+      Upload one clear photo from above. Make sure every card is visible, in focus, and not covered by glare.
     </div>
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
-      <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo here<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+      <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a clear spread photo here<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
     </div>
     <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleUpload(this)">
-    <button class="btn btn-primary" id="identify-btn" style="display:none;width:100%" onclick="identifyCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
+    <button class="btn btn-primary" id="identify-btn" style="display:none;width:100%" onclick="identifyCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Tarot Cards with AI</button>
     <div id="upload-results"></div>
   </div>
 
   <div id="tab-manual" style="display:none">
     <div class="onboard">
-      Choose a card from the picker, then set each card <strong>upright</strong> or <strong>reversed</strong>.
+      Choose a card from the picker, then mark it <strong>upright</strong> or <strong>reversed</strong>. Manual entry is useful when a photo is unclear.
     </div>
     <div class="suit-filter" id="suit-filter"></div>
     <div id="manual-entries"></div>
@@ -292,29 +391,29 @@
 
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-spread')">Back</button>
-    <button class="btn btn-primary" onclick="confirmCards()">Review Cards</button>
+    <button class="btn btn-primary" onclick="confirmCards()">Review My Spread</button>
   </div>
 </div>
 </template>
   <template id="template-overview">
 <div class="screen" id="screen-overview">
   <div class="step-dots" id="dots-overview"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Card Overview</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Are these the right cards?</h2>
   <div class="onboard">
-    Your spread at a glance. Tap any card to edit before reading.
+    Review each card and position before generating the reading. If AI identification missed a card or orientation, tap the card to correct it.
   </div>
   <div id="dropped-overview" style="display:none;margin-bottom:16px"></div>
   <div class="overview-grid" id="overview-grid"></div>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-card-entry')">Edit Cards</button>
-    <button class="btn btn-primary" onclick="generateReading()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate Reading</button>
+    <button class="btn btn-primary" onclick="generateReading()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate My Tarot Reading</button>
   </div>
 </div>
 </template>
   <template id="template-results">
 <div class="screen" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your Reading</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your tarot reading</h2>
   <div class="reading-toggle no-print">
     <button class="btn btn-sm" id="btn-ai-read" onclick="switchReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
     <button class="btn btn-sm" id="btn-classic-read" onclick="switchReadingMode('classic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> Classic Reading</button>
@@ -324,12 +423,12 @@
 
   <div class="journal-section no-print" id="journal-section" data-premium-feature="journal">
     <div class="journal-prompt">Reflection</div>
-    <p class="reflection-question">What stood out most to you?</p>
-    <textarea id="journal-entry" class="journal-textarea" placeholder="Write your reflection here..."></textarea>
+    <p class="reflection-question">What message, card, or pattern feels most important right now?</p>
+    <textarea id="journal-entry" class="journal-textarea" placeholder="Write what the reading helped you notice..."></textarea>
     <button class="btn btn-sm" onclick="saveJournal()" style="margin-top:8px">Save Reflection</button>
   </div>
   <div class="nav-row no-print" style="flex-wrap:wrap;gap:8px">
-    <button class="btn" onclick="goScreen('screen-welcome')">New Reading</button>
+    <button class="btn" onclick="goScreen('screen-welcome')">Start Another Reading</button>
     <button class="btn" onclick="shareReading()">Share</button>
     <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
     <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
@@ -338,9 +437,9 @@
 </template>
   <template id="template-history">
 <div class="screen" id="screen-history">
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Reading History</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How can you track tarot readings over time?</h2>
   <div class="onboard">
-    Free history keeps your latest 3 readings on this device. Premium keeps the full reading history with journal notes and comparison.
+    Arcana saves readings on this device so you can revisit card patterns, journal notes, and recurring themes. Free history keeps your latest 3 readings; Premium keeps the full archive with comparison tools.
   </div>
   <div id="history-list"></div>
   <div style="text-align:center;margin-top:16px">
@@ -350,15 +449,15 @@
 </template>
   <template id="template-quick">
 <div class="screen" id="screen-quick">
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Quick Reading</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Upload a tarot spread for an AI reading</h2>
   <div class="onboard">
-    Select your spread below, then upload a photo. AI reads each position with full context.
+    Choose the spread you laid out, upload a clear photo from above, and Arcana will identify the cards by position before generating your reading.
   </div>
-  <input type="text" id="quick-concern" placeholder="Optional: what's on your mind?" style="margin-bottom:16px">
+  <input type="text" id="quick-concern" placeholder="Optional: what question should this reading explore?" style="margin-bottom:16px">
   <div class="context-panel quick-context">
     <div>
-      <h3>Reading Context</h3>
-      <p>Optional, but life stage helps Arcana interpret the cards appropriately.</p>
+      <h3>What context helps the AI reading?</h3>
+      <p>Life stage is optional, but it helps Arcana keep the language relevant, gentle, and age-aware.</p>
     </div>
     <div class="context-grid">
       <label>
@@ -375,14 +474,14 @@
     </div>
     <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
   </div>
-  <div class="quick-step-label">Choose your spread</div>
+  <div class="quick-step-label">Choose the spread you used</div>
   <div class="spread-grid" id="quick-spread-grid"></div>
-  <div class="quick-step-label" style="margin-top:14px">Upload your photo</div>
+  <div class="quick-step-label" style="margin-top:14px">Upload a clear spread photo</div>
   <div class="upload-zone" id="quick-upload-zone" onclick="document.getElementById('quick-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleQuickDrop(event)">
-    <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
+    <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
   </div>
   <input type="file" id="quick-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleQuickUpload(this)">
-  <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Read My Cards</button>
+  <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate My Tarot Reading</button>
   <div id="quick-results"></div>
   <div style="margin-top:16px">
     <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
@@ -393,26 +492,26 @@
 <div class="modal-overlay" id="modal-settings">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
-    <h2>Settings</h2>
+    <h2>Reading Settings</h2>
 
     <div class="settings-section">
-      <h3>Subscription</h3>
+      <h3>How do Premium tarot features unlock?</h3>
       <p id="premium-settings-status" class="settings-status">Free plan active</p>
-      <label>Activation Key</label>
-      <input type="text" id="premium-key-input" placeholder="Enter premium activation key">
+      <label>Premium activation key</label>
+      <input type="text" id="premium-key-input" placeholder="Enter your premium activation key">
       <p id="premium-key-status" class="activation-status"></p>
       <button class="btn btn-sm" onclick="deactivatePremium();renderEntitlementsUI();showToast('Premium deactivated on this device.')">Deactivate Premium</button>
     </div>
 
-    <label>Reading Style</label>
+    <label>AI tarot reading style</label>
     <select id="reading-style">
       <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
     </select>
-    <label>Reading Tone</label>
+    <label>AI reading tone</label>
     <select id="reading-tone">
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
-    <label>Narrator Voice</label>
+    <label>Narrator voice</label>
     <select id="narrator-voice">
       <option value="">Browser default</option>
     </select>
@@ -429,15 +528,16 @@
 <div class="modal-overlay" id="modal-help">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('modal-help')">&times;</button>
-    <h2>Guide</h2>
-    <div class="help-section"><h3>What is Tarot?</h3><p>Tarot is a system of 78 cards used for reflection, insight, and guidance. It's not about predicting the future; it's a tool for exploring your thoughts, feelings, and possibilities.</p></div>
-    <div class="help-section"><h3>Major &amp; Minor Arcana</h3><p>The 22 <strong>Major Arcana</strong> cards represent life's big themes and spiritual lessons, including The Fool, The Tower, and The Star. The 56 <strong>Minor Arcana</strong> cards deal with everyday situations across four suits.</p></div>
-    <div class="help-section"><h3>Suits</h3><p><strong>Wands</strong> = passion, creativity, action. <strong>Cups</strong> = emotions, relationships, intuition. <strong>Swords</strong> = intellect, conflict, truth. <strong>Pentacles</strong> = material world, money, health.</p></div>
-    <div class="help-section"><h3>Court Cards</h3><p><strong>Pages/Jacks</strong> = youth, messages, learning. <strong>Knights</strong> = action, movement, pursuit. <strong>Queens</strong> = maturity, nurturing, mastery. <strong>Kings</strong> = authority, leadership, responsibility.</p></div>
-    <div class="help-section"><h3>Reversed Cards</h3><p>A reversed card appears upside-down. Its meaning is not necessarily bad; it often indicates blocked energy, internalized qualities, or the shadow side of the card's upright meaning.</p></div>
-    <div class="help-section"><h3>Dropped Cards</h3><p>If a card falls out while you're shuffling, pay attention. Many readers believe these jumper cards carry a message your subconscious wants you to see. Arcana lets you record this card separately.</p></div>
-    <div class="help-section"><h3>Spreads</h3><p>A spread is the layout pattern for your cards. Each position has a specific meaning: past, present, future, obstacle, advice, and more. The cards interact with each other through their positions.</p></div>
-    <div class="help-section"><h3>AI vs Classic Readings</h3><p><strong>AI readings</strong> use Google Gemini to weave a personalized narrative. <strong>Classic readings</strong> use pre-written card meanings assembled into a structured interpretation, with no internet required.</p></div>
+    <h2>Tarot Reading Guide</h2>
+    <div class="help-section"><h3>What is tarot?</h3><p>Tarot is a 78-card symbolic system used for reflection, insight, and guidance. A tarot reading does not need to predict a fixed future; it helps you examine a question, notice patterns, and consider possible next steps.</p></div>
+    <div class="help-section"><h3>How does Arcana create an AI tarot reading?</h3><p>Arcana reads the spread you create with your own cards. You choose a spread, draw and place real cards, upload a photo or enter the cards manually, then receive an interpretation based on each card and its position.</p></div>
+    <div class="help-section"><h3>What are the Major and Minor Arcana?</h3><p>The 22 <strong>Major Arcana</strong> cards represent major life themes, turning points, and lessons. The 56 <strong>Minor Arcana</strong> cards describe everyday situations through four suits: Wands, Cups, Swords, and Pentacles.</p></div>
+    <div class="help-section"><h3>What do the tarot suits mean?</h3><p><strong>Wands</strong> often point to action, creativity, and ambition. <strong>Cups</strong> relate to emotion, intuition, and relationships. <strong>Swords</strong> explore thought, truth, conflict, and clarity. <strong>Pentacles</strong> connect to work, money, body, home, and material life.</p></div>
+    <div class="help-section"><h3>What do court cards mean in tarot?</h3><p>Court cards often describe a person, role, attitude, or stage of growth. <strong>Pages</strong> suggest learning and messages, <strong>Knights</strong> suggest movement, <strong>Queens</strong> suggest inner mastery, and <strong>Kings</strong> suggest leadership or responsibility.</p></div>
+    <div class="help-section"><h3>What does a reversed tarot card mean?</h3><p>A reversed card appears upside-down and usually points to blocked, delayed, internalized, or shadow-side energy. It is not automatically negative; it adds nuance to the card's upright meaning.</p></div>
+    <div class="help-section"><h3>What is a dropped or jumper card?</h3><p>A dropped card is a card that falls out while shuffling. Many readers treat it as an extra message or underlying theme, so Arcana lets you record it separately from the main spread.</p></div>
+    <div class="help-section"><h3>Which tarot spread should beginners choose?</h3><p>Beginners should start with one card for a daily focus or three cards for past, present, and future. Larger spreads are better when you already have a clear question and want more detail.</p></div>
+    <div class="help-section"><h3>What is the difference between AI and classic readings?</h3><p><strong>AI readings</strong> use Google Gemini to create a personalized narrative from your cards, spread positions, and optional context. <strong>Classic readings</strong> use built-in card meanings and work offline without an API key.</p></div>
   </div>
 </div>
 </template>

@@ -47,6 +47,7 @@ The redesign is a **theme layer**, not a product rewrite. Preserve the physical-
 Arcana APP/
   index.html                 # Static shell, embedded fallbacks, stylesheet/script tags
   ARCHITECTURE.md            # This file
+  llms.txt                   # AI/LLM-readable project and content summary
   package.json               # Tailwind/TypeScript build scripts only
   package-lock.json          # Locked build-tool dependency versions
   tsconfig.json              # Compiles src/*.ts into js/
@@ -105,6 +106,13 @@ Arcana APP/
     reading-actions.ps1
 ```
 
+Important: most screen templates have **two runtime sources**:
+
+1. External partials in `templates/*.html`
+2. Embedded fallback templates in `index.html`
+
+When changing a template, update both sources or run a deliberate sync step. HTTP preview usually fetches external templates; `file://` usage relies on the embedded fallback templates.
+
 ---
 
 ## Build & Preview
@@ -125,6 +133,15 @@ Generated files that must exist for the static app:
 - `js/ai-identification.js`
 
 The build does **not** bundle the app and does **not** replace the original HTML/templates/global JS runtime.
+
+Additional verification commands used for plain-JS changes:
+
+```powershell
+node --check js\ui.js
+node --check js\reading-engine.js
+```
+
+Use these when editing large global JavaScript files because TypeScript compilation does not parse most runtime files.
 
 ---
 
@@ -191,6 +208,12 @@ settings
 help
 ```
 
+Template editing rule:
+
+- Keep `templates/<name>.html` and the matching `<template id="template-<name>">` in `index.html` synchronized.
+- `templates/results.html` is the guided reading output screen; it includes the reading toggle, `#reading-content`, reflection journal, and post-reading action controls.
+- `templates/quick.html` renders the quick/upload entry screen; quick reading results are inserted dynamically by `quickRead()` in `ui.js`.
+
 ---
 
 ## Core User Flow
@@ -205,7 +228,8 @@ The app should preserve this physical-card workflow:
 6. Take a clear photo of the completed spread and upload it, or enter cards manually.
 7. Let AI identify/analyze the spread, or use classic offline interpretation.
 8. Read or listen to results.
-9. Write a journal entry to track progress and build a relationship with the deck.
+9. Save, share, print, or start again.
+10. Write a reflection journal entry to track progress and build a relationship with the deck.
 
 The app must not become a random-card generator unless explicitly requested as a new product feature.
 
@@ -240,6 +264,12 @@ screen-welcome
   -> screen-quick         choose spread + upload photo; AI reads inline
 ```
 
+Quick mode still uses the same reading/share/journal helpers as guided mode where possible:
+
+- `getReadingSpread()` resolves `state.quickSpreadId` before `state.spreadId` when `state.mode === 'quick'`.
+- `quickRead()` renders `#quick-reading-content`, the post-reading action controls, and the same premium reflection journal component used by guided readings.
+- Quick/upload readings must expose `Share`, `Print`, and `Save Reading` after the narrative is generated.
+
 ### Utility Screens
 
 - `screen-history`: premium reading archive and journal history
@@ -264,6 +294,7 @@ let state = {
   uploadedImage:  string | null,
   narrative:      string,
   readingMode:    'ai' | 'classic',
+  readerLifeStage:string,
   guidedStep:     number,
   reversals:      boolean,
   quickSpreadId:  string | null
@@ -351,6 +382,14 @@ Core visible spread choices in default guided mode:
 
 Advanced spreads are kept behind the advanced/premium panel.
 
+Canonical visible spread ids are controlled by `ACTIVE_SPREAD_IDS` in `ui.js`:
+
+```js
+['one-card', 'three-card', 'six-card', 'celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship']
+```
+
+This allow-list prevents legacy duplicate spread definitions from appearing in quick spread selection and spread-reference prompts.
+
 ---
 
 ## Card Entry Screen
@@ -376,6 +415,9 @@ Advanced spreads are kept behind the advanced/premium panel.
 - One row per spread position.
 - Card picker/search uses the active deck.
 - Orientation toggle supports upright/reversed.
+- Orientation buttons carry `data-pos` and write back to `state.cards[positionId].orientation` through `syncOrientationState(el)`.
+- `confirmCards()` reads picker button selections as well as legacy text inputs, so reversed cards persist even when the user chooses cards through the picker.
+- Dropped/jumper card orientation uses the same `data-pos="drop"` pattern and stores to `state.droppedCard.orientation`.
 - Manual review remains important because photo recognition can be imperfect.
 
 ---
@@ -439,6 +481,73 @@ The result is stored in `state.narrative` and rendered as markdown sections.
 
 ---
 
+## Post-Reading Reflection & Actions
+
+The guided reading result screen is defined in `templates/results.html` and embedded in `index.html`.
+
+The post-reading screen includes:
+
+- Reading mode controls: AI, Classic, Voice
+- `#reading-content`: generated reading markdown rendered by `reading-engine.js`
+- `.journal-section`: premium reflection journal card
+- `.reading-actions`: post-reading Save/Share/Print/Start controls
+
+### Reflection Journal
+
+The reflection journal is designed as a premium post-reading capture moment, not a generic textarea.
+
+Core elements:
+
+- `.journal-badge`: "Premium Journal" badge
+- `.journal-prompt`: "Reflection"
+- `.reflection-question`: short prompt copy
+- `.reflection-chips`: guided prompt chips
+- `.journal-textarea`: reflection input
+- `.journal-save-btn`: disabled until textarea has content
+- `.journal-save-status`: saved confirmation text
+
+Behavior lives in `ui.js`:
+
+- `renderJournalSection(container)` injects the same journal component for quick/upload readings.
+- `wireJournalSection(section)` enables/disables the save button based on text entry.
+- `useReflectionPrompt(btn)` inserts a prompt chip into the textarea.
+- `saveJournal()` writes to `localStorage` key `arcana-journal` and shows "Saved to your journal".
+
+`renderReading()` in `reading-engine.js` clears the static journal textarea and calls `wireJournalSection(jSec)` when a guided reading is rendered.
+
+### Post-Reading Actions
+
+The improved action hierarchy is:
+
+1. `Save Reading` as the primary full-width action
+2. Secondary actions: `Share`, `Print`, `Start Again`
+
+The mobile layout is intentionally not a four-equal-button row because long labels clip on narrow screens.
+
+### Share Canvas
+
+Sharing is handled in `ui.js`:
+
+- `getSharePayload()` builds a payload from `state.cards`, `state.narrative`, and `getReadingSpread()`.
+- `showShareModal(data)` opens the share preview modal.
+- `renderShareCanvas(data)` draws a canvas preview.
+- `getShareSlots(data)` maps spread layouts to card positions.
+
+Supported share slot layouts include:
+
+- `row`
+- `celtic-simple`
+- `celtic`
+- `yearly`
+- `romany`
+- `two-pathways`
+- `relationship`
+- generic grid fallback
+
+Advanced spreads must use explicit share slot maps where possible; otherwise the canvas becomes visually misleading or cramped.
+
+---
+
 ## AI Layer
 
 `ai.js` contains the Gemini API client.
@@ -485,6 +594,33 @@ Reading records include:
 }
 ```
 
+Journal records in `arcana-journal` are intentionally lightweight:
+
+```js
+{
+  date: string,
+  spread: string,
+  text: string
+}
+```
+
+Saved reading history (`arcana_readings`) and reflection journal entries (`arcana-journal`) are separate stores.
+
+---
+
+## AEO / Search Metadata
+
+The landing page copy is written with Answer Engine Optimization in mind:
+
+- Question-based headings and direct answer copy
+- Clear "what is Arcana / how it works / is it free" sections
+- Hard-coded HTML copy in templates and embedded fallbacks
+- `meta description` and `meta keywords` in `index.html`
+- JSON-LD `SoftwareApplication` and `FAQPage` schema in `index.html`
+- `llms.txt` at the project root for AI/LLM-readable summary and important routes/content
+
+Do not hide essential product explanations behind client-only interactions. Important answer-oriented copy should remain readable in the static HTML.
+
 ---
 
 ## CSS Architecture
@@ -498,8 +634,10 @@ The theme uses:
 - Star and moon-like CSS atmosphere
 - Gold, violet, and teal accents
 - Cormorant Garamond display typography
+- Clean sans-serif body typography
 - Larger negative space and slow transitions
 - 8px border radius for premium, restrained UI surfaces
+- Dedicated premium treatment for the post-reading reflection journal and reading action bar
 
 `onboarding.css`, `reading.css`, and `settings.css` remain stubs unless the styling is later split by domain.
 
@@ -519,6 +657,16 @@ npm test
 ```
 
 The test command also compiles TypeScript first.
+
+`reading-actions.ps1` also checks several architecture-sensitive contracts:
+
+- Shared `getReadingSpread()` behavior for guided and quick flows
+- Quick/upload share action availability
+- Active spread allow-list usage
+- Card picker/orientation persistence hooks
+- Advanced share layout support
+- Reflection prompt chips and journal save-state wiring
+- Public-domain tarot art helper availability
 
 ---
 
@@ -543,3 +691,9 @@ The test command also compiles TypeScript first.
 9. **Manual review matters**: AI identification can be wrong, especially on larger spreads. The UI must preserve review/correction.
 
 10. **Theme is layered**: Premium visual changes should prefer the theme layer and existing class names before changing product markup or flow.
+
+11. **Template sync matters**: For user-facing template changes, update both `templates/*.html` and embedded `<template>` fallbacks in `index.html`.
+
+12. **Plain JS must parse**: Run `node --check` on edited global JS files. Build/type checks do not cover most runtime JavaScript.
+
+13. **Post-reading actions must not clip**: Mobile reading actions should prioritize `Save Reading` and keep secondary actions short enough for narrow screens.

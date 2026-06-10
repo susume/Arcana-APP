@@ -1281,12 +1281,16 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
     results.appendChild(content);
     renderReadingInto(content,narrative);
     results.insertAdjacentHTML('beforeend',`
-      <div class="nav-row" style="margin-top:16px">
-        <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
-        <button class="btn" onclick="shareReading()">Share</button>
-        <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
+      <div class="reading-actions no-print">
+        <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
+        <div class="reading-actions-secondary">
+          <button class="btn" onclick="shareReading()">Share</button>
+          <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
+          <button class="btn" onclick="goScreen('screen-welcome')">Start Again</button>
+        </div>
       </div>`);
     renderJournalSection(results);
+    wireJournalSection(results.querySelector('.journal-section'));
     renderEntitlementsUI();
   }catch(e){
     results.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
@@ -1443,11 +1447,53 @@ function renderJournalSection(container){
   section.className='journal-section no-print';
   section.dataset.premiumFeature='journal';
   section.innerHTML=`
+    <div class="journal-orbit" aria-hidden="true"></div>
+    <div class="journal-topline">
+      <span class="journal-badge">Premium Journal</span>
+      <span class="journal-moon" aria-hidden="true"></span>
+    </div>
     <div class="journal-prompt">Reflection</div>
-    <p class="reflection-question">What stood out most to you?</p>
-    <textarea class="journal-textarea" placeholder="Write your reflection here..."></textarea>
-    <button class="btn btn-sm" onclick="saveJournal()" style="margin-top:8px">Save Reflection</button>`;
+    <p class="reflection-question">Before the moment passes, write down the message you want to remember.</p>
+    <div class="reflection-chips" aria-label="Reflection prompts">
+      <button type="button" onclick="useReflectionPrompt(this)">What surprised me?</button>
+      <button type="button" onclick="useReflectionPrompt(this)">Which card keeps echoing?</button>
+      <button type="button" onclick="useReflectionPrompt(this)">What action will I take?</button>
+    </div>
+    <textarea class="journal-textarea" placeholder="I want to remember..."></textarea>
+    <div class="journal-actions">
+      <button class="btn btn-primary journal-save-btn" onclick="saveJournal()" disabled>Save Reflection</button>
+      <span class="journal-save-status" aria-live="polite"></span>
+    </div>`;
   container.appendChild(section);
+  wireJournalSection(section);
+}
+
+function wireJournalSection(section){
+  if(!section)return;
+  const textarea=section.querySelector('.journal-textarea');
+  const button=section.querySelector('.journal-save-btn');
+  const status=section.querySelector('.journal-save-status');
+  if(!textarea||!button)return;
+  const sync=()=>{
+    const hasText=textarea.value.trim().length>0;
+    button.disabled=!hasText;
+    if(status&&!hasText)status.textContent='';
+  };
+  textarea.removeEventListener('input',textarea._arcanaJournalSync||(()=>{}));
+  textarea._arcanaJournalSync=sync;
+  textarea.addEventListener('input',sync);
+  sync();
+}
+
+function useReflectionPrompt(btn){
+  const section=btn.closest('.journal-section');
+  const textarea=section&&section.querySelector('.journal-textarea');
+  if(!textarea)return;
+  const prompt=btn.textContent.trim();
+  const prefix=textarea.value.trim()?'\n\n':'';
+  textarea.value+=prefix+prompt+'\n';
+  textarea.focus();
+  textarea.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
 function saveJournal(){
@@ -1463,5 +1509,7 @@ function saveJournal(){
   history.unshift(entry);
   localStorage.setItem('arcana-journal',JSON.stringify(history.slice(0,50)));
   const btn=event&&event.currentTarget;
-  if(btn){const orig=btn.textContent;btn.textContent='Saved!';setTimeout(()=>{btn.textContent=orig},2000);}
+  const status=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-save-status') : null;
+  if(status)status.textContent='Saved to your journal';
+  if(btn){const orig=btn.textContent;btn.textContent='Saved';setTimeout(()=>{btn.textContent=orig;if(status)status.textContent=''},2200);}
 }

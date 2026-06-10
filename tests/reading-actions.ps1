@@ -6,6 +6,7 @@ $storage = Get-Content -LiteralPath (Join-Path $root 'js/storage.js') -Raw
 $subscription = Get-Content -LiteralPath (Join-Path $root 'js/subscription.js') -Raw
 $css = Get-Content -LiteralPath (Join-Path $root 'css/main.css') -Raw
 $placement = Get-Content -LiteralPath (Join-Path $root 'templates/placement.html') -Raw
+$results = Get-Content -LiteralPath (Join-Path $root 'templates/results.html') -Raw
 $cardArt = Get-Content -LiteralPath (Join-Path $root 'js/card-art.js') -Raw -ErrorAction SilentlyContinue
 $index = Get-Content -LiteralPath (Join-Path $root 'index.html') -Raw
 
@@ -47,6 +48,11 @@ Assert-Contains $ui 'onclick="shareReading()"' 'Expected quick upload readings t
 Assert-Contains $ui "data.layout==='romany'" 'Expected share canvas to understand the Romany advanced spread layout.'
 Assert-Contains $ui "data.layout==='two-pathways'" 'Expected share canvas to understand the Two Pathways advanced spread layout.'
 Assert-Contains $ui "data.layout==='relationship'" 'Expected share canvas to understand the Relationship advanced spread layout.'
+Assert-Contains $ui 'function useReflectionPrompt(' 'Expected reflection prompt chips to insert guided journal prompts.'
+Assert-Contains $ui 'function wireJournalSection(' 'Expected reflection save button state to be wired for static and quick readings.'
+Assert-Contains $results 'journal-badge' 'Expected guided reading reflection panel to show the premium journal badge.'
+Assert-Contains $results 'reflection-chips' 'Expected guided reading reflection panel to include prompt chips.'
+Assert-Contains $index 'reading-actions-secondary' 'Expected mobile reading actions to use the improved non-clipping action layout.'
 Assert-NotContains $ui '${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</button>' 'Expected tarot picker filter buttons to omit suit glyphs.'
 Assert-NotContains $ui '${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</span>' 'Expected manual tarot suit filters to omit suit glyphs.'
 Assert-NotContains $ui '${PLAYING_SYM[s]} ${s.charAt(0).toUpperCase()+s.slice(1)}</button>' 'Expected playing-card picker filter buttons to omit suit glyphs.'

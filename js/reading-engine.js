@@ -252,6 +252,10 @@ function renderReading(text){
   content.innerHTML=html;
   enhanceReadingOutput();
   const jSec=document.getElementById('journal-section');
-  if(jSec){jSec.style.display='block';document.getElementById('journal-entry').value=''}
+  if(jSec){
+    jSec.style.display='block';
+    document.getElementById('journal-entry').value='';
+    if(typeof wireJournalSection==='function')wireJournalSection(jSec);
+  }
   renderEntitlementsUI();
 }

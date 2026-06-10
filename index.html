@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -422,16 +422,31 @@
   <div id="reading-content"></div>
 
   <div class="journal-section no-print" id="journal-section" data-premium-feature="journal">
+    <div class="journal-orbit" aria-hidden="true"></div>
+    <div class="journal-topline">
+      <span class="journal-badge">Premium Journal</span>
+      <span class="journal-moon" aria-hidden="true"></span>
+    </div>
     <div class="journal-prompt">Reflection</div>
-    <p class="reflection-question">What message, card, or pattern feels most important right now?</p>
-    <textarea id="journal-entry" class="journal-textarea" placeholder="Write what the reading helped you notice..."></textarea>
-    <button class="btn btn-sm" onclick="saveJournal()" style="margin-top:8px">Save Reflection</button>
+    <p class="reflection-question">Before the moment passes, write down the message you want to remember.</p>
+    <div class="reflection-chips" aria-label="Reflection prompts">
+      <button type="button" onclick="useReflectionPrompt(this)">What surprised me?</button>
+      <button type="button" onclick="useReflectionPrompt(this)">Which card keeps echoing?</button>
+      <button type="button" onclick="useReflectionPrompt(this)">What action will I take?</button>
+    </div>
+    <textarea id="journal-entry" class="journal-textarea" placeholder="I want to remember..."></textarea>
+    <div class="journal-actions">
+      <button class="btn btn-primary journal-save-btn" onclick="saveJournal()" disabled>Save Reflection</button>
+      <span class="journal-save-status" aria-live="polite"></span>
+    </div>
   </div>
-  <div class="nav-row no-print" style="flex-wrap:wrap;gap:8px">
-    <button class="btn" onclick="goScreen('screen-welcome')">Start Another Reading</button>
-    <button class="btn" onclick="shareReading()">Share</button>
-    <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
-    <button class="btn btn-primary" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
+  <div class="reading-actions no-print">
+    <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
+    <div class="reading-actions-secondary">
+      <button class="btn" onclick="shareReading()">Share</button>
+      <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
+      <button class="btn" onclick="goScreen('screen-welcome')">Start Again</button>
+    </div>
   </div>
 </div>
 </template>
@@ -561,7 +576,7 @@
     "id": "three-card",
     "name": "Three Card (Past/Present/Future)",
     "category": "Daily",
-    "description": "Past Â· Present Â· Future",
+    "description": "Past E Present E Future",
     "cardCount": 3,
     "positions": [
       {
@@ -975,7 +990,7 @@
     "id": "standardReading",
     "name": "Standard Reading",
     "category": "Classic",
-    "description": "Past Â· Present Â· Future",
+    "description": "Past E Present E Future",
     "cardCount": 3,
     "positions": [
       {
@@ -1000,7 +1015,7 @@
     "id": "deepExploration",
     "name": "Deep Exploration",
     "category": "Classic",
-    "description": "Current Situation Â· Challenge Â· Past Influence Â· Near Future Â· Advice Â· Outcome",
+    "description": "Current Situation E Challenge E Past Influence E Near Future E Advice E Outcome",
     "cardCount": 6,
     "positions": [
       {

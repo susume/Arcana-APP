@@ -1,7 +1,4 @@
-// ===== SUBSCRIPTION / ENTITLEMENTS =====
-const ARCANA_ACTIVATION_KEYS = [
-  'ARCANA-FOUNDER-4F99-2026'
-];
+// ===== PREMIUM / ENTITLEMENTS =====
 const FREE_DAILY_READING_LIMIT = 1;
 const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship'];
 
@@ -35,10 +32,19 @@ function isPremium(){
   return getSubscription().tier === 'premium';
 }
 
-function activatePremiumKey(key){
+async function activatePremiumKey(key){
   const clean = normalizeActivationKey(key);
-  if(!ARCANA_ACTIVATION_KEYS.includes(clean)) return false;
-  saveSubscription({tier:'premium', key:clean, activatedAt:new Date().toISOString()});
+  if(!clean) throw new Error('Enter your Gumroad license key.');
+  const url = getActivationApiUrl();
+  if(!url) throw new Error('Activation service is not configured yet.');
+  const resp = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({licenseKey:clean})
+  });
+  const data = await resp.json().catch(()=>({}));
+  if(!resp.ok || !data.isPremium) throw new Error(data.error || 'That Gumroad license key was not recognized.');
+  saveSubscription({tier:'premium', key:clean, source:data.source||'gumroad', activatedAt:data.activatedAt||new Date().toISOString()});
   return true;
 }
 
@@ -127,7 +133,7 @@ function showUpgradeModal(reason){
   modal.innerHTML = `
     <div class="modal upgrade-modal">
       <button class="close-btn" onclick="closeModal('modal-upgrade')">&times;</button>
-      <div class="plan-pill">Premium - $4.99/month</div>
+      <div class="plan-pill">Premium - $29 lifetime unlock</div>
       <h2>${featureTitle(reason)}</h2>
       ${countLine}
       <div class="upgrade-grid">
@@ -139,9 +145,10 @@ function showUpgradeModal(reason){
         <span>Reading comparison</span>
         <span>Priority AI processing</span>
       </div>
+      ${getGumroadProductUrl()?`<p class="upgrade-note">One-time payment. Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Buy Premium - $29</button>`:''}
       <div class="activation-box">
-        <label>Activation Key</label>
-        <input id="activation-key-input" type="text" placeholder="Enter activation key">
+        <label>Gumroad License Key</label>
+        <input id="activation-key-input" type="text" placeholder="Paste your Gumroad license key">
         <button class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
         <p id="activation-status" class="activation-status"></p>
       </div>
@@ -149,17 +156,37 @@ function showUpgradeModal(reason){
   modal.classList.add('open');
 }
 
-function submitActivationKey(){
+async function submitActivationKey(){
   const input = document.getElementById('activation-key-input');
   const status = document.getElementById('activation-status');
-  if(activatePremiumKey(input.value)){
-    status.textContent = 'Premium activated on this device.';
+  try{
+    status.textContent = 'Verifying Gumroad license key...';
+    await activatePremiumKey(input.value);
+    status.textContent = 'Premium activated on this browser.';
     status.style.color = 'var(--success)';
     renderEntitlementsUI();
     setTimeout(() => closeModal('modal-upgrade'), 650);
-  }else{
-    status.textContent = 'That activation key was not recognized.';
+  }catch(e){
+    status.textContent = e.message || 'That Gumroad license key was not recognized.';
     status.style.color = 'var(--danger)';
+  }
+}
+
+async function submitSettingsActivationKey(){
+  const input=document.getElementById('premium-key-input');
+  const status=document.getElementById('premium-key-status');
+  if(!input||!input.value.trim()){
+    if(status)status.textContent='Paste your Gumroad license key first.';
+    return;
+  }
+  try{
+    if(status){status.textContent='Verifying license key...';status.style.color='var(--muted)';}
+    await activatePremiumKey(input.value);
+    if(status){status.textContent='Premium activated on this browser.';status.style.color='var(--success)';}
+    input.value='';
+    renderEntitlementsUI();
+  }catch(e){
+    if(status){status.textContent=e.message||'Activation failed.';status.style.color='var(--danger)';}
   }
 }
 

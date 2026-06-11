@@ -4,12 +4,30 @@
     <h2>Reading Settings</h2>
 
     <div class="settings-section">
-      <h3>How do Premium tarot features unlock?</h3>
+      <h3>Premium Access</h3>
       <p id="premium-settings-status" class="settings-status">Free plan active</p>
-      <label>Premium activation key</label>
-      <input type="text" id="premium-key-input" placeholder="Enter your premium activation key">
+      <p class="settings-note">Premium is a one-time $29 lifetime unlock for unlimited readings, advanced spreads, journal history, narration, and comparison tools.</p>
+      <label>Gumroad license key</label>
+      <input type="text" id="premium-key-input" placeholder="Paste your Gumroad license key">
       <p id="premium-key-status" class="activation-status"></p>
-      <button class="btn btn-sm" onclick="deactivatePremium();renderEntitlementsUI();showToast('Premium deactivated on this device.')">Deactivate Premium</button>
+      <div class="settings-actions">
+        <button class="btn btn-primary btn-sm" onclick="submitSettingsActivationKey()">Activate Premium</button>
+        <button class="btn btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Buy Premium - $29</button>
+        <button class="btn btn-sm" onclick="deactivatePremium();renderEntitlementsUI();showToast('Premium deactivated on this browser.')">Deactivate on this browser</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>AI Configuration</h3>
+      <p class="settings-note">Use your own Google Gemini API key for AI readings and photo identification. Arcana saves it only in this browser.</p>
+      <label>Gemini API key</label>
+      <input type="password" id="gemini-key-input" placeholder="Paste your Gemini API key">
+      <p id="gemini-key-status" class="activation-status"></p>
+      <div class="settings-actions">
+        <button class="btn btn-primary btn-sm" onclick="testAndSaveGeminiKey()">Test & Save Key</button>
+        <button class="btn btn-sm" onclick="removeGeminiKey()">Remove Key</button>
+        <button class="btn btn-sm" onclick="openGeminiKeyGuide()">How to get a free Gemini API key</button>
+      </div>
     </div>
 
     <label>AI tarot reading style</label>

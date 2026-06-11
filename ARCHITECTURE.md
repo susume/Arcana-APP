@@ -273,7 +273,7 @@ Quick mode still uses the same reading/share/journal helpers as guided mode wher
 ### Utility Screens
 
 - `screen-history`: premium reading archive and journal history
-- `modal-settings`: API key, reading style, reading tone
+- `modal-settings`: Premium activation, Gemini API key, reading style, reading tone
 - `modal-help`: tarot guide and FAQ
 
 ---
@@ -548,6 +548,26 @@ Advanced spreads must use explicit share slot maps where possible; otherwise the
 
 ---
 
+## Monetization And Premium Activation
+
+Arcana Premium is a one-time $29 lifetime unlock. Gumroad issues a unique license key for each purchase, and the browser verifies that key through the Cloudflare Worker before saving local premium state.
+
+The Worker exposes:
+
+- `POST /api/activate`: verifies a Gumroad license key with Gumroad's license API, stores activation metadata in Cloudflare KV when `ARCANA_LICENSES` is bound, and returns `isPremium: true` for valid purchases.
+- `POST /api/gumroad/webhook`: stores Gumroad sale/refund metadata for bookkeeping and future revocation support.
+
+Worker deployment expects:
+
+- `GUMROAD_PRODUCT_ID`: Gumroad product id for the $29 Premium product.
+- `ARCANA_LICENSES`: Cloudflare KV namespace binding for license/event metadata.
+- Optional `GUMROAD_WEBHOOK_SECRET`: shared webhook secret if configured.
+- Optional `GOOGLE_API_KEY`: only needed if retaining the old Arcana AI proxy fallback.
+
+The static app stores premium state in `arcana_subscription` after activation. There is no account system or server-side user profile.
+
+---
+
 ## AI Layer
 
 `ai.js` contains the Gemini API client.
@@ -556,6 +576,8 @@ Advanced spreads must use explicit share slot maps where possible; otherwise the
 
 - Sends text-only or multimodal text+image requests.
 - Adds `inline_data` when `imageData` is provided.
+- Prefers an explicit or saved user Gemini API key and sends it with the `x-goog-api-key` header.
+- Falls back to the optional Arcana AI proxy only when no user key is available and a proxy URL is configured.
 - Handles model fallback and retry behavior.
 - Handles API key validation and rate-limit messaging.
 
@@ -570,7 +592,8 @@ All persistence is `localStorage`.
 | Key | Contents | Notes |
 |---|---|---|
 | `arcana_autosave` | `{ state, timestamp }` | Expires after 1 hour |
-| `arcana_settings` | `{ geminiKey, readingStyle, readingTone }` | Persists indefinitely |
+| `arcana_settings` | `{ geminiKey, readingStyle, readingTone, narratorVoice }` | Gemini key and reading preferences saved locally in this browser |
+| `arcana_subscription` | `{ tier, key, source, activatedAt }` | Premium state after Gumroad license verification |
 | `arcana_readings` | Reading history records | Capped at 50 |
 | `arcana-journal` | Journal entries | Capped at 50 |
 
@@ -686,7 +709,7 @@ The test command also compiles TypeScript first.
 
 7. **Mutable singleton state**: No framework reactivity. UI updates are imperative.
 
-8. **API key in localStorage**: Gemini key is stored in plaintext in `arcana_settings`; users should use a dedicated key.
+8. **API key in localStorage**: Gemini key is stored in plaintext in `arcana_settings`; users should use a dedicated key and can revoke it in Google AI Studio.
 
 9. **Manual review matters**: AI identification can be wrong, especially on larger spreads. The UI must preserve review/correction.
 

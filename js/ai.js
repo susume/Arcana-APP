@@ -2,18 +2,22 @@
 const GEMINI_MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-3.5-flash','gemini-3.1-flash-lite'];
 
 function hasAIConfiguration(){
-  return !!(getAIProxyUrl() || getGoogleApiKey());
+  return !!(getSavedGeminiKey() || getGoogleApiKey() || getAIProxyUrl());
 }
 
 function requireAIConfiguration(){
   if(hasAIConfiguration()) return true;
-  throw new Error('Arcana AI is not configured yet. Set ARCANA_AI_PROXY_URL in js/config.js after deploying the private AI proxy.');
+  throw new Error('Arcana AI is not configured yet. Open Settings and add your Gemini API key.');
 }
 
 function requireGoogleApiKey(){
-  const key=getGoogleApiKey();
-  if(!key)throw new Error('Arcana AI is not configured for direct development access. Use ARCANA_AI_PROXY_URL for production.');
+  const key=getSavedGeminiKey() || getGoogleApiKey();
+  if(!key)throw new Error('Open Settings and add your Gemini API key.');
   return key;
+}
+
+function getSavedGeminiKey(){
+  return loadSettings().geminiKey || '';
 }
 
 async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
@@ -24,14 +28,60 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
     parts.push({inline_data:{mime_type:mime,data:base64}});
   }
   const body=JSON.stringify({contents:[{parts}]});
-  const headers={'Content-Type':'application/json'};
-  const proxyUrl=getAIProxyUrl();
+  apiKey=apiKey || getSavedGeminiKey() || getGoogleApiKey();
 
+  if(apiKey){
+    const directHeaders={'Content-Type':'application/json','x-goog-api-key':apiKey};
+    for(let m=0;m<GEMINI_MODELS.length;m++){
+      const model=GEMINI_MODELS[m];
+      const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      for(let attempt=0;attempt<2;attempt++){
+        if(statusEl)statusEl.textContent=`Trying ${model}${attempt>0?' (retry)':''}...`;
+        const resp=await fetch(url,{method:'POST',headers:directHeaders,body});
+        if(resp.ok){
+          const data=await resp.json();
+          return data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
+        }
+        if(resp.status===429){
+          const errText=await resp.text();
+          const isZeroQuota=errText.includes('limit: 0');
+          if(isZeroQuota){
+            if(m<GEMINI_MODELS.length-1){
+              if(statusEl)statusEl.textContent=`${model} has no quota. Trying ${GEMINI_MODELS[m+1]}...`;
+              break;
+            }
+            throw new Error(`All models rate limited (limit: 0). Your API key may not have free tier access. Try creating a new key in a new project at aistudio.google.com`);
+          }
+          let wait=15;
+          const delayMatch=errText.match(/retryDelay.*?(\d+)/);
+          if(delayMatch)wait=Math.min(parseInt(delayMatch[1])+2,45);
+          if(attempt===0){
+            if(statusEl)statusEl.textContent=`Rate limited on ${model}. Waiting ${wait}s...`;
+            await countdown(wait,statusEl,model);
+            continue;
+          }
+          if(m<GEMINI_MODELS.length-1){
+            if(statusEl)statusEl.textContent=`${model} quota exhausted. Trying ${GEMINI_MODELS[m+1]}...`;
+            break;
+          }
+          throw new Error(`All models rate limited. Please wait a minute and try again.`);
+        }
+        const e=await resp.text();
+        if(resp.status===400&&m<GEMINI_MODELS.length-1)break;
+        if(resp.status===403)throw new Error('API key invalid or Generative Language API not enabled. Go to aistudio.google.com/apikey and create a new key in a new project.');
+        if(m<GEMINI_MODELS.length-1)break;
+        throw new Error(`API error ${resp.status}: ${e.slice(0,120)}`);
+      }
+    }
+    throw new Error('All models failed. Please try again later.');
+  }
+
+  const proxyUrl=getAIProxyUrl();
   if(proxyUrl){
     if(statusEl)statusEl.textContent='Contacting Arcana AI...';
     const resp=await fetch(proxyUrl,{
       method:'POST',
-      headers,
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({prompt,imageData})
     });
     const data=await resp.json().catch(()=>({}));
@@ -39,53 +89,14 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
     return data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
   }
 
-  if(!apiKey)apiKey=requireGoogleApiKey();
+  requireGoogleApiKey();
+  throw new Error('Arcana AI is not configured yet. Open Settings and add your Gemini API key.');
+}
 
-  for(let m=0;m<GEMINI_MODELS.length;m++){
-    const model=GEMINI_MODELS[m];
-    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    for(let attempt=0;attempt<2;attempt++){
-      if(statusEl)statusEl.textContent=`Trying ${model}${attempt>0?' (retry)':''}...`;
-      const resp=await fetch(url,{method:'POST',headers,body});
-      if(resp.ok){
-        const data=await resp.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
-      }
-      if(resp.status===429){
-        const errText=await resp.text();
-        const isZeroQuota=errText.includes('limit: 0');
-        // If limit is 0, this model has no quota at all  - skip immediately to next model
-        if(isZeroQuota){
-          if(m<GEMINI_MODELS.length-1){
-            if(statusEl)statusEl.textContent=`${model} has no quota. Trying ${GEMINI_MODELS[m+1]}...`;
-            break;
-          }
-          throw new Error(`All models rate limited (limit: 0). Your API key may not have free tier access. Try creating a new key in a new project at aistudio.google.com`);
-        }
-        // Temporary rate limit  - wait and retry once
-        let wait=15;
-        const delayMatch=errText.match(/retryDelay.*?(\d+)/);
-        if(delayMatch)wait=Math.min(parseInt(delayMatch[1])+2,45);
-        if(attempt===0){
-          if(statusEl)statusEl.textContent=`Rate limited on ${model}. Waiting ${wait}s...`;
-          await countdown(wait,statusEl,model);
-          continue;
-        }
-        if(m<GEMINI_MODELS.length-1){
-          if(statusEl)statusEl.textContent=`${model} quota exhausted. Trying ${GEMINI_MODELS[m+1]}...`;
-          break;
-        }
-        throw new Error(`All models rate limited. Please wait a minute and try again.`);
-      }
-      // Other error (400, 403, etc)
-      const e=await resp.text();
-      if(resp.status===400&&m<GEMINI_MODELS.length-1)break; // model doesn't exist, try next
-      if(resp.status===403)throw new Error('API key invalid or Generative Language API not enabled. Go to aistudio.google.com/apikey and create a new key in a new project.');
-      if(m<GEMINI_MODELS.length-1)break;
-      throw new Error(`API error ${resp.status}`);
-    }
-  }
-  throw new Error('All models failed. Please try again later.');
+async function testApiKey(key){
+  const result=await callGemini('Reply with the single word Arcana.', key, null, null);
+  if(!result)throw new Error('This key could not be validated.');
+  return true;
 }
 
 async function countdown(secs,statusEl,model){

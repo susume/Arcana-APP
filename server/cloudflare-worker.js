@@ -2,6 +2,8 @@ const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-
 const RETRYABLE_GEMINI_STATUSES = [429, 500, 502, 503, 504];
 const MAX_MODEL_ATTEMPTS = 2;
 const GUMROAD_LICENSE_VERIFY_URL = 'https://api.gumroad.com/v2/licenses/verify';
+const ARCANA_GUMROAD_PRODUCT_ID = 'HOp54WHc-rZtK8nTrqtFcg==';
+const ARCANA_GUMROAD_SELLER_ID = 'dNW90VHgyFlXSIHD7Xr6Sw==';
 
 function corsHeaders(origin) {
   return {
@@ -58,7 +60,8 @@ function purchaseIsValid(purchase) {
 
 async function handleActivate(request, env, origin) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, origin);
-  if (!env.GUMROAD_PRODUCT_ID) return json({ error: 'GUMROAD_PRODUCT_ID is not configured.' }, 500, origin);
+  const gumroadProductId = env.GUMROAD_PRODUCT_ID || ARCANA_GUMROAD_PRODUCT_ID;
+  if (!gumroadProductId) return json({ error: 'GUMROAD_PRODUCT_ID is not configured.' }, 500, origin);
 
   const body = await parseBody(request).catch(() => null);
   if (!body) return json({ error: 'Invalid request body.' }, 400, origin);
@@ -67,7 +70,7 @@ async function handleActivate(request, env, origin) {
   if (!licenseKey) return json({ error: 'Enter your Gumroad license key.' }, 400, origin);
 
   const form = new URLSearchParams();
-  form.set('product_id', env.GUMROAD_PRODUCT_ID);
+  form.set('product_id', gumroadProductId);
   form.set('license_key', licenseKey);
   form.set('increment_uses_count', 'false');
 
@@ -89,7 +92,7 @@ async function handleActivate(request, env, origin) {
     activatedAt,
     purchaseId: purchase.id || '',
     email: purchase.email || '',
-    productId: purchase.product_id || env.GUMROAD_PRODUCT_ID,
+    productId: purchase.product_id || gumroadProductId,
     refunded: !!purchase.refunded,
     chargebacked: !!purchase.chargebacked
   };
@@ -104,6 +107,11 @@ async function handleActivate(request, env, origin) {
 async function handleGumroadWebhook(request, env, origin) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, origin);
   const payload = await parseBody(request).catch(() => ({}));
+  const expectedSellerId = env.GUMROAD_SELLER_ID || ARCANA_GUMROAD_SELLER_ID;
+  const sellerId = String(payload.seller_id || payload.sellerId || '');
+  if (sellerId && expectedSellerId && sellerId !== expectedSellerId) {
+    return json({ ok: false, error: 'Gumroad seller id did not match Arcana.' }, 403, origin);
+  }
   const saleId = String(payload.sale_id || payload.id || Date.now());
   const licenseKey = normalizeLicenseKey(payload.license_key || payload.licenseKey);
   const receivedAt = new Date().toISOString();

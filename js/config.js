@@ -2,7 +2,7 @@
 // Example: const ARCANA_AI_PROXY_URL = 'https://your-worker.your-subdomain.workers.dev';
 const ARCANA_AI_PROXY_URL = 'https://ancient-smoke-2917.susume1982.workers.dev/';
 const ARCANA_ACTIVATION_API_URL = '';
-const ARCANA_GUMROAD_PRODUCT_URL = 'https://gumroad.com/l/arcana-premium';
+const ARCANA_GUMROAD_PRODUCT_URL = 'https://thelayersapp.gumroad.com/l/vjptlg';
 
 // Development-only fallback. Do not commit a real Google Gemini API key here.
 const ARCANA_GOOGLE_API_KEY = '';

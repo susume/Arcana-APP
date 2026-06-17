@@ -27,6 +27,7 @@ Assert-NotContains $subscription '$4.99/month' 'Expected subscription pricing co
 
 Assert-Contains $config 'ARCANA_ACTIVATION_API_URL' 'Expected activation endpoint configuration.'
 Assert-Contains $config 'ARCANA_GUMROAD_PRODUCT_URL' 'Expected Gumroad product URL configuration.'
+Assert-Contains $config 'https://thelayersapp.gumroad.com/l/vjptlg' 'Expected Gumroad purchase URL to point at the live Arcana product.'
 
 Assert-Contains $settings 'Premium Access' 'Expected Settings to include Premium Access section.'
 Assert-Contains $settings 'AI Configuration' 'Expected Settings to include AI Configuration section.'
@@ -54,6 +55,8 @@ Assert-Contains $index 'Premium lifetime unlock' 'Expected embedded welcome fall
 
 Assert-Contains $worker 'handleActivate' 'Expected Worker activation route handler.'
 Assert-Contains $worker 'GUMROAD_PRODUCT_ID' 'Expected Worker to use Gumroad product id.'
+Assert-Contains $worker 'HOp54WHc-rZtK8nTrqtFcg==' 'Expected Worker to include the live Arcana Gumroad product id fallback.'
+Assert-Contains $worker 'dNW90VHgyFlXSIHD7Xr6Sw==' 'Expected Worker to include the live Gumroad seller id fallback.'
 Assert-Contains $worker 'ARCANA_LICENSES' 'Expected Worker to persist activation metadata to KV.'
 Assert-Contains $worker '/api/gumroad/webhook' 'Expected Worker Gumroad webhook route.'
 

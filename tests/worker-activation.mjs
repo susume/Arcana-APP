@@ -67,13 +67,28 @@ try {
   }
 
   {
-    const response = await post('/api/activate', { licenseKey: 'TEST-LICENSE-123' }, {
-      ARCANA_LICENSES: createKv()
-    });
+    let gumroadBody = '';
+    globalThis.fetch = async (url, init) => {
+      assert.equal(url, 'https://api.gumroad.com/v2/licenses/verify');
+      gumroadBody = init.body.toString();
+      return new Response(JSON.stringify({
+        success: true,
+        purchase: {
+          id: 'sale_default',
+          email: 'buyer@example.com',
+          refunded: false,
+          chargebacked: false,
+          product_id: 'HOp54WHc-rZtK8nTrqtFcg=='
+        }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+
+    const response = await post('/api/activate', { licenseKey: 'TEST-LICENSE-123' }, { ARCANA_LICENSES: createKv() });
     const data = await response.json();
 
-    assert.equal(response.status, 500);
-    assert.match(data.error, /GUMROAD_PRODUCT_ID/);
+    assert.equal(response.status, 200);
+    assert.equal(data.isPremium, true);
+    assert.match(gumroadBody, /product_id=HOp54WHc-rZtK8nTrqtFcg%3D%3D/);
   }
 
   {
@@ -92,6 +107,22 @@ try {
     assert.equal(response.status, 200);
     assert.equal(data.ok, true);
     assert.equal(kv.data.size, 2);
+  }
+
+  {
+    const response = await worker.fetch(new Request('https://worker.test/api/gumroad/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        seller_id: 'not-the-arcana-seller',
+        sale_id: 'sale_wrong'
+      }).toString()
+    }), { ARCANA_LICENSES: createKv() });
+    const data = await response.json();
+
+    assert.equal(response.status, 403);
+    assert.equal(data.ok, false);
+    assert.match(data.error, /seller/);
   }
 } finally {
   globalThis.fetch = originalFetch;

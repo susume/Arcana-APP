@@ -22,10 +22,16 @@ Assert-Contains $template 'id="premium"' "Premium section anchor is missing."
 Assert-Contains $template 'id="journal"' "Journal section anchor is missing."
 Assert-Contains $template 'Real Cards With Arcana Guide' "Real-card comparison message is missing."
 Assert-Contains $template 'Random Generators' "Random-generator comparison message is missing."
+Assert-Contains $template '<span class="comparison-mark" aria-hidden="true">+</span>' "Positive comparison mark is malformed."
+Assert-Contains $template '<span class="comparison-mark" aria-hidden="true">-</span>' "Negative comparison mark is malformed."
 Assert-Contains $template 'Your Cards Have A Story. Let AI Help You Read It.' "Final CTA headline is missing."
 
 if ($template -match 'generated_images|\.codex') {
   throw "Homepage template references a local Codex generated image path."
+}
+
+if ($template -match '(?<!<)/span>|<span class="comparison-mark" aria-hidden="true">[^+-]') {
+  throw "Homepage template contains malformed encoded markup."
 }
 
 $match = [regex]::Match($index, '(?s)<template id="template-welcome">\s*(.*?)\s*</template>')

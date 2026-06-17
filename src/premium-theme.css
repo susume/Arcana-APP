@@ -878,6 +878,8 @@
 .ritual-home .ritual-final-cta,
 .ritual-home .ritual-footer {
   box-sizing: border-box;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 @media (max-width: 720px) {
@@ -888,7 +890,7 @@
   .ritual-home .ritual-journal-premium,
   .ritual-home .ritual-final-cta,
   .ritual-home .ritual-footer {
-    width: min(100% - 32px, 1220px);
+    width: min(calc(100% - 32px), 1220px);
     max-width: 100vw;
   }
 

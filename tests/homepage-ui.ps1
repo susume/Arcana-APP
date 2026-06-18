@@ -13,7 +13,9 @@ function Assert-Contains($content, $needle, $message) {
   }
 }
 
-Assert-Contains $template 'Read Your Real Tarot Cards With AI' "Homepage hero headline is missing."
+Assert-Contains $template 'Read Your' "Homepage hero headline is missing."
+Assert-Contains $template 'Real Tarot' "Homepage hero headline emphasis is missing."
+Assert-Contains $template 'Cards with <em>AI</em>' "Homepage hero AI headline line is missing."
 Assert-Contains $template 'onclick="startGuided()"' "Guided reading CTA handler changed or disappeared."
 Assert-Contains $template 'onclick="startQuick()"' "Quick upload CTA handler changed or disappeared."
 Assert-Contains $template 'onclick="openModal(''modal-settings'')"' "Settings modal handler changed or disappeared."
@@ -24,6 +26,8 @@ Assert-Contains $template 'Real Cards With Arcana Guide' "Real-card comparison m
 Assert-Contains $template 'Random Generators' "Random-generator comparison message is missing."
 Assert-Contains $template '<span class="comparison-mark" aria-hidden="true">+</span>' "Positive comparison mark is malformed."
 Assert-Contains $template '<span class="comparison-mark" aria-hidden="true">-</span>' "Negative comparison mark is malformed."
+Assert-Contains $template 'assets/homepage/reference-crops/journey-choose-spread.png' "Journey reference image is missing."
+Assert-Contains $template 'assets/homepage/reference-crops/comparison-real-card.png' "Comparison reference image is missing."
 Assert-Contains $template 'Your Cards Have A Story. Let AI Help You Read It.' "Final CTA headline is missing."
 
 if ($template -match 'generated_images|\.codex') {

@@ -88,14 +88,15 @@
       <button type="button" onclick="document.getElementById('journal').scrollIntoView({behavior:'smooth'})">Journal</button>
     </nav>
     <button class="icon-btn ritual-settings" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.2" y1="8" x2="20.8" y2="8"></line><line x1="3.2" y1="16" x2="20.8" y2="16"></line><circle cx="8" cy="8" r="2.6"></circle><circle cx="16" cy="16" r="2.6"></circle></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
     </button>
   </header>
 
   <section class="ritual-hero" aria-labelledby="ritual-hero-title">
     <div class="ritual-hero-copy">
       <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
-      <h2 id="ritual-hero-title">Read Your Real Tarot Cards With AI</h2>
+      <h2 id="ritual-hero-title"><span>Read Your</span> <span class="gold-line">Real Tarot</span> <span>Cards with <em>AI</em></span></h2>
+      <div class="hero-title-rule" aria-hidden="true"></div>
       <p>Use your intuition. Draw real cards. Upload your spread and receive AI-powered insight that helps you see the bigger picture and your next step.</p>
       <div class="hero-cta-row ritual-cta-row">
         <button class="btn btn-primary ritual-primary-cta" onclick="startGuided()">
@@ -111,7 +112,7 @@
     </div>
 
     <div class="ritual-hero-visual" aria-hidden="true">
-      <img src="assets/homepage/ritual-table-hero.png" alt="">
+      <img src="assets/homepage/reference-crops/hero-table-reference.png" alt="">
       <div class="ritual-orbit orbit-one"></div>
       <div class="ritual-orbit orbit-two"></div>
     </div>
@@ -125,25 +126,25 @@
     <div class="journey-steps">
       <div class="journey-step">
         <span class="journey-number">1</span>
-        <div class="journey-visual cards-fan" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-choose-spread.png" alt=""></div>
         <h4>Choose a Spread</h4>
         <p>Pick the layout that fits your question, from a daily card to deeper exploration.</p>
       </div>
       <div class="journey-step">
         <span class="journey-number">2</span>
-        <div class="journey-visual draw-table" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-draw-cards.png" alt=""></div>
         <h4>Draw Your Cards</h4>
         <p>Shuffle, focus, and place real cards from your own deck into each position.</p>
       </div>
       <div class="journey-step">
         <span class="journey-number">3</span>
-        <div class="journey-visual phone-spread" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-upload-photo.png" alt=""></div>
         <h4>Upload a Photo</h4>
         <p>Snap a clear image of the spread so Arcana can identify each card by position.</p>
       </div>
       <div class="journey-step">
         <span class="journey-number">4</span>
-        <div class="journey-visual insight-star" aria-hidden="true"><i></i></div>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-ai-insight.png" alt=""></div>
         <h4>Get AI Insight</h4>
         <p>Receive a reflective interpretation shaped by your cards, context, and spread.</p>
       </div>
@@ -158,6 +159,7 @@
     <div class="comparison-grid">
       <div class="comparison-panel comparison-good">
         <span class="comparison-mark" aria-hidden="true">+</span>
+        <img class="comparison-card-image" src="assets/homepage/reference-crops/comparison-real-card.png" alt="" aria-hidden="true">
         <h4>Real Cards With Arcana Guide</h4>
         <ul>
           <li>Your energy and intention stay in the spread.</li>
@@ -168,6 +170,7 @@
       </div>
       <div class="comparison-panel comparison-muted">
         <span class="comparison-mark" aria-hidden="true">-</span>
+        <img class="comparison-card-image" src="assets/homepage/reference-crops/comparison-random-cards.png" alt="" aria-hidden="true">
         <h4>Random Generators</h4>
         <ul>
           <li>No physical ritual or personal deck connection.</li>
@@ -181,11 +184,11 @@
 
   <section class="ritual-journal-premium" id="journal" aria-labelledby="journal-title">
     <div class="journal-image" aria-hidden="true">
-      <img src="assets/homepage/journal-premium.png" alt="">
+      <img src="assets/homepage/reference-crops/journal-book-reference.png" alt="">
     </div>
     <div class="journal-copy" id="premium">
       <h3 id="journal-title">Go Deeper With Journal &amp; Premium</h3>
-      <p>Save your readings, reflect on your journey, and upgrade once with the Premium lifetime unlock for $29 to access unlimited readings, premium spreads, narration, comparison tools, and your full archive.</p>
+      <p>Save your readings, reflect on your journey, and unlock premium spreads and deeper insights.<span class="homepage-monetization-copy"> Premium lifetime unlock for $29.</span></p>
       <div class="premium-benefits">
         <div>
           <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>

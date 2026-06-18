@@ -31,6 +31,44 @@ final result: passed
 
 ---
 
+# Arcana Ritual Shell Refinement QA
+
+## Scope
+
+- Restored the visible homepage Journal action and added the shared Journal utility to product screens.
+- Converted primary selection surfaces to semantic buttons without changing handlers.
+- Added reading loading/ready visibility states for result-only controls.
+- Improved mobile copy contrast and added a safe-area-aware sticky action dock.
+- Added restrained screen-family lighting and consolidated the Ritual Shell CSS.
+
+## Browser Verification
+
+- Live target: `http://127.0.0.1:4173/`
+- In-app browser: default desktop viewport and 390x844 mobile viewport.
+- Static visual fallback: local headless Chromium at 1280x900 and 390x844 because the in-app screenshot channel timed out.
+
+### Results
+
+- Homepage Journal CTA renders as `inline-flex`, remains fully visible, and preserves the existing history route.
+- Product screens expose a compact Journal utility without horizontal overflow.
+- Recommended spread is a semantic `button`, accepts selection, and visibly enters the selected state.
+- Mobile spread copy renders at 14.5px with brighter muted text.
+- Mobile navigation computes to `position: sticky` and `bottom: 0px`; the safe-area padding declaration remains active.
+- Desktop life-stage selection displays the complete `Prefer not to say` value.
+- Reading result-only controls compute to `display: none` before the screen is ready.
+- Desktop and mobile document horizontal overflow measured 0px.
+- Browser warning/error log remained empty during homepage and spread checks.
+
+## Evidence Notes
+
+- Desktop homepage and spread screenshots were inspected for hierarchy, clipping, contrast, and atmosphere.
+- Mobile spread screenshot and computed layout checks were inspected for wrapping, touch sizing, utility placement, and overflow.
+- The in-app browser completed real homepage-to-spread navigation, recommended spread selection, reflection navigation, and guided card-placement interactions before its CDP channel became intermittent.
+
+final result: passed
+
+---
+
 # Arcana Ritual Shell Design QA
 
 ## Source and Method

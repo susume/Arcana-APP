@@ -24,41 +24,41 @@
     <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
   </div>
   <div class="reading-choices" id="reading-choices">
-    <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
       <p>Best for a daily tarot reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
-    </div>
-    <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
       <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
-    </div>
-    <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
       <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
-    </div>
-    <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
+    </button>
+    <button type="button" class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
       <span id="adv-arrow">v</span> Advanced Readings <span class="premium-chip">Premium</span>
-    </div>
+    </button>
     <div class="advanced-readings-panel" id="advanced-readings-panel" style="display:none">
-      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
         <h3>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
         <h3>Romany Spread</h3><span class="rc-cards">21 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
         <h3>Yearly Forecast</h3><span class="rc-cards">12 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
         <h3>Relationship Spread</h3><span class="rc-cards">15 Cards</span>
-      </div>
+      </button>
     </div>
   </div>
   <div class="nav-row">

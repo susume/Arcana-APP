@@ -22,6 +22,8 @@ Assert-Contains $template 'onclick="openModal(''modal-settings'')"' "Settings mo
 Assert-Contains $template 'id="how-it-works"' "How It Works section anchor is missing."
 Assert-Contains $template 'id="premium"' "Premium section anchor is missing."
 Assert-Contains $template 'id="journal"' "Journal section anchor is missing."
+Assert-Contains $template 'class="btn ritual-journal-cta"' "Visible homepage Journal action is missing."
+Assert-Contains $template 'Open Tarot Journal' "Homepage Journal action label is missing."
 Assert-Contains $template 'Real Cards With Arcana Guide' "Real-card comparison message is missing."
 Assert-Contains $template 'Random Generators' "Random-generator comparison message is missing."
 Assert-Contains $template '<span class="comparison-mark" aria-hidden="true">+</span>' "Positive comparison mark is malformed."
@@ -36,6 +38,11 @@ if ($template -match 'generated_images|\.codex') {
 
 if ($template -match '(?<!<)/span>|<span class="comparison-mark" aria-hidden="true">[^+-]') {
   throw "Homepage template contains malformed encoded markup."
+}
+
+$theme = Get-Content -LiteralPath (Join-Path $root "src\premium-theme.css") -Raw
+if ($theme -match '(?s)\.ritual-home\s+\.journal-copy\s*>\s*\.btn\s*\{[^}]*display:\s*none') {
+  throw "Homepage Journal action is still hidden by the theme."
 }
 
 $match = [regex]::Match($index, '(?s)<template id="template-welcome">\s*(.*?)\s*</template>')

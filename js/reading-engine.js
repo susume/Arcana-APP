@@ -5,6 +5,7 @@ async function generateReading(){
     return;
   }
   goScreen('screen-reading');
+  setReadingReadyState(false);
   clearAutoSave();
   const content=document.getElementById('reading-content');
   content.innerHTML=thoughtfulLoadingHtml('ai-status');
@@ -55,6 +56,7 @@ async function switchReadingMode(mode){
   if(mode==='ai'){
     const settings=loadSettings();
     try{requireAIConfiguration();}catch(e){alert(e.message);return;}
+    setReadingReadyState(false);
     content.innerHTML=thoughtfulLoadingHtml('ai-status');
     try{
       const narrative=await generateAIReading(settings);
@@ -65,6 +67,7 @@ async function switchReadingMode(mode){
       content.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
     }
   }else{
+    setReadingReadyState(false);
     const classic=generateClassicReading();
     state.narrative=classic;
     renderReading(classic);
@@ -257,5 +260,6 @@ function renderReading(text){
     document.getElementById('journal-entry').value='';
     if(typeof wireJournalSection==='function')wireJournalSection(jSec);
   }
+  setReadingReadyState(true);
   renderEntitlementsUI();
 }

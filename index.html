@@ -201,7 +201,7 @@
           <p>Unlock advanced readings, narration, comparison tools, and your full archive.</p>
         </div>
       </div>
-      <button class="btn" onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+      <button class="btn ritual-journal-cta" onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
     </div>
   </section>
 
@@ -237,13 +237,13 @@
   </div>
   <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
   <div class="tag-chips">
-    <span class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Career</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Family</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Personal Growth</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Finances</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Spiritual</span>
-    <span class="tag-chip" onclick="tagConcern(this)">General Guidance</span>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Career</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Family</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Personal Growth</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Finances</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Spiritual</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">General Guidance</button>
   </div>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
@@ -258,18 +258,18 @@
   <div class="onboard">
     Arcana can interpret traditional tarot cards or playing cards used for cartomancy. Choose the deck in your hands so card meanings and suits match your reading.
   </div>
-  <div class="card-opt" onclick="selectSystem('tarot',this)">
+  <button type="button" class="card-opt" onclick="selectSystem('tarot',this)">
     <h3>Traditional Tarot</h3>
     <p>Use this for a 78-card tarot deck with 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
-  </div>
-  <div class="card-opt" onclick="selectSystem('playing',this)">
+  </button>
+  <button type="button" class="card-opt" onclick="selectSystem('playing',this)">
     <h3>Playing Cards</h3>
     <p>Use this for a standard 52-card deck. Arcana reads Hearts, Diamonds, Clubs, and Spades through classic cartomancy meanings.</p>
-  </div>
-  <div class="card-opt" onclick="selectSystem('playing-joker',this)">
+  </button>
+  <button type="button" class="card-opt" onclick="selectSystem('playing-joker',this)">
     <h3>Playing Cards + Joker</h3>
     <p>Use this for a 53-card deck. The Joker adds themes of possibility, risk, surprise, and trust in the unknown.</p>
-  </div>
+  </button>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-concerns')">Back</button>
     <button class="btn btn-primary" onclick="confirmSystem()">Continue</button>
@@ -303,41 +303,41 @@
     <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
   </div>
   <div class="reading-choices" id="reading-choices">
-    <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
       <p>Best for a daily tarot reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
-    </div>
-    <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
       <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
-    </div>
-    <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
       <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
-    </div>
-    <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
+    </button>
+    <button type="button" class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
       <span id="adv-arrow">v</span> Advanced Readings <span class="premium-chip">Premium</span>
-    </div>
+    </button>
     <div class="advanced-readings-panel" id="advanced-readings-panel" style="display:none">
-      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
         <h3>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
         <h3>Romany Spread</h3><span class="rc-cards">21 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
         <h3>Yearly Forecast</h3><span class="rc-cards">12 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
         <h3>Relationship Spread</h3><span class="rc-cards">15 Cards</span>
-      </div>
+      </button>
     </div>
   </div>
   <div class="nav-row">
@@ -394,9 +394,9 @@
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-guided',this)">Guided Draw</button>
-    <button class="tab-btn" onclick="switchTab('tab-upload',this)">Upload Photo</button>
-    <button class="tab-btn" onclick="switchTab('tab-manual',this)">Manual Entry</button>
+    <button type="button" class="tab-btn active" onclick="switchTab('tab-guided',this)">Guided Draw</button>
+    <button type="button" class="tab-btn" onclick="switchTab('tab-upload',this)">Upload Photo</button>
+    <button type="button" class="tab-btn" onclick="switchTab('tab-manual',this)">Manual Entry</button>
   </div>
 
   <div id="tab-guided">
@@ -471,7 +471,7 @@
   </div>
   <div id="reading-content"></div>
 
-  <div class="journal-section no-print" id="journal-section" data-premium-feature="journal">
+  <div class="journal-section no-print result-only" id="journal-section" data-premium-feature="journal">
     <div class="journal-orbit" aria-hidden="true"></div>
     <div class="journal-topline">
       <span class="journal-badge">Premium Journal</span>
@@ -490,7 +490,7 @@
       <span class="journal-save-status" aria-live="polite"></span>
     </div>
   </div>
-  <div class="reading-actions no-print">
+  <div class="reading-actions no-print result-only">
     <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
     <div class="reading-actions-secondary">
       <button class="btn" onclick="shareReading()">Share</button>

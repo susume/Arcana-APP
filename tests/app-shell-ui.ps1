@@ -2,6 +2,8 @@ $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
 $index = Get-Content -LiteralPath (Join-Path $root "index.html") -Raw
+$ui = Get-Content -LiteralPath (Join-Path $root "js\ui.js") -Raw
+$theme = Get-Content -LiteralPath (Join-Path $root "src\premium-theme.css") -Raw
 
 $screenTemplates = @{
   "concerns.html" = @("ritual-screen ritual-screen-focus", "concerns")
@@ -44,6 +46,49 @@ if ($settings -notlike '*class="modal ritual-modal ritual-settings-modal"*') {
 
 if ($help -notlike '*class="modal ritual-modal ritual-help-modal"*') {
   throw "Help modal is missing its Arcana ritual modal classes."
+}
+
+if ($ui -notlike '*function ensureRitualUtilities()*' -or $ui -notlike '*ritual-journal-shortcut*') {
+  throw "Shared Journal utility is missing from the Ritual Shell."
+}
+
+foreach ($semanticControl in @(
+  '<button type="button" class="card-opt"',
+  '<button type="button" class="reading-choice-card"',
+  '<button type="button" class="tag-chip"',
+  '<button type="button" class="tab-btn'
+)) {
+  if ($index -notlike "*$semanticControl*") {
+    throw "Expected semantic control is missing: $semanticControl"
+  }
+}
+
+if (
+  $theme -notlike '*position: sticky !important*' -or
+  $theme -notlike '*bottom: 0 !important*' -or
+  $theme -notlike '*safe-area-inset-bottom*'
+) {
+  throw "Mobile guided navigation is missing its sticky safe-area treatment."
+}
+
+if ($theme -notlike '*font-size: 14.5px*' -or $theme -notlike '*color: #b2bac9*') {
+  throw "Mobile Ritual Shell copy is missing its readability treatment."
+}
+
+if ($theme -notlike '*.ritual-screen .ritual-journal-shortcut*') {
+  throw "Shared Journal utility is missing its Ritual Shell styling."
+}
+
+if ($theme -notlike '*.ritual-screen-reading:not(.reading-ready) .result-only*') {
+  throw "Reading result-only controls are not hidden until content is ready."
+}
+
+if ($theme -notlike '*.ritual-screen .context-grid select*' -or $theme -notlike '*min-width: 220px*') {
+  throw "Ritual Shell context selects are missing their readable desktop width."
+}
+
+if ($theme -match 'Final cascade lock for product screens') {
+  throw "Duplicate Ritual Shell cascade-lock block still exists."
 }
 
 foreach ($modal in @(

@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 $ui = Get-Content -LiteralPath (Join-Path $root 'js/ui.js') -Raw
+$readingEngine = Get-Content -LiteralPath (Join-Path $root 'js/reading-engine.js') -Raw
 $storage = Get-Content -LiteralPath (Join-Path $root 'js/storage.js') -Raw
 $subscription = Get-Content -LiteralPath (Join-Path $root 'js/subscription.js') -Raw
 $css = Get-Content -LiteralPath (Join-Path $root 'css/main.css') -Raw
@@ -53,6 +54,10 @@ Assert-Contains $ui 'function wireJournalSection(' 'Expected reflection save but
 Assert-Contains $results 'journal-badge' 'Expected guided reading reflection panel to show the premium journal badge.'
 Assert-Contains $results 'reflection-chips' 'Expected guided reading reflection panel to include prompt chips.'
 Assert-Contains $index 'reading-actions-secondary' 'Expected mobile reading actions to use the improved non-clipping action layout.'
+Assert-Contains $results 'result-only' 'Expected reading-only actions to begin in a hidden readiness group.'
+Assert-Contains $ui 'function setReadingReadyState(' 'Expected reading loading and ready states to share one helper.'
+Assert-Contains $readingEngine 'setReadingReadyState(false)' 'Expected reading generation to hide result-only actions while loading.'
+Assert-Contains $readingEngine 'setReadingReadyState(true)' 'Expected completed reading rendering to reveal result-only actions.'
 Assert-NotContains $ui '${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</button>' 'Expected tarot picker filter buttons to omit suit glyphs.'
 Assert-NotContains $ui '${TAROT_SUIT_SYM[s]} ${TAROT_SUIT_NAMES[s]}</span>' 'Expected manual tarot suit filters to omit suit glyphs.'
 Assert-NotContains $ui '${PLAYING_SYM[s]} ${s.charAt(0).toUpperCase()+s.slice(1)}</button>' 'Expected playing-card picker filter buttons to omit suit glyphs.'

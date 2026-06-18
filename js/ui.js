@@ -13,7 +13,22 @@ async function renderScreen(){
     return embedded ? embedded.innerHTML : '';
   }));
   app.innerHTML=html.join('\n');
+  ensureRitualUtilities();
   app.dataset.templatesLoaded='true';
+}
+
+function ensureRitualUtilities(){
+  document.querySelectorAll('.ritual-screen:not(#screen-history)').forEach(screen=>{
+    if(screen.querySelector('.ritual-journal-shortcut'))return;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='ritual-journal-shortcut';
+    button.dataset.premiumFeature='history';
+    button.setAttribute('aria-label','Open Tarot Journal');
+    button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg><span>Journal</span>';
+    button.onclick=()=>goScreen('screen-history');
+    screen.appendChild(button);
+  });
 }
 
 // ===== NAVIGATION =====
@@ -155,7 +170,8 @@ function renderSpreads(){
     lbl.textContent=cat;
     grid.appendChild(lbl);
     catSpreads.forEach(sp=>{
-      const card=document.createElement('div');
+      const card=document.createElement('button');
+      card.type='button';
       card.className='spread-card'+(state.spreadId===sp.id?' selected':'');
       card.onclick=()=>{selectSpread(sp.id,card)};
       card.innerHTML=`<h4>${sp.name}</h4><div class="count">${sp.id==='custom'?'Custom positions':(sp.cardCount===1?'1 card':sp.cardCount+' cards')}</div>`;
@@ -1426,7 +1442,7 @@ function renderPickerCards(filter){
   const list=document.getElementById('card-picker-list');
   list.innerHTML=cards.map(card=>{
     const esc=card.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    return`<div class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${card.name}</span></div>`;
+    return`<button type="button" class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${card.name}</span></button>`;
   }).join('');
 }
 function selectPickerCard(name){
@@ -1466,6 +1482,14 @@ function renderJournalSection(container){
     </div>`;
   container.appendChild(section);
   wireJournalSection(section);
+}
+
+function setReadingReadyState(ready){
+  const screen=document.getElementById('screen-reading');
+  if(!screen)return;
+  screen.classList.toggle('reading-ready',!!ready);
+  screen.classList.toggle('reading-loading',!ready);
+  screen.setAttribute('aria-busy',ready?'false':'true');
 }
 
 function wireJournalSection(section){

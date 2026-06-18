@@ -71,112 +71,162 @@
   <div class="stars" id="stars"></div>
   <main id="app"></main>
   <template id="template-welcome">
-<div class="screen active landing-screen" id="screen-welcome">
-  <div class="landing-shell">
-    <div class="landing-topbar">
-      <div class="brand-lockup">
-        <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
+<div class="screen active landing-screen ritual-home" id="screen-welcome">
+  <div class="ritual-ambient" aria-hidden="true"></div>
+
+  <header class="ritual-nav" aria-label="Arcana homepage">
+    <div class="brand-lockup ritual-brand">
+      <span class="logo-sym"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5 13.61 8.12 19.42 4.58 15.88 10.39 22.5 12 15.88 13.61 19.42 19.42 13.61 15.88 12 22.5 10.39 15.88 4.58 19.42 8.12 13.61 1.5 12 8.12 10.39 4.58 4.58 10.39 8.12Z"></path></svg></span>
+      <div>
+        <h1>Arcana</h1>
+        <p>Guide</p>
+      </div>
+    </div>
+    <nav class="ritual-nav-links" aria-label="Homepage sections">
+      <button type="button" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      <button type="button" onclick="document.getElementById('premium').scrollIntoView({behavior:'smooth'})">Premium</button>
+      <button type="button" onclick="document.getElementById('journal').scrollIntoView({behavior:'smooth'})">Journal</button>
+    </nav>
+    <button class="icon-btn ritual-settings" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+    </button>
+  </header>
+
+  <section class="ritual-hero" aria-labelledby="ritual-hero-title">
+    <div class="ritual-hero-copy">
+      <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
+      <h2 id="ritual-hero-title"><span>Read Your</span> <span class="gold-line">Real Tarot</span> <span>Cards with <em>AI</em></span></h2>
+      <div class="hero-title-rule" aria-hidden="true"></div>
+      <p>Use your intuition. Draw real cards. Upload your spread and receive AI-powered insight that helps you see the bigger picture and your next step.</p>
+      <div class="hero-cta-row ritual-cta-row">
+        <button class="btn btn-primary ritual-primary-cta" onclick="startGuided()">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+          Start a Free Reading
+        </button>
+        <button class="btn ritual-secondary-cta" onclick="startQuick()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
+          Upload a Spread
+        </button>
+      </div>
+      <p class="ritual-trust-note">No sign up required to begin. Your cards stay your ritual.</p>
+    </div>
+
+    <div class="ritual-hero-visual" aria-hidden="true">
+      <img src="assets/homepage/reference-crops/hero-table-reference.png" alt="">
+      <div class="ritual-orbit orbit-one"></div>
+      <div class="ritual-orbit orbit-two"></div>
+    </div>
+  </section>
+
+  <section class="ritual-journey" id="how-it-works" aria-labelledby="journey-title">
+    <div class="ritual-section-heading">
+      <h3 id="journey-title">Your Reading Journey</h3>
+      <p>Ancient ritual. Modern insight. A simple, sacred process for the cards already in your hands.</p>
+    </div>
+    <div class="journey-steps">
+      <div class="journey-step">
+        <span class="journey-number">1</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-choose-spread.png" alt=""></div>
+        <h4>Choose a Spread</h4>
+        <p>Pick the layout that fits your question, from a daily card to deeper exploration.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">2</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-draw-cards.png" alt=""></div>
+        <h4>Draw Your Cards</h4>
+        <p>Shuffle, focus, and place real cards from your own deck into each position.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">3</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-upload-photo.png" alt=""></div>
+        <h4>Upload a Photo</h4>
+        <p>Snap a clear image of the spread so Arcana can identify each card by position.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">4</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/reference-crops/journey-ai-insight.png" alt=""></div>
+        <h4>Get AI Insight</h4>
+        <p>Receive a reflective interpretation shaped by your cards, context, and spread.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ritual-comparison" aria-labelledby="comparison-title">
+    <div class="ritual-section-heading">
+      <h3 id="comparison-title">Real Cards. Real Connection.</h3>
+      <p>Arcana Guide is built for readers who value authenticity and depth.</p>
+    </div>
+    <div class="comparison-grid">
+      <div class="comparison-panel comparison-good">
+        <span class="comparison-mark" aria-hidden="true">+</span>
+        <img class="comparison-card-image" src="assets/homepage/reference-crops/comparison-real-card.png" alt="" aria-hidden="true">
+        <h4>Real Cards With Arcana Guide</h4>
+        <ul>
+          <li>Your energy and intention stay in the spread.</li>
+          <li>The reading reflects the cards you actually drew.</li>
+          <li>AI interprets position, context, and meaning together.</li>
+          <li>You can save reflections and revisit patterns over time.</li>
+        </ul>
+      </div>
+      <div class="comparison-panel comparison-muted">
+        <span class="comparison-mark" aria-hidden="true">-</span>
+        <img class="comparison-card-image" src="assets/homepage/reference-crops/comparison-random-cards.png" alt="" aria-hidden="true">
+        <h4>Random Generators</h4>
+        <ul>
+          <li>No physical ritual or personal deck connection.</li>
+          <li>Surface-level results from an automatic draw.</li>
+          <li>Less context around your actual question.</li>
+          <li>Harder to turn the message into reflection.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="ritual-journal-premium" id="journal" aria-labelledby="journal-title">
+    <div class="journal-image" aria-hidden="true">
+      <img src="assets/homepage/reference-crops/journal-book-reference.png" alt="">
+    </div>
+    <div class="journal-copy" id="premium">
+      <h3 id="journal-title">Go Deeper With Journal &amp; Premium</h3>
+      <p>Save your readings, reflect on your journey, and unlock premium spreads and deeper insights.<span class="homepage-monetization-copy"> Premium lifetime unlock for $29.</span></p>
+      <div class="premium-benefits">
         <div>
-          <h1>Arcana</h1>
-          <p>AI Tarot Reading With Your Real Deck</p>
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>
+          <h4>Journal</h4>
+          <p>Capture reflections and track the themes that return again and again.</p>
+        </div>
+        <div>
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 8 4 4 4-7 4 7 4-4v10H4Z"></path><path d="M4 18h16"></path></svg></span>
+          <h4>Premium Spreads</h4>
+          <p>Unlock advanced readings, narration, comparison tools, and your full archive.</p>
         </div>
       </div>
-      <button class="icon-btn" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.2" y1="8" x2="20.8" y2="8"></line><line x1="3.2" y1="16" x2="20.8" y2="16"></line><circle cx="8" cy="8" r="2.6"></circle><circle cx="16" cy="16" r="2.6"></circle></svg>
+      <button class="btn ritual-journal-cta" onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+    </div>
+  </section>
+
+  <section class="ritual-final-cta" aria-labelledby="final-cta-title">
+    <h3 id="final-cta-title">Your Cards Have A Story. Let AI Help You Read It.</h3>
+    <div class="hero-cta-row ritual-cta-row">
+      <button class="btn btn-primary ritual-primary-cta" onclick="startGuided()">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+        Start a Free Reading
+      </button>
+      <button class="btn ritual-secondary-cta" onclick="startQuick()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
+        Upload a Spread
       </button>
     </div>
+    <p>Trusted by readers who use real cards.</p>
+  </section>
 
-    <section class="landing-command">
-      <div class="landing-copy">
-        <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
-        <h2>Free AI tarot with your own cards</h2>
-        <p>Arcana helps you read a physical tarot spread by guiding the ritual, identifying cards from a photo, and turning the layout into a clear reflection you can save, revisit, and learn from.</p>
-        <div class="hero-cta-row">
-          <button class="btn btn-primary" onclick="startGuided()">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
-            Start a Free Reading
-          </button>
-          <button class="btn" onclick="startQuick()">Upload a Spread</button>
-        </div>
-      </div>
-
-      <div class="card-stage" aria-hidden="true">
-        <div class="moon-disc"></div>
-        <div class="constellation-line line-one"></div>
-        <div class="constellation-line line-two"></div>
-        <div class="stage-card card-a"><span>I</span></div>
-        <div class="stage-card card-b"><span>XVII</span></div>
-        <div class="stage-card card-c"><span>III</span></div>
-        <div class="stage-line"></div>
-        <div class="phase-row"><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
-    </section>
-
-    <section class="landing-actions-panel" aria-label="Start options">
-      <button class="action-tile primary-action" onclick="startGuided()">
-        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg></span>
-        <span><strong>Guided Tarot Reading</strong><small>Choose a spread, draw real cards, then interpret them</small></span>
-      </button>
-      <button class="action-tile" onclick="startQuick()">
-        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg></span>
-        <span><strong>AI Card Identification</strong><small>Upload a photo of your completed tarot spread</small></span>
-      </button>
-      <button class="action-tile" onclick="goScreen('screen-history')" data-premium-feature="history">
-        <span class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg></span>
-        <span><strong>Tarot Journal</strong><small>Track readings, patterns, notes, and themes</small></span>
-      </button>
-    </section>
-
-    <section class="landing-editorial">
-      <div class="editorial-copy">
-        <span class="section-kicker">What is Arcana?</span>
-        <h3>Arcana is an AI tarot reading app for physical cards</h3>
-        <p>Arcana is built for people who already own a tarot deck or want to practice with real cards. Instead of simulating a random draw, it helps you choose a spread, lay out your own cards, upload a photo, and receive an interpretation shaped by the positions in your spread.</p>
-      </div>
-      <div class="ritual-steps">
-        <div><span>01</span><h4>How does an AI tarot reading work?</h4><p>You focus on a question, draw cards from your own deck, photograph the spread, and let Arcana identify each card before creating a reflective reading.</p></div>
-        <div><span>02</span><h4>What can a tarot reading tell you?</h4><p>A reading can highlight emotions, patterns, choices, and possible next steps. It is best used as a mirror for reflection, not as a fixed prediction.</p></div>
-        <div><span>03</span><h4>Which tarot spread should I choose?</h4><p>Use one card for a quick daily focus, three cards for past-present-future context, and deeper spreads when a situation has several moving parts.</p></div>
-      </div>
-    </section>
-
-    <section class="landing-answer-panel">
-      <span class="section-kicker">Free online tarot reading</span>
-      <h3>What makes Arcana different from a random card generator?</h3>
-      <p>Arcana keeps the reading grounded in your real deck. You shuffle, draw, and place the cards yourself; the app supports interpretation, photo identification, journaling, and review. That makes it useful for beginners learning tarot meanings and experienced readers who want a polished reflection tool.</p>
-      <ul class="answer-list">
-        <li>Use real tarot or playing cards instead of an automatic digital draw.</li>
-        <li>Upload a spread photo so AI can identify cards by position.</li>
-        <li>Choose AI interpretation or classic offline meanings.</li>
-        <li>Save reflections to build a personal tarot journal over time.</li>
-      </ul>
-    </section>
-
-    <section class="plan-preview premium-strip">
-      <div>
-        <h3>Is Arcana free?</h3>
-        <p>Arcana includes a free daily tarot reading with guided spreads, AI card identification, and a clear summary you can reflect on afterward.</p>
-      </div>
-      <div>
-        <h3>Premium lifetime unlock</h3>
-        <p>Upgrade once for $29 to unlock unlimited readings, journal history, narration, advanced spreads, comparison tools, and your full personal archive.</p>
-      </div>
-    </section>
-
-    <section class="final-cta-panel">
-      <span class="section-kicker">Start your reading</span>
-      <h3>Ask a question, shuffle your deck, and let the cards answer.</h3>
-      <button class="btn btn-primary" onclick="startGuided()">Start a Free Tarot Reading</button>
-    </section>
-
-    <div class="footer-links">
-      <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</span>
-    </div>
+  <div class="footer-links ritual-footer">
+    <span class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</span>
   </div>
 </div>
 </template>
   <template id="template-concerns">
-<div class="screen" id="screen-concerns">
+<div class="screen ritual-screen ritual-screen-focus" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question should your tarot reading explore?</h2>
   <div class="onboard">
@@ -187,13 +237,13 @@
   </div>
   <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
   <div class="tag-chips">
-    <span class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Career</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Family</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Personal Growth</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Finances</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Spiritual</span>
-    <span class="tag-chip" onclick="tagConcern(this)">General Guidance</span>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Career</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Family</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Personal Growth</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Finances</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Spiritual</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">General Guidance</button>
   </div>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-welcome')">Back</button>
@@ -202,24 +252,24 @@
 </div>
 </template>
   <template id="template-card-system">
-<div class="screen" id="screen-card-system">
+<div class="screen ritual-screen ritual-screen-choice" id="screen-card-system">
   <div class="step-dots" id="dots-system"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which deck are you reading with?</h2>
   <div class="onboard">
     Arcana can interpret traditional tarot cards or playing cards used for cartomancy. Choose the deck in your hands so card meanings and suits match your reading.
   </div>
-  <div class="card-opt" onclick="selectSystem('tarot',this)">
+  <button type="button" class="card-opt" onclick="selectSystem('tarot',this)">
     <h3>Traditional Tarot</h3>
     <p>Use this for a 78-card tarot deck with 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
-  </div>
-  <div class="card-opt" onclick="selectSystem('playing',this)">
+  </button>
+  <button type="button" class="card-opt" onclick="selectSystem('playing',this)">
     <h3>Playing Cards</h3>
     <p>Use this for a standard 52-card deck. Arcana reads Hearts, Diamonds, Clubs, and Spades through classic cartomancy meanings.</p>
-  </div>
-  <div class="card-opt" onclick="selectSystem('playing-joker',this)">
+  </button>
+  <button type="button" class="card-opt" onclick="selectSystem('playing-joker',this)">
     <h3>Playing Cards + Joker</h3>
     <p>Use this for a 53-card deck. The Joker adds themes of possibility, risk, surprise, and trust in the unknown.</p>
-  </div>
+  </button>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-concerns')">Back</button>
     <button class="btn btn-primary" onclick="confirmSystem()">Continue</button>
@@ -227,7 +277,7 @@
 </div>
 </template>
   <template id="template-choose-reading">
-<div class="screen" id="screen-spread">
+<div class="screen ritual-screen ritual-screen-choice" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which tarot spread should you use?</h2>
@@ -253,41 +303,41 @@
     <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
   </div>
   <div class="reading-choices" id="reading-choices">
-    <div class="reading-choice-card" onclick="selectReadingType('one-card',this)">
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
       <p>Best for a daily tarot reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
-    </div>
-    <div class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card recommended" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
       <span class="badge" style="margin-bottom:6px">Recommended</span>
       <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
-    </div>
-    <div class="reading-choice-card" onclick="selectReadingType('six-card',this)">
+    </button>
+    <button type="button" class="reading-choice-card" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
       <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
-    </div>
-    <div class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
+    </button>
+    <button type="button" class="advanced-readings-toggle" onclick="toggleAdvancedReadings()">
       <span id="adv-arrow">v</span> Advanced Readings <span class="premium-chip">Premium</span>
-    </div>
+    </button>
     <div class="advanced-readings-panel" id="advanced-readings-panel" style="display:none">
-      <div class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
         <h3>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
         <h3>Romany Spread</h3><span class="rc-cards">21 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
         <h3>Yearly Forecast</h3><span class="rc-cards">12 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
         <h3>Two Pathways</h3><span class="rc-cards">14 Cards</span>
-      </div>
-      <div class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+      </button>
+      <button type="button" class="reading-choice-card compact" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
         <h3>Relationship Spread</h3><span class="rc-cards">15 Cards</span>
-      </div>
+      </button>
     </div>
   </div>
   <div class="nav-row">
@@ -297,7 +347,7 @@
 </div>
 </template>
   <template id="template-reflection">
-<div class="screen" id="screen-reflection">
+<div class="screen ritual-screen ritual-screen-focus" id="screen-reflection">
   <div class="step-dots" id="dots-reflection"></div>
   <div class="progress-estimate" id="progress-reflection"></div>
   <div class="reflection-container">
@@ -323,7 +373,7 @@
 </div>
 </template>
   <template id="template-placement">
-<div class="screen" id="screen-card-entry">
+<div class="screen ritual-screen ritual-screen-workspace" id="screen-card-entry">
   <div class="step-dots" id="dots-entry"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How do you lay out a tarot spread?</h2>
   <div class="onboard compact-onboard">Place one real card in each position shown below. When the spread is complete, upload a clear photo from above so Arcana can identify the cards, or enter them manually.</div>
@@ -344,9 +394,9 @@
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-guided',this)">Guided Draw</button>
-    <button class="tab-btn" onclick="switchTab('tab-upload',this)">Upload Photo</button>
-    <button class="tab-btn" onclick="switchTab('tab-manual',this)">Manual Entry</button>
+    <button type="button" class="tab-btn active" onclick="switchTab('tab-guided',this)">Guided Draw</button>
+    <button type="button" class="tab-btn" onclick="switchTab('tab-upload',this)">Upload Photo</button>
+    <button type="button" class="tab-btn" onclick="switchTab('tab-manual',this)">Manual Entry</button>
   </div>
 
   <div id="tab-guided">
@@ -396,7 +446,7 @@
 </div>
 </template>
   <template id="template-overview">
-<div class="screen" id="screen-overview">
+<div class="screen ritual-screen ritual-screen-review" id="screen-overview">
   <div class="step-dots" id="dots-overview"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Are these the right cards?</h2>
   <div class="onboard">
@@ -411,7 +461,7 @@
 </div>
 </template>
   <template id="template-results">
-<div class="screen" id="screen-reading">
+<div class="screen ritual-screen ritual-screen-reading" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your tarot reading</h2>
   <div class="reading-toggle no-print">
@@ -421,7 +471,7 @@
   </div>
   <div id="reading-content"></div>
 
-  <div class="journal-section no-print" id="journal-section" data-premium-feature="journal">
+  <div class="journal-section no-print result-only" id="journal-section" data-premium-feature="journal">
     <div class="journal-orbit" aria-hidden="true"></div>
     <div class="journal-topline">
       <span class="journal-badge">Premium Journal</span>
@@ -440,7 +490,7 @@
       <span class="journal-save-status" aria-live="polite"></span>
     </div>
   </div>
-  <div class="reading-actions no-print">
+  <div class="reading-actions no-print result-only">
     <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save Reading</button>
     <div class="reading-actions-secondary">
       <button class="btn" onclick="shareReading()">Share</button>
@@ -451,7 +501,7 @@
 </div>
 </template>
   <template id="template-history">
-<div class="screen" id="screen-history">
+<div class="screen ritual-screen ritual-screen-archive" id="screen-history">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How can you track tarot readings over time?</h2>
   <div class="onboard">
     Arcana saves readings on this device so you can revisit card patterns, journal notes, and recurring themes. Free history keeps your latest 3 readings; Premium keeps the full archive with comparison tools.
@@ -463,7 +513,7 @@
 </div>
 </template>
   <template id="template-quick">
-<div class="screen" id="screen-quick">
+<div class="screen ritual-screen ritual-screen-workspace" id="screen-quick">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Upload a tarot spread for an AI reading</h2>
   <div class="onboard">
     Choose the spread you laid out, upload a clear photo from above, and Arcana will identify the cards by position before generating your reading.
@@ -505,7 +555,7 @@
 </template>
   <template id="template-settings">
 <div class="modal-overlay" id="modal-settings">
-  <div class="modal">
+  <div class="modal ritual-modal ritual-settings-modal">
     <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
     <h2>Reading Settings</h2>
 
@@ -559,7 +609,7 @@
 </template>
   <template id="template-help">
 <div class="modal-overlay" id="modal-help">
-  <div class="modal">
+  <div class="modal ritual-modal ritual-help-modal">
     <button class="close-btn" onclick="closeModal('modal-help')">&times;</button>
     <h2>Tarot Reading Guide</h2>
     <div class="help-section"><h3>What is tarot?</h3><p>Tarot is a 78-card symbolic system used for reflection, insight, and guidance. A tarot reading does not need to predict a fixed future; it helps you examine a question, notice patterns, and consider possible next steps.</p></div>
@@ -607,7 +657,7 @@
     "id": "three-card",
     "name": "Three Card (Past/Present/Future)",
     "category": "Daily",
-    "description": "Past ÅE Present ÅE Future",
+    "description": "Past ÔøΩE Present ÔøΩE Future",
     "cardCount": 3,
     "positions": [
       {
@@ -1021,7 +1071,7 @@
     "id": "standardReading",
     "name": "Standard Reading",
     "category": "Classic",
-    "description": "Past ÅE Present ÅE Future",
+    "description": "Past ÔøΩE Present ÔøΩE Future",
     "cardCount": 3,
     "positions": [
       {
@@ -1046,7 +1096,7 @@
     "id": "deepExploration",
     "name": "Deep Exploration",
     "category": "Classic",
-    "description": "Current Situation ÅE Challenge ÅE Past Influence ÅE Near Future ÅE Advice ÅE Outcome",
+    "description": "Current Situation ÔøΩE Challenge ÔøΩE Past Influence ÔøΩE Near Future ÔøΩE Advice ÔøΩE Outcome",
     "cardCount": 6,
     "positions": [
       {

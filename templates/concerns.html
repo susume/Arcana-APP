@@ -1,4 +1,4 @@
-<div class="screen" id="screen-concerns">
+<div class="screen ritual-screen ritual-screen-focus" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question should your tarot reading explore?</h2>
   <div class="onboard">
@@ -9,13 +9,13 @@
   </div>
   <button class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
   <div class="tag-chips">
-    <span class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Career</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Family</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Personal Growth</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Finances</span>
-    <span class="tag-chip" onclick="tagConcern(this)">Spiritual</span>
-    <span class="tag-chip" onclick="tagConcern(this)">General Guidance</span>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Career</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Family</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Personal Growth</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Finances</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">Spiritual</button>
+    <button type="button" class="tag-chip" onclick="tagConcern(this)">General Guidance</button>
   </div>
   <div class="nav-row">
     <button class="btn" onclick="goScreen('screen-welcome')">Back</button>

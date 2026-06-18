@@ -1,197 +1,241 @@
-# Arcana - Architecture
+# Arcana Architecture
 
-## Overview
+## 1. System overview
 
-Arcana is a **client-side-only Single-Page Application** for tarot and playing-card cartomancy readings. It has no backend and no runtime app framework dependency. The app runs as static HTML, CSS, and plain global JavaScript, with a small build step that generates static CSS and JavaScript assets.
+Arcana is a tarot and cartomancy reflection application built around the user's
+physical cards. It guides a reader through selecting a spread, preparing a
+question, drawing and arranging real cards, uploading a spread photo or entering
+cards manually, receiving an AI-assisted or classic interpretation, and saving
+the result and personal reflection.
 
-The product model is a **physical-card reflection tool**, not a digital card-drawing game. Users handle their own deck, choose a spread, create a quiet space, formulate a question, shuffle and draw real cards, lay out the spread, then upload a photo for AI identification and interpretation. Manual entry remains available for correction and non-AI use.
+The product deliberately is not a random-card generator. The user supplies the
+deck, draw, layout, intention, and final judgment. AI supports identification and
+interpretation but does not replace manual review or make guaranteed predictions.
 
-The app can be served over HTTP or opened directly via `file://` as long as the compiled assets are present. AI features require a Google Gemini API key supplied by the user; everything else runs entirely offline.
+Arcana has two deployment layers:
 
----
+1. A statically hosted browser SPA made from HTML, CSS, and ordered global
+   JavaScript.
+2. A Cloudflare Worker used for Gumroad premium activation, Gumroad webhook
+   ingestion, and optional Arcana-hosted Gemini proxying.
 
-## Technology Stack
+There is no application server, account system, or user-profile database.
+Browser data stays in `localStorage`. Cloudflare KV, when configured, stores
+license and Gumroad event metadata rather than tarot readings or journal entries.
 
-| Layer | Choice |
+## 2. Technology stack
+
+| Layer | Current choice |
 |---|---|
-| Runtime language | Vanilla JavaScript, ES2020 globals |
-| Build-time language | Small TypeScript helper compiled to plain JS |
-| Markup | HTML5 with embedded `<template>` fallbacks and external template partials |
-| Styling | CSS custom properties + Tailwind CLI-generated premium override layer |
-| AI | Google Gemini REST API, including multimodal image input |
-| Persistence | `localStorage` only |
-| Fonts | Cormorant Garamond WOFF2, self-hosted |
-| Build | `npm run build` for CSS and TypeScript assets |
-| Runtime frameworks | None. Do not use React/Vue/Angular/Vite unless product direction explicitly changes. |
+| Browser runtime | Vanilla JavaScript globals, HTML5, CSS |
+| Build-time code | TypeScript for the AI identification parser |
+| Styling build | Tailwind CSS CLI v4 compiling a large custom source stylesheet |
+| Frontend hosting | Static files; supports HTTP(S) and embedded fallbacks for `file://` |
+| Service layer | Cloudflare Worker |
+| AI | Google Gemini REST API with text and image input |
+| Payments/licenses | Gumroad license verification |
+| Service persistence | Optional Cloudflare KV binding `ARCANA_LICENSES` |
+| Browser persistence | `localStorage` |
+| Fonts | Self-hosted WOFF2 files, including Cormorant Garamond |
+| Runtime frameworks | None |
 
----
+`package.json` is intentionally small. Its dependencies are build tools, not
+browser runtime libraries.
 
-## Current Design Direction
+## 3. Runtime and deployment topology
 
-The visual system should feel like:
+```text
+Browser
+  |
+  |-- static HTML/CSS/JS ----------------------> static host / local server
+  |
+  |-- user Gemini key (preferred) ------------> Google Gemini REST API
+  |
+  |-- no user key + proxy configured ----------> Cloudflare Worker
+  |                                                |
+  |                                                +--> Gemini API
+  |
+  |-- premium license activation --------------> Cloudflare Worker
+                                                   |
+                                                   +--> Gumroad verify API
+                                                   +--> ARCANA_LICENSES KV (optional)
 
-- Premium self-reflection tool wrapped in celestial luxury
-- Dark celestial atmosphere
-- Modern mysticism, luxury occult, celestial minimalism
-- Spiritual editorial, dark academia meets astrology
-- Calm, slow UX with breathing room and low visual noise
-- Editorial typography closer to luxury magazines, book publishing, and premium blogs
+Gumroad sale/refund events --------------------> Worker webhook
+                                                   |
+                                                   +--> ARCANA_LICENSES KV (optional)
+```
 
-The redesign is a **theme layer**, not a product rewrite. Preserve the physical-card reading workflow and the existing onboarding length.
+The static frontend can be deployed independently. AI and premium services
+depend on runtime endpoint configuration in `js/config.js` and Worker
+environment bindings/secrets.
 
----
+## 4. Product and visual direction
 
-## Directory Layout
+The current design system has two connected layers:
+
+- **Ritual Stage homepage**: an image-led, editorial landing experience with a
+  dark indigo atmosphere, antique-gold accents, physical-card imagery, the
+  reading journey, real-card comparison, Premium/Journal promotion, and repeated
+  guided/upload calls to action.
+- **Ritual Shell product UI**: shared visual treatment across focus, choice,
+  workspace, review, reading, archive, settings, and help surfaces.
+
+The intended character is premium self-reflection, celestial minimalism, modern
+mysticism, dark academia, and spiritual editorial design. The interface should
+remain calm and legible rather than ornamental for its own sake.
+
+Current shared screen variants:
+
+| Variant | Purpose |
+|---|---|
+| `ritual-screen-focus` | concerns and preparation |
+| `ritual-screen-choice` | deck and spread choices |
+| `ritual-screen-workspace` | placement, upload, and quick reading |
+| `ritual-screen-review` | spread confirmation |
+| `ritual-screen-reading` | generated reading and journal |
+| `ritual-screen-archive` | saved reading history |
+
+Settings and help use `ritual-modal` plus purpose-specific modal classes.
+Non-homepage screens receive a shared Journal shortcut through
+`ensureRitualUtilities()` in `js/ui.js`.
+
+The approved design sources are under `docs/superpowers/specs/`; current browser
+verification and intentional deviations are recorded in `design-qa.md`.
+
+## 5. Repository map
 
 ```text
 Arcana APP/
-  index.html                 # Static shell, embedded fallbacks, stylesheet/script tags
-  ARCHITECTURE.md            # This file
-  llms.txt                   # AI/LLM-readable project and content summary
-  package.json               # Tailwind/TypeScript build scripts only
-  package-lock.json          # Locked build-tool dependency versions
-  tsconfig.json              # Compiles src/*.ts into js/
-  .gitignore                 # Ignores env files, node_modules, dist, logs
+  AGENTS.md                    Codex discovery entry point
+  system.md                    concise repository operating guide
+  ARCHITECTURE.md              detailed technical source of truth
+  index.html                   shell, metadata, embedded templates/data
+  llms.txt                     product summary for AI/search readers
+  package.json                 build, test, and preview scripts
+  tsconfig.json                TypeScript compilation into js/
 
   assets/
-    fonts/                   # Cormorant Garamond WOFF2 files
+    fonts/                     self-hosted fonts
+    homepage/                  deployed homepage imagery
+      reference-crops/         cropped source/reference imagery used by UI
 
   css/
-    main.css                 # Original core styles and font-face declarations
-    onboarding.css           # Stub placeholder
-    reading.css              # Stub placeholder
-    settings.css             # Stub placeholder
-    premium.css              # Compiled premium celestial/luxury theme override
+    main.css                   original/core styles and font declarations
+    onboarding.css             reserved/stub domain stylesheet
+    reading.css                reserved/stub domain stylesheet
+    settings.css               reserved/stub domain stylesheet
+    premium.css                generated Ritual theme output
 
   data/
-    spreads.json             # Spread definitions for HTTP loading
+    spreads.json               HTTP-loaded spread definitions
+    tarot-cards.json           reference card data
+    playing-cards.json         reference card data
 
   js/
-    tarot.js                 # Card database, glyphs, constants
-    spreads.js               # Spread loader with JSON + embedded fallback
-    state.js                 # Global state singleton and card helpers
-    card-art.js              # Public-domain card art helpers
-    subscription.js          # Premium/entitlement UI helpers
-    config.js                # Runtime config and local config override point
-    storage.js               # localStorage persistence
-    ai-identification.js     # Compiled TypeScript AI card-identification parser
-    ui.js                    # Screen rendering, navigation, interactions
-    reading-engine.js        # AI/classic reading generation and markdown rendering
-    ai.js                    # Gemini API client
-    app.js                   # App initialization, routing, star animation
+    tarot.js                   runtime card database and deck builders
+    spreads.js                 spread loading and fallback
+    state.js                   global mutable state
+    card-art.js                public-domain tarot art helpers
+    subscription.js            premium, usage, upgrade, narration
+    config.js                  public runtime endpoint configuration
+    storage.js                 settings/autosave/history persistence
+    ai-identification.js       generated parser from TypeScript
+    ui.js                      rendering, routing, interactions, sharing
+    reading-engine.js          AI/classic readings and output rendering
+    ai.js                      Gemini client and proxy fallback
+    app.js                     initialization, routing listener, atmosphere
 
   src/
-    premium-theme.css        # Tailwind source for premium theme layer
-    ai-identification.ts     # TypeScript source for AI identification parser
+    premium-theme.css          authoritative Ritual styles
+    ai-identification.ts       typed identification response parser
 
+  templates/                   HTTP-loaded screen/modal partials
+  server/
+    cloudflare-worker.js       activation, webhook, AI proxy
+    README.md                  Worker deployment notes
   scripts/
-    serve-static.mjs         # Local static preview server for project root
-
-  templates/
-    welcome.html
-    concerns.html
-    card-system.html
-    choose-reading.html
-    reflection.html
-    placement.html
-    overview.html
-    results.html
-    history.html
-    quick.html
-    settings.html
-    help.html
-
-  tests/
-    journal-ui.ps1
-    reading-actions.ps1
+    serve-static.mjs           local static server
+  tests/                       contract/regression checks
+  docs/superpowers/
+    specs/                     approved design specifications
+    plans/                     implementation plans
 ```
 
-Important: most screen templates have **two runtime sources**:
+## 6. Build, preview, and generated assets
 
-1. External partials in `templates/*.html`
-2. Embedded fallback templates in `index.html`
-
-When changing a template, update both sources or run a deliberate sync step. HTTP preview usually fetches external templates; `file://` usage relies on the embedded fallback templates.
-
----
-
-## Build & Preview
-
-The app remains deployable as static files. Build tools only generate assets loaded by `index.html`.
+Available scripts:
 
 | Command | Purpose |
 |---|---|
-| `npm run build:css` | Compiles `src/premium-theme.css` to minified `css/premium.css` |
-| `npm run build:ts` | Compiles `src/ai-identification.ts` to `js/ai-identification.js` |
-| `npm run build` | Runs CSS and TypeScript builds |
-| `npm test` | Runs TypeScript compile plus journal and reading-action regression checks |
-| `npm run serve` | Serves the static project root at `http://127.0.0.1:4173/` |
+| `npm run build:css` | Compile `src/premium-theme.css` to minified `css/premium.css` |
+| `npm run build:ts` | Compile TypeScript sources into `js/` |
+| `npm run build` | Run CSS and TypeScript builds |
+| `npm test` | Compile TypeScript and run all repository regressions |
+| `npm run serve` | Serve the repository at `http://127.0.0.1:4173/` |
 
-Generated files that must exist for the static app:
+The browser does not bundle modules. Generated assets are ordinary deployed
+files and must remain committed:
 
 - `css/premium.css`
 - `js/ai-identification.js`
 
-The build does **not** bundle the app and does **not** replace the original HTML/templates/global JS runtime.
+Plain runtime JavaScript is outside TypeScript coverage. Use `node --check` on
+every edited file under `js/` or `server/` where syntax checking is applicable.
 
-Additional verification commands used for plain-JS changes:
+## 7. Static shell and load order
 
-```powershell
-node --check js\ui.js
-node --check js\reading-engine.js
-```
+`index.html` provides:
 
-Use these when editing large global JavaScript files because TypeScript compilation does not parse most runtime files.
+- Search and social metadata
+- JSON-LD `SoftwareApplication` and `FAQPage` data
+- The atmospheric page background and `<main id="app">`
+- Embedded fallback templates
+- Embedded spread JSON
+- Settings/help modal templates
+- Stylesheet and script tags in dependency order
 
----
-
-## Stylesheet Load Order
-
-Stylesheets are declared in `index.html` in this order:
-
-```html
-<link rel="stylesheet" href="css/main.css">
-<link rel="stylesheet" href="css/onboarding.css">
-<link rel="stylesheet" href="css/reading.css">
-<link rel="stylesheet" href="css/settings.css">
-<link rel="stylesheet" href="css/premium.css">
-```
-
-`premium.css` intentionally loads last. It is an override/theme layer over the original app, not a replacement for `main.css`.
-
----
-
-## Script Load Order
-
-Scripts are declared at the bottom of `index.html` and loaded in dependency order:
+Stylesheets load in this order:
 
 ```text
-tarot.js              card data, glyphs, constants, buildPlayingCards()
-spreads.js            SPREADS array loader
-state.js              global state object, getCards(), getSpread()
-card-art.js           public-domain card art URL/render helpers
-subscription.js       entitlement/premium UI helpers
-config.js             runtime config
-storage.js            localStorage helpers
-ai-identification.js  window.ArcanaAI.parseIdentifiedCards()
-ui.js                 navigation, screen rendering, event handlers
-reading-engine.js     reading generation and markdown rendering
-ai.js                 callGemini(), testApiKey()
-app.js                initApp(), routing, star animation
+css/main.css
+css/onboarding.css
+css/reading.css
+css/settings.css
+css/premium.css
 ```
 
-All runtime scripts are plain globals. There is no browser module system. TypeScript is used only at build time to produce `js/ai-identification.js`.
+`premium.css` intentionally loads last and is the active theme/override layer.
+Edit its source in `src/premium-theme.css`, not the minified output directly.
 
----
+Browser scripts load as globals in this order:
 
-## Template Loading Strategy
+```text
+tarot.js
+spreads.js
+state.js
+card-art.js
+subscription.js
+config.js
+storage.js
+ai-identification.js
+ui.js
+reading-engine.js
+ai.js
+app.js
+```
 
-`renderScreen()` in `ui.js` runs once on init and populates `<main id="app">`.
+Later files depend on functions and state introduced earlier. Adding ES module
+syntax to these runtime scripts would break the current loading model.
 
-- `file://` protocol: reads content from embedded `<template id="template-*">` tags in `index.html`, so the app can open locally without a server.
-- `http(s)://` protocol: fetches each partial from `templates/<name>.html`, with embedded template fallback if fetch fails.
+## 8. Dual-source templates and spread data
 
-Template names:
+`renderScreen()` in `js/ui.js` builds the application UI at startup.
+
+- Over HTTP(S), it fetches `templates/<name>.html`.
+- Under `file://`, or when a fetch fails, it reads the matching embedded
+  `<template id="template-<name>">` from `index.html`.
+
+Current template names:
 
 ```text
 welcome
@@ -208,515 +252,460 @@ settings
 help
 ```
 
-Template editing rule:
+External and embedded versions are runtime alternatives and must be identical.
+The homepage and app-shell tests explicitly enforce synchronization.
 
-- Keep `templates/<name>.html` and the matching `<template id="template-<name>">` in `index.html` synchronized.
-- `templates/results.html` is the guided reading output screen; it includes the reading toggle, `#reading-content`, reflection journal, and post-reading action controls.
-- `templates/quick.html` renders the quick/upload entry screen; quick reading results are inserted dynamically by `quickRead()` in `ui.js`.
+Spread definitions follow the same principle:
 
----
+- `data/spreads.json` is loaded over HTTP.
+- `<script type="application/json" id="spreads-data">` is the embedded fallback.
 
-## Core User Flow
+Changes to either template or spread data must update both sources.
 
-The app should preserve this physical-card workflow:
+## 9. Routing and screen lifecycle
 
-1. Choose the deck/spread path: Quick Insight, Standard Reading, Deep Exploration, or an advanced spread.
-2. Create the reading space: quiet place, optionally candle/incense/music, clear the deck.
-3. Formulate the question or intention.
-4. Shuffle and draw real cards from the user's physical deck.
-5. Lay out the spread position by position.
-6. Take a clear photo of the completed spread and upload it, or enter cards manually.
-7. Let AI identify/analyze the spread, or use classic offline interpretation.
-8. Read or listen to results.
-9. Save, share, print, or start again.
-10. Write a reflection journal entry to track progress and build a relationship with the deck.
+Arcana uses hash routing rather than a router library. Routes have the form
+`#welcome`, `#spread`, or `#reading`.
 
-The app must not become a random-card generator unless explicitly requested as a new product feature.
+Key functions in `js/ui.js`:
 
----
+- `routeForScreen()` and `screenForRoute()` translate IDs and hashes.
+- `navigate()` and `goScreen()` activate screens and update the hash.
+- `updateDots()` and `updateProgressEstimate()` update guided progress.
+- `ensureRitualUtilities()` installs shared shell utilities, including Journal.
 
-## Screen Flow
+`js/app.js`:
 
-### Guided Mode
+- Loads spreads and templates
+- Restores settings/autosave state
+- Initializes the default route
+- Handles `hashchange` for browser back/forward behavior
+- Initializes ambient visual behavior
+
+`goScreen()` performs imperative side effects for particular screens, including
+building choices, card-entry controls, overview data, readings, history, and
+autosave. Modals are overlays and are not routes.
+
+The main guided progress sequence is:
+
+```js
+[
+  'screen-spread',
+  'screen-reflection',
+  'screen-card-entry',
+  'screen-overview',
+  'screen-reading'
+]
+```
+
+Concerns and card-system screens remain available but are not part of the short
+default guided route.
+
+## 10. User flows
+
+### Guided reading
 
 ```text
-screen-welcome
-  -> screen-spread        choose Quick/Standard/Deep or advanced spread
-  -> screen-reflection    preparation and mindfulness pause
-  -> screen-card-entry    guided draw, upload photo, or manual entry
-  -> screen-overview      review spread before reading
-  -> screen-reading       AI/classic reading output and journal
+Homepage
+  -> choose spread
+  -> prepare/reflection
+  -> guided draw, upload, or manual card entry
+  -> review identified/entered cards
+  -> AI or classic reading
+  -> journal, save, share, print, voice, or restart
 ```
 
-`startGuided()` resets state and navigates directly to `screen-spread`.
+`startGuided()` resets reading state and starts at spread selection.
 
-Optional/legacy screens still exist:
-
-- `screen-concerns`: topic/focus input
-- `screen-card-system`: tarot vs playing cards
-
-They are available in the codebase, but the default guided onboarding should remain short.
-
-### Quick Mode
+### Quick upload
 
 ```text
-screen-welcome
-  -> screen-quick         choose spread + upload photo; AI reads inline
+Homepage
+  -> quick workspace
+  -> choose the already-used spread
+  -> upload spread photo
+  -> identify cards and generate interpretation
+  -> dynamically append journal/actions
 ```
 
-Quick mode still uses the same reading/share/journal helpers as guided mode where possible:
+`startQuick()` resets state for the shorter flow. Quick results use the same
+underlying reading, sharing, and persistence concepts but are rendered into the
+quick screen rather than the guided results template.
 
-- `getReadingSpread()` resolves `state.quickSpreadId` before `state.spreadId` when `state.mode === 'quick'`.
-- `quickRead()` renders `#quick-reading-content`, the post-reading action controls, and the same premium reflection journal component used by guided readings.
-- Quick/upload readings must expose `Share`, `Print`, and `Save Reading` after the narrative is generated.
+## 11. Global state and UI model
 
-### Utility Screens
+`js/state.js` defines one mutable global state object. There is no framework
+reactivity; functions mutate state and then update DOM elements explicitly.
 
-- `screen-history`: premium reading archive and journal history
-- `modal-settings`: Premium activation, Gemini API key, reading style, reading tone
-- `modal-help`: tarot guide and FAQ
+Important state domains include:
 
----
+- Current mode: guided or quick
+- User concerns and optional reader context
+- Active card system and spread
+- Cards keyed by spread position
+- Dropped/jumper card and orientation
+- Uploaded image data
+- Generated narrative and reading mode
+- Guided step, reversals, and quick spread selection
 
-## Global State
+`currentCards` contains the active deck's card records. `getCards()` and
+`getSpread()` are shared accessors.
 
-Defined in `state.js`. One mutable singleton; no reactivity framework.
+Screen navigation calls `autoSaveState()`. Autosave is a recovery aid rather
+than permanent reading history and expires after one hour.
 
-```js
-let state = {
-  mode:           'guided' | 'quick',
-  concerns:       string[],
-  cardSystem:     'tarot' | 'playing' | 'playing-joker',
-  spreadId:       string | null,
-  cards:          { [positionId]: { name: string, orientation: 'upright'|'reversed' } },
-  droppedCard:    { name, orientation } | null,
-  hasDroppedCard: boolean,
-  uploadedImage:  string | null,
-  narrative:      string,
-  readingMode:    'ai' | 'classic',
-  readerLifeStage:string,
-  guidedStep:     number,
-  reversals:      boolean,
-  quickSpreadId:  string | null
-};
+## 12. Cards, spreads, and entry modes
 
-let currentCards = [];
-```
+### Card systems
 
-State is mutated directly throughout `ui.js` and `reading-engine.js`. `autoSaveState()` serializes it to `localStorage` on screen navigation.
+`js/tarot.js` creates:
 
----
+- Traditional 78-card tarot
+- Standard 52-card playing-card cartomancy
+- Playing cards plus Joker
 
-## Navigation & Routing
+Runtime card records include identity, system, arcana/suit/number metadata,
+keywords, and upright/reversed meanings.
 
-Hash-based SPA routing is managed in `ui.js`.
+### Spreads
 
-- URL format: `index.html#<route>`, for example `#spread`, `#reading`, `#welcome`
-- `goScreen(screenId)` hides inactive `.screen` elements, shows the target, updates the hash, triggers screen-specific side effects, and autosaves
-- `window.addEventListener('hashchange', ...)` in `app.js` handles back/forward navigation
-- `GUIDED_SCREENS` drives progress dots:
+Spread records include ID, name, category, description, card count, ordered
+positions, and a layout key.
 
-```js
-['screen-spread', 'screen-reflection', 'screen-card-entry', 'screen-overview', 'screen-reading']
-```
+The default visible choices are:
 
-Modals are overlays and do not affect routing.
+- `one-card`
+- `three-card`
+- `six-card`
 
----
+Advanced premium choices are:
 
-## Card Systems
+- `celtic-cross`
+- `romany`
+- `yearly`
+- `two-pathways`
+- `relationship`
 
-Defined in `tarot.js`.
+`ACTIVE_SPREAD_IDS` in `js/ui.js` prevents legacy duplicate definitions from
+appearing in active selectors and prompt references.
 
-### Tarot
+### Card entry
 
-- 78 cards total
-- Major Arcana hardcoded
-- Minor Arcana generated from suit/rank meaning maps
+The placement screen has three modes that converge on `state.cards`:
 
-### Playing Cards
+1. **Guided Draw** steps through positions while the user places physical cards.
+2. **Upload Photo** sends a completed spread image to Gemini identification.
+3. **Manual Entry** uses searchable card pickers and orientation controls.
 
-- 52-card and 53-card-with-Joker modes
-- Meanings generated from playing-card suit/rank maps
+Manual correction remains required product behavior. Orientation is stored as
+`upright` or `reversed`, including the optional dropped card.
 
-### Card Shape
+## 13. Gemini and card identification
 
-```js
-{
-  system:    'tarot' | 'playing',
-  name:      string,
-  arcana:    'major' | 'minor',
-  suit:      string | null,
-  number:    number,
-  keywords:  string[],
-  upright:   string,
-  reversed:  string
-}
-```
+### Configuration priority
 
-`currentCards` holds the active card array and is rebuilt when `cardSystem` changes.
+`js/ai.js` prefers:
 
----
+1. An explicit or locally saved user Gemini API key
+2. The configured Arcana Worker proxy when no user key is available
 
-## Spreads
+The user key is sent directly to Google using the `x-goog-api-key` header. It is
+stored in `arcana_settings` in the current browser and can be tested or removed
+from Settings.
 
-Spread definitions live in `data/spreads.json` and are also embedded in `index.html` as `<script type="application/json" id="spreads-data">` for `file://` fallback.
+`js/config.js` contains public runtime configuration:
 
-```js
-{
-  id:          string,
-  name:        string,
-  category:    'Daily' | 'Classic' | 'Relationships' | 'Life & Decisions' | 'Custom',
-  description: string,
-  cardCount:   number,
-  positions:   [{ id: number, name: string, description: string }],
-  layout:      string
-}
-```
+- AI proxy URL
+- Optional separate activation API URL
+- Gumroad product URL
+- Empty legacy/local Google key override
 
-Core visible spread choices in default guided mode:
+Private API keys and webhook secrets must not be shipped in browser JavaScript.
 
-- `one-card`: Quick Insight
-- `three-card`: Standard Reading
-- `six-card`: Deep Exploration
+### Gemini client
 
-Advanced spreads are kept behind the advanced/premium panel.
+`callGemini()` supports text prompts and base64 image input. It handles:
 
-Canonical visible spread ids are controlled by `ACTIVE_SPREAD_IDS` in `ui.js`:
+- Direct and proxy request shapes
+- Multiple Gemini model attempts
+- Retryable rate-limit/server statuses
+- Countdown/status messaging
+- Useful configuration and error messages
 
-```js
-['one-card', 'three-card', 'six-card', 'celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship']
-```
+The Worker has its own model fallback and retry logic for proxied requests.
 
-This allow-list prevents legacy duplicate spread definitions from appearing in quick spread selection and spread-reference prompts.
+### Identification parser
 
----
-
-## Card Entry Screen
-
-`screen-card-entry` has three tabs, all writing to the same `state.cards` object.
-
-### Guided Draw
-
-- Steps through spread positions one by one.
-- Shows ritual prompts and a visual spread diagram.
-- User physically draws and places each card.
-- After all positions are placed, the photo upload section is shown.
-
-### Upload Photo
-
-- Drag-and-drop or click-to-upload for JPG, PNG, WEBP.
-- File is read as base64 and stored in `state.uploadedImage`.
-- "Identify Cards with AI" sends the photo plus spread/position context to Gemini.
-- Returned JSON is parsed into `state.cards`.
-
-### Manual Entry
-
-- One row per spread position.
-- Card picker/search uses the active deck.
-- Orientation toggle supports upright/reversed.
-- Orientation buttons carry `data-pos` and write back to `state.cards[positionId].orientation` through `syncOrientationState(el)`.
-- `confirmCards()` reads picker button selections as well as legacy text inputs, so reversed cards persist even when the user chooses cards through the picker.
-- Dropped/jumper card orientation uses the same `data-pos="drop"` pattern and stores to `state.droppedCard.orientation`.
-- Manual review remains important because photo recognition can be imperfect.
-
----
-
-## AI Card Identification Helper
-
-Source: `src/ai-identification.ts`
-
-Build output: `js/ai-identification.js`
-
-Runtime API:
+`src/ai-identification.ts` compiles to `js/ai-identification.js` and exposes:
 
 ```js
 window.ArcanaAI.parseIdentifiedCards(responseText, currentCards)
 ```
 
-Purpose:
+It extracts a JSON array from Gemini text, normalizes orientation, canonicalizes
+names against the active deck, and returns cards keyed by position. `js/ui.js`
+retains a fallback parsing path if the helper is unavailable.
 
-- Extracts the first JSON array from Gemini's response.
-- Normalizes orientation to `upright` or `reversed`.
-- Canonicalizes card names against the active deck when possible.
-- Returns `{ [position]: { name, orientation } }`.
+## 14. Reading generation and readiness
 
-`ui.js` uses this helper when available and keeps the original inline JSON parsing as fallback.
-
----
-
-## Reading Generation
-
-`generateReading()` in `reading-engine.js` runs when the user reaches `screen-reading`.
+`generateReading()` in `js/reading-engine.js` chooses AI or classic output:
 
 ```text
-Gemini key available and not classic-forced?
-  yes -> generateAIReading()
-         on failure -> generateClassicReading()
-  no  -> generateClassicReading()
+AI configured and not forced to classic
+  -> generate AI reading
+  -> on failure, fall back to classic
+
+otherwise
+  -> generate classic reading
 ```
 
-### AI Reading
+AI prompts include:
 
-`generateAIReading()` builds a structured markdown prompt with:
+- Spread and layout context
+- Position names and meanings
+- Card names and orientations
+- Card keywords
+- Dropped card
+- Concerns and reader context
+- Reading style and tone
+- Safety language and advanced-layout guidance
 
-- Spread name and layout hint
-- Each position, card name, orientation, and keywords
-- Dropped card, if any
-- User concerns, reading style, and tone
-- Special spread notes for larger layouts
+Classic readings are fully local. They combine card meanings with pattern
+analysis such as dominant suits, Major Arcana count, reversals, repeated
+numbers, and reflection prompts.
 
-The result is stored in `state.narrative` and rendered as markdown sections.
+The guided results screen uses loading/ready classes:
 
-### Classic Reading
+- Before generation, it is not `reading-ready`.
+- `.result-only` Journal and action controls remain hidden.
+- `renderReading()` adds `reading-ready` after real content is rendered.
+- Errors do not reveal result-only controls as if a reading succeeded.
 
-`generateClassicReading()` works fully offline using:
+This prevents empty journal/actions UI from appearing during generation.
 
-- Card upright/reversed meaning text
-- Dominant suit analysis
-- Major Arcana count
-- Reversal count
-- Repeated numbers
-- Reflection questions
+## 15. Post-reading capabilities
 
----
+### Reflection journal
 
-## Post-Reading Reflection & Actions
+Guided results include a static Journal component; quick results inject the same
+concept dynamically. Prompt chips can seed the textarea, and the Save button is
+enabled only when content exists.
 
-The guided reading result screen is defined in `templates/results.html` and embedded in `index.html`.
+`saveJournal()` writes lightweight entries to `arcana-journal`, capped at 50.
+Journal entries are separate from saved reading records and remain local.
 
-The post-reading screen includes:
+### Saved readings and history
 
-- Reading mode controls: AI, Classic, Voice
-- `#reading-content`: generated reading markdown rendered by `reading-engine.js`
-- `.journal-section`: premium reflection journal card
-- `.reading-actions`: post-reading Save/Share/Print/Start controls
+`saveReading()` writes richer records to `arcana_readings`, also capped at 50.
+History renders saved spreads, notes, and premium comparison/archive behavior.
 
-### Reflection Journal
+### Sharing
 
-The reflection journal is designed as a premium post-reading capture moment, not a generic textarea.
+Sharing is implemented in `js/ui.js` with a modal and canvas renderer.
+`getShareSlots()` maps known layouts—including Celtic, yearly, Romany,
+two-pathways, and relationship spreads—to visual card positions. Unknown layouts
+use a grid fallback.
 
-Core elements:
+### Printing
 
-- `.journal-badge`: "Premium Journal" badge
-- `.journal-prompt`: "Reflection"
-- `.reflection-question`: short prompt copy
-- `.reflection-chips`: guided prompt chips
-- `.journal-textarea`: reflection input
-- `.journal-save-btn`: disabled until textarea has content
-- `.journal-save-status`: saved confirmation text
+`printReading()` prepares a print view and coordinates cleanup through
+`afterprint`. Theme changes must preserve print-specific readability and hide
+non-print controls.
 
-Behavior lives in `ui.js`:
+### Narration
 
-- `renderJournalSection(container)` injects the same journal component for quick/upload readings.
-- `wireJournalSection(section)` enables/disables the save button based on text entry.
-- `useReflectionPrompt(btn)` inserts a prompt chip into the textarea.
-- `saveJournal()` writes to `localStorage` key `arcana-journal` and shows "Saved to your journal".
+Premium narration uses the browser Speech Synthesis API. Voice preference is
+stored in settings, and reading markdown is reduced to narration-friendly text.
 
-`renderReading()` in `reading-engine.js` clears the static journal textarea and calls `wireJournalSection(jSec)` when a guided reading is rendered.
+## 16. Premium and monetization
 
-### Post-Reading Actions
+Arcana Premium is a one-time **$29 lifetime unlock**, not a recurring
+subscription.
 
-The improved action hierarchy is:
+`js/subscription.js` owns:
 
-1. `Save Reading` as the primary full-width action
-2. Secondary actions: `Share`, `Print`, `Start Again`
+- Free daily reading usage
+- Premium spread IDs
+- Local entitlement state
+- Upgrade modal content
+- Activation forms
+- Premium UI rendering
+- Narration and comparison entry points
 
-The mobile layout is intentionally not a four-equal-button row because long labels clip on narrow screens.
+The browser does not contain an activation allow-list. `activatePremiumKey()`
+posts the entered key to `getActivationApiUrl()`, which uses an explicit
+activation endpoint when configured or the Worker/proxy base otherwise.
 
-### Share Canvas
+After successful verification, the browser stores premium state in
+`arcana_subscription`. This local state controls the UI, but its source of truth
+at activation time is the Worker/Gumroad response.
 
-Sharing is handled in `ui.js`:
+## 17. Cloudflare Worker services
 
-- `getSharePayload()` builds a payload from `state.cards`, `state.narrative`, and `getReadingSpread()`.
-- `showShareModal(data)` opens the share preview modal.
-- `renderShareCanvas(data)` draws a canvas preview.
-- `getShareSlots(data)` maps spread layouts to card positions.
+`server/cloudflare-worker.js` handles CORS, request parsing, JSON responses, and
+three service paths.
 
-Supported share slot layouts include:
+### `POST /api/activate`
 
-- `row`
-- `celtic-simple`
-- `celtic`
-- `yearly`
-- `romany`
-- `two-pathways`
-- `relationship`
-- generic grid fallback
+- Normalizes and hashes the submitted license key
+- Calls Gumroad's license verification endpoint
+- Uses the configured product ID or the checked-in public fallback product ID
+- Rejects failed, refunded, or chargebacked purchases
+- Optionally stores activation metadata in `ARCANA_LICENSES`
+- Returns premium entitlement metadata to the browser
 
-Advanced spreads must use explicit share slot maps where possible; otherwise the canvas becomes visually misleading or cramped.
+### `POST /api/gumroad/webhook`
 
----
+- Accepts Gumroad form-encoded event data
+- Validates the seller ID against configuration/public fallback
+- Optionally validates a shared webhook secret
+- Stores sale/refund/event metadata in `ARCANA_LICENSES` when bound
+- Does not store browser reading or journal data
+
+### AI proxy route
 
-## Monetization And Premium Activation
+Other accepted POST traffic is handled by the Gemini proxy path. It requires the
+Worker secret `GOOGLE_API_KEY`, forwards a Gemini request, and applies model
+fallback/retry behavior.
 
-Arcana Premium is a one-time $29 lifetime unlock. Gumroad issues a unique license key for each purchase, and the browser verifies that key through the Cloudflare Worker before saving local premium state.
-
-The Worker exposes:
-
-- `POST /api/activate`: verifies a Gumroad license key with Gumroad's license API, stores activation metadata in Cloudflare KV when `ARCANA_LICENSES` is bound, and returns `isPremium: true` for valid purchases.
-- `POST /api/gumroad/webhook`: stores Gumroad sale/refund metadata for bookkeeping and future revocation support.
-
-Worker deployment expects:
-
-- `GUMROAD_PRODUCT_ID`: Gumroad product id for the $29 Premium product.
-- `ARCANA_LICENSES`: Cloudflare KV namespace binding for license/event metadata.
-- Optional `GUMROAD_WEBHOOK_SECRET`: shared webhook secret if configured.
-- Optional `GOOGLE_API_KEY`: only needed if retaining the old Arcana AI proxy fallback.
-
-The static app stores premium state in `arcana_subscription` after activation. There is no account system or server-side user profile.
-
----
-
-## AI Layer
-
-`ai.js` contains the Gemini API client.
-
-`callGemini(prompt, apiKey, imageData, statusEl)`:
-
-- Sends text-only or multimodal text+image requests.
-- Adds `inline_data` when `imageData` is provided.
-- Prefers an explicit or saved user Gemini API key and sends it with the `x-goog-api-key` header.
-- Falls back to the optional Arcana AI proxy only when no user key is available and a proxy URL is configured.
-- Handles model fallback and retry behavior.
-- Handles API key validation and rate-limit messaging.
-
-`testApiKey()` validates the key with a minimal prompt and saves settings on success.
-
----
-
-## Persistence
-
-All persistence is `localStorage`.
-
-| Key | Contents | Notes |
-|---|---|---|
-| `arcana_autosave` | `{ state, timestamp }` | Expires after 1 hour |
-| `arcana_settings` | `{ geminiKey, readingStyle, readingTone, narratorVoice }` | Gemini key and reading preferences saved locally in this browser |
-| `arcana_subscription` | `{ tier, key, source, activatedAt }` | Premium state after Gumroad license verification |
-| `arcana_readings` | Reading history records | Capped at 50 |
-| `arcana-journal` | Journal entries | Capped at 50 |
-
-Reading records include:
-
-```js
-{
-  id: string,
-  title: string,
-  date: string,
-  mode: 'guided' | 'quick',
-  concerns: string[],
-  cardSystem: string,
-  spread: string,
-  spreadName: string,
-  cards: object,
-  droppedCard: object | null,
-  hasDroppedCard: boolean,
-  narrative: string,
-  notes: string
-}
-```
-
-Journal records in `arcana-journal` are intentionally lightweight:
-
-```js
-{
-  date: string,
-  spread: string,
-  text: string
-}
-```
-
-Saved reading history (`arcana_readings`) and reflection journal entries (`arcana-journal`) are separate stores.
-
----
-
-## AEO / Search Metadata
-
-The landing page copy is written with Answer Engine Optimization in mind:
-
-- Question-based headings and direct answer copy
-- Clear "what is Arcana / how it works / is it free" sections
-- Hard-coded HTML copy in templates and embedded fallbacks
-- `meta description` and `meta keywords` in `index.html`
-- JSON-LD `SoftwareApplication` and `FAQPage` schema in `index.html`
-- `llms.txt` at the project root for AI/LLM-readable summary and important routes/content
-
-Do not hide essential product explanations behind client-only interactions. Important answer-oriented copy should remain readable in the static HTML.
-
----
-
-## CSS Architecture
-
-`main.css` contains the original core styling and font declarations. `premium.css` is the current premium theme override layer and should be edited via `src/premium-theme.css`, then rebuilt.
-
-The theme uses:
-
-- Deep charcoal/near-black backgrounds
-- Soft celestial gradients
-- Star and moon-like CSS atmosphere
-- Gold, violet, and teal accents
-- Cormorant Garamond display typography
-- Clean sans-serif body typography
-- Larger negative space and slow transitions
-- 8px border radius for premium, restrained UI surfaces
-- Dedicated premium treatment for the post-reading reflection journal and reading action bar
-
-`onboarding.css`, `reading.css`, and `settings.css` remain stubs unless the styling is later split by domain.
-
----
-
-## Tests
-
-Current regression checks:
-
-- `tests/journal-ui.ps1`
-- `tests/reading-actions.ps1`
-
-Run:
+Expected Worker configuration:
+
+| Binding/variable | Purpose |
+|---|---|
+| `GOOGLE_API_KEY` | private Gemini key for hosted proxy fallback |
+| `GUMROAD_PRODUCT_ID` | optional override for the Arcana product |
+| `GUMROAD_SELLER_ID` | optional seller override |
+| `GUMROAD_WEBHOOK_SECRET` | optional shared webhook verification |
+| `ARCANA_LICENSES` | optional KV namespace for activation/events |
+
+## 18. Browser persistence
+
+| Key | Purpose |
+|---|---|
+| `arcana_autosave` | temporary state recovery, one-hour expiry |
+| `arcana_settings` | Gemini key, reading style/tone, narrator voice |
+| `arcana_subscription` | local premium entitlement metadata |
+| `arcana_usage` | daily/monthly usage counters |
+| `arcana_readings` | saved reading archive, capped at 50 |
+| `arcana-journal` | lightweight reflection entries, capped at 50 |
+
+Saved reading records contain the mode, spread, cards, dropped card, narrative,
+concerns, notes, and display metadata. Journal records contain date, spread, and
+reflection text.
+
+There is no cloud sync. Clearing browser storage removes this local data.
+Uploaded photos are used in the active flow and should be treated as private.
+
+## 19. Homepage, metadata, and assets
+
+`templates/welcome.html` and its embedded counterpart implement the current
+homepage:
+
+- Ritual navigation to How It Works, Premium, and Journal sections
+- Guided and quick-upload calls to action
+- Image-led physical-card hero
+- Four-step reading journey
+- Real cards versus random generators comparison
+- Journal/Premium promotion and lifetime price
+- Final repeated call to action
+
+Deployed homepage images live under `assets/homepage/`. Template references must
+never point to local Codex output directories or developer-only paths.
+
+Search/answer-engine support includes:
+
+- Descriptive metadata in `index.html`
+- Static, answer-oriented homepage/help copy
+- JSON-LD software and FAQ schemas
+- `llms.txt`
+
+Important product explanations should remain present in static HTML rather than
+existing only after client-side interaction.
+
+## 20. CSS, responsiveness, and accessibility
+
+`src/premium-theme.css` is the authoritative current visual layer and generates
+`css/premium.css`. It contains both homepage and product-shell styling.
+
+Core conventions:
+
+- Near-black/deep-indigo backgrounds
+- Ivory text with brighter secondary copy
+- Antique-gold primary controls, rules, borders, and focus rings
+- Editorial serif headings and readable sans-serif controls
+- Restrained translucent surfaces and celestial light effects
+- Eight-pixel premium surface radii
+- CSS-only motion with `prefers-reduced-motion` support
+
+At 760px and below, guided `.nav-row` controls become a sticky safe-area-aware
+bottom action dock. Mobile copy has an explicit readability floor, and major
+controls must remain usable at a 390px viewport without horizontal overflow.
+
+Selection surfaces use semantic `<button type="button">` elements. Preserve:
+
+- Visible keyboard focus
+- Non-color selection cues
+- Appropriate touch targets
+- `aria-live` feedback
+- Decorative `aria-hidden` behavior
+- Modal scrolling and accessible close controls
+- Print styles
+
+## 21. Tests and verification
+
+`npm test` runs:
+
+1. TypeScript compilation
+2. `tests/worker-activation.mjs`
+3. `tests/monetization-config.ps1`
+4. `tests/journal-ui.ps1`
+5. `tests/reading-actions.ps1`
+6. `tests/homepage-ui.ps1`
+7. `tests/app-shell-ui.ps1`
+
+Coverage is contract-oriented:
+
+- Worker activation success/failure/default configuration and webhook validation
+- No hardcoded browser activation keys
+- Current lifetime pricing and Gemini-key settings
+- Journal wiring and post-reading actions
+- Spread/layout/card-orientation behavior
+- Homepage content, assets, handlers, and embedded-template sync
+- Ritual Shell classes, semantic controls, Journal utility, mobile navigation,
+  reading-ready behavior, and modal/template sync
+
+Recommended verification by change type:
 
 ```powershell
+npm run build
 npm test
+node --check js\ui.js
+node --check js\reading-engine.js
+node --check server\cloudflare-worker.js
+git diff --check
 ```
 
-The test command also compiles TypeScript first.
+For visual changes, also use `npm run serve` and browser-check desktop plus 390px
+mobile, keyboard navigation, loading/error states, overflow, and console output.
 
-`reading-actions.ps1` also checks several architecture-sensitive contracts:
+## 22. Implementation constraints
 
-- Shared `getReadingSpread()` behavior for guided and quick flows
-- Quick/upload share action availability
-- Active spread allow-list usage
-- Card picker/orientation persistence hooks
-- Advanced share layout support
-- Reflection prompt chips and journal save-state wiring
-- Public-domain tarot art helper availability
+1. Preserve the static, framework-free browser runtime.
+2. Preserve the physical-card-first product model.
+3. Keep the default guided onboarding short.
+4. Synchronize external and embedded templates.
+5. Synchronize external and embedded spread data.
+6. Edit theme and TypeScript generated outputs through their source files.
+7. Commit generated deployable assets.
+8. Preserve global script dependency order.
+9. Keep manual card correction and classic fallback working.
+10. Do not expose Gemini keys, webhook secrets, or activation secrets.
+11. Verify premium licenses through the Worker/Gumroad path.
+12. Keep browser readings, photos, and journal data private and local.
+13. Preserve Ritual Stage/Ritual Shell accessibility and responsive behavior.
+14. Keep result-only controls hidden until a reading is ready.
+15. Run current tests and syntax checks before claiming completion.
 
----
-
-## Key Constraints & Decisions
-
-1. **Static runtime**: The app must remain plain HTML/CSS/global JS at runtime.
-
-2. **No React/Vue/Angular/Vite rewrite**: The user requested a redesign of the existing app, not a rebuilt product or generated-card game.
-
-3. **Physical cards first**: Users draw and lay out real cards. AI analyzes the uploaded photo and/or manually entered cards.
-
-4. **Short default onboarding**: Default guided mode starts at choosing a spread, then preparation, card placement/upload/manual entry, overview, reading, and journal.
-
-5. **Dual-source templates/data**: Templates and spreads exist as external files and embedded fallbacks, supporting both HTTP and `file://`.
-
-6. **Generated assets must be committed/deployed**: Because the app can run without a build server, `css/premium.css` and `js/ai-identification.js` must exist alongside their `src/` sources.
-
-7. **Mutable singleton state**: No framework reactivity. UI updates are imperative.
-
-8. **API key in localStorage**: Gemini key is stored in plaintext in `arcana_settings`; users should use a dedicated key and can revoke it in Google AI Studio.
-
-9. **Manual review matters**: AI identification can be wrong, especially on larger spreads. The UI must preserve review/correction.
-
-10. **Theme is layered**: Premium visual changes should prefer the theme layer and existing class names before changing product markup or flow.
-
-11. **Template sync matters**: For user-facing template changes, update both `templates/*.html` and embedded `<template>` fallbacks in `index.html`.
-
-12. **Plain JS must parse**: Run `node --check` on edited global JS files. Build/type checks do not cover most runtime JavaScript.
-
-13. **Post-reading actions must not clip**: Mobile reading actions should prioritize `Save Reading` and keep secondary actions short enough for narrow screens.
+When code, tests, and documentation disagree, inspect the running code and
+regression contracts first, then update this document to match verified current
+behavior.

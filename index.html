@@ -226,7 +226,7 @@
 </div>
 </template>
   <template id="template-concerns">
-<div class="screen" id="screen-concerns">
+<div class="screen ritual-screen ritual-screen-focus" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question should your tarot reading explore?</h2>
   <div class="onboard">
@@ -252,7 +252,7 @@
 </div>
 </template>
   <template id="template-card-system">
-<div class="screen" id="screen-card-system">
+<div class="screen ritual-screen ritual-screen-choice" id="screen-card-system">
   <div class="step-dots" id="dots-system"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which deck are you reading with?</h2>
   <div class="onboard">
@@ -277,7 +277,7 @@
 </div>
 </template>
   <template id="template-choose-reading">
-<div class="screen" id="screen-spread">
+<div class="screen ritual-screen ritual-screen-choice" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which tarot spread should you use?</h2>
@@ -347,7 +347,7 @@
 </div>
 </template>
   <template id="template-reflection">
-<div class="screen" id="screen-reflection">
+<div class="screen ritual-screen ritual-screen-focus" id="screen-reflection">
   <div class="step-dots" id="dots-reflection"></div>
   <div class="progress-estimate" id="progress-reflection"></div>
   <div class="reflection-container">
@@ -373,7 +373,7 @@
 </div>
 </template>
   <template id="template-placement">
-<div class="screen" id="screen-card-entry">
+<div class="screen ritual-screen ritual-screen-workspace" id="screen-card-entry">
   <div class="step-dots" id="dots-entry"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How do you lay out a tarot spread?</h2>
   <div class="onboard compact-onboard">Place one real card in each position shown below. When the spread is complete, upload a clear photo from above so Arcana can identify the cards, or enter them manually.</div>
@@ -446,7 +446,7 @@
 </div>
 </template>
   <template id="template-overview">
-<div class="screen" id="screen-overview">
+<div class="screen ritual-screen ritual-screen-review" id="screen-overview">
   <div class="step-dots" id="dots-overview"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Are these the right cards?</h2>
   <div class="onboard">
@@ -461,7 +461,7 @@
 </div>
 </template>
   <template id="template-results">
-<div class="screen" id="screen-reading">
+<div class="screen ritual-screen ritual-screen-reading" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your tarot reading</h2>
   <div class="reading-toggle no-print">
@@ -501,7 +501,7 @@
 </div>
 </template>
   <template id="template-history">
-<div class="screen" id="screen-history">
+<div class="screen ritual-screen ritual-screen-archive" id="screen-history">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How can you track tarot readings over time?</h2>
   <div class="onboard">
     Arcana saves readings on this device so you can revisit card patterns, journal notes, and recurring themes. Free history keeps your latest 3 readings; Premium keeps the full archive with comparison tools.
@@ -513,7 +513,7 @@
 </div>
 </template>
   <template id="template-quick">
-<div class="screen" id="screen-quick">
+<div class="screen ritual-screen ritual-screen-workspace" id="screen-quick">
   <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Upload a tarot spread for an AI reading</h2>
   <div class="onboard">
     Choose the spread you laid out, upload a clear photo from above, and Arcana will identify the cards by position before generating your reading.
@@ -555,7 +555,7 @@
 </template>
   <template id="template-settings">
 <div class="modal-overlay" id="modal-settings">
-  <div class="modal">
+  <div class="modal ritual-modal ritual-settings-modal">
     <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
     <h2>Reading Settings</h2>
 
@@ -609,7 +609,7 @@
 </template>
   <template id="template-help">
 <div class="modal-overlay" id="modal-help">
-  <div class="modal">
+  <div class="modal ritual-modal ritual-help-modal">
     <button class="close-btn" onclick="closeModal('modal-help')">&times;</button>
     <h2>Tarot Reading Guide</h2>
     <div class="help-section"><h3>What is tarot?</h3><p>Tarot is a 78-card symbolic system used for reflection, insight, and guidance. A tarot reading does not need to predict a fixed future; it helps you examine a question, notice patterns, and consider possible next steps.</p></div>
@@ -657,7 +657,7 @@
     "id": "three-card",
     "name": "Three Card (Past/Present/Future)",
     "category": "Daily",
-    "description": "Past ÅE Present ÅE Future",
+    "description": "Past ÔøΩE Present ÔøΩE Future",
     "cardCount": 3,
     "positions": [
       {
@@ -1071,7 +1071,7 @@
     "id": "standardReading",
     "name": "Standard Reading",
     "category": "Classic",
-    "description": "Past ÅE Present ÅE Future",
+    "description": "Past ÔøΩE Present ÔøΩE Future",
     "cardCount": 3,
     "positions": [
       {
@@ -1096,7 +1096,7 @@
     "id": "deepExploration",
     "name": "Deep Exploration",
     "category": "Classic",
-    "description": "Current Situation ÅE Challenge ÅE Past Influence ÅE Near Future ÅE Advice ÅE Outcome",
+    "description": "Current Situation ÔøΩE Challenge ÔøΩE Past Influence ÔøΩE Near Future ÔøΩE Advice ÔøΩE Outcome",
     "cardCount": 6,
     "positions": [
       {

@@ -15,11 +15,15 @@
 - Modify `src/ai-identification.ts`: strict active-deck validation and safe playing-card aliases.
 - Generate `js/ai-identification.js`: compiled browser output.
 - Create `tests/ai-identification.mjs`: executable parser behavior tests.
+- Modify `js/state.js`: persist the explicit card-system establishment marker.
+- Modify `js/app.js`: migrate restored card-system establishment state.
 - Modify `js/ui.js`: deck tabs, guarded switching, and deck-aware identification/quick prompts.
 - Modify `js/reading-engine.js`: full meanings and deck-specific reading/pattern instructions.
+- Create `tests/deck-selection.mjs`: executable deck-state, detection, picker, and position-validation regressions.
 - Modify `tests/reading-actions.ps1`: prompt and manual-picker contracts.
 - Modify `package.json`: include the focused Node test in `npm test`.
 - Modify `ARCHITECTURE.md`: document deck inference and strict name handling.
+- Modify `docs/superpowers/plans/2026-06-19-deck-aware-card-selection.md`: keep the completed implementation inventory current.
 
 ### Task 1: Strict card-name normalization
 
@@ -29,7 +33,7 @@
 - Generate: `js/ai-identification.js`
 - Modify: `package.json`
 
-- [ ] **Step 1: Write the failing parser test**
+- [x] **Step 1: Write the failing parser test**
 
 Create `tests/ai-identification.mjs` that loads `js/ai-identification.js` in a
 minimal `window` shim and asserts:
@@ -80,7 +84,7 @@ assert.deepEqual(
 console.log('ai identification regression passed');
 ```
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -91,7 +95,7 @@ node tests\ai-identification.mjs
 Expected: FAIL because numeric ranks and tarot-style playing-card aliases are
 not normalized and unknown names are currently accepted.
 
-- [ ] **Step 3: Implement strict normalization**
+- [x] **Step 3: Implement strict normalization**
 
 In `src/ai-identification.ts`:
 
@@ -105,16 +109,23 @@ In `src/ai-identification.ts`:
   the supplied references.
 - Omit positions whose card name cannot be resolved.
 
-Keep the public API unchanged:
+Keep the existing two-argument API compatible while allowing spread-position
+validation through an optional third argument:
 
 ```ts
 parseIdentifiedCards(
   responseText: string,
-  cardReferences?: ArcanaCardReference[]
+  cardReferences?: ArcanaCardReference[],
+  allowedPositions?: Array<string | number>
 ): Record<string, ArcanaIdentifiedCard>
 ```
 
-- [ ] **Step 4: Compile and verify GREEN**
+When `allowedPositions` is supplied, accept only positive scalar string/number
+positions whose normalized value belongs to that set. UI identification calls
+pass the current spread's position IDs, reject empty post-filter results before
+replacement, and remove stale non-spread keys from spread-scoped card state.
+
+- [x] **Step 4: Compile and verify GREEN**
 
 Run:
 
@@ -125,12 +136,12 @@ node tests\ai-identification.mjs
 
 Expected: TypeScript exits 0 and `ai identification regression passed`.
 
-- [ ] **Step 5: Add the focused test to `npm test`**
+- [x] **Step 5: Add the focused test to `npm test`**
 
 Insert `node tests\ai-identification.mjs` immediately after `build:ts` in the
 test script.
 
-- [ ] **Step 6: Commit parser behavior**
+- [x] **Step 6: Commit parser behavior**
 
 ```powershell
 git add src/ai-identification.ts js/ai-identification.js tests/ai-identification.mjs package.json
@@ -144,7 +155,7 @@ git commit -m "fix: validate identified cards against active deck"
 - Modify: `js/ui.js`
 - Modify: `js/reading-engine.js`
 
-- [ ] **Step 1: Add failing contract assertions**
+- [x] **Step 1: Add failing contract assertions**
 
 Extend `tests/reading-actions.ps1` to require:
 
@@ -161,7 +172,7 @@ Assert-Contains $engine 'Do not rename playing cards as tarot equivalents' 'Expe
 Assert-Contains $engine 'Do not discuss Major Arcana' 'Expected playing-card pattern-analysis rule.'
 ```
 
-- [ ] **Step 2: Run the contract test to verify RED**
+- [x] **Step 2: Run the contract test to verify RED**
 
 Run:
 
@@ -171,7 +182,7 @@ powershell -ExecutionPolicy Bypass -File tests\reading-actions.ps1
 
 Expected: FAIL at the first missing deck-aware helper.
 
-- [ ] **Step 3: Add shared deck prompt guidance**
+- [x] **Step 3: Add shared deck prompt guidance**
 
 In `js/ui.js`, add:
 
@@ -200,7 +211,7 @@ Make the quick prompt role deck-neutral (`card reader`), and make pattern
 analysis conditional: tarot asks for Major Arcana; playing cards ask for suit
 and rank patterns without Major Arcana.
 
-- [ ] **Step 4: Add guarded manual picker switching**
+- [x] **Step 4: Add guarded manual picker switching**
 
 In `js/ui.js`, add:
 
@@ -219,6 +230,7 @@ function switchPickerCardSystem(nextSystem){
     state.hasDroppedCard=false;
   }
   state.cardSystem=nextSystem;
+  state.cardSystemEstablished=false;
   currentCards=getCards();
   buildSuitFilter();
   renderPickerCards('');
@@ -229,10 +241,15 @@ function switchPickerCardSystem(nextSystem){
 Render Tarot and Playing Cards buttons in `openCardPicker()` before the suit
 filters. The active tab follows `state.cardSystem`.
 
-When the first card is selected, keep the currently active picker deck as
-`state.cardSystem`. Never permit a card absent from `currentCards` to be saved.
+Browsing tabs changes `state.cardSystem` and available cards without establishing
+the deck. The first selected card establishes its system. Never permit a card
+absent from `currentCards` to be saved.
 
-- [ ] **Step 5: Make guided readings deck-specific**
+If the current system is `playing-joker`, selecting a playing card (including
+The Joker) preserves `playing-joker`; ordinary Playing Cards tab selections
+remain `playing`.
+
+- [x] **Step 5: Make guided readings deck-specific**
 
 In `js/reading-engine.js`, add `getReadingSystemInstructions()` returning:
 
@@ -252,7 +269,7 @@ cardLines+=`... Keywords: ${kws}. Meaning: ${meaning}\n`;
 Insert the deck-specific instructions before the requested sections and replace
 the universal Major Arcana pattern request with the helper's pattern rule.
 
-- [ ] **Step 6: Run focused tests to verify GREEN**
+- [x] **Step 6: Run focused tests to verify GREEN**
 
 Run:
 
@@ -266,7 +283,7 @@ node --check js\reading-engine.js
 
 Expected: all commands exit 0.
 
-- [ ] **Step 7: Commit prompt and picker behavior**
+- [x] **Step 7: Commit prompt and picker behavior**
 
 ```powershell
 git add js/ui.js js/reading-engine.js tests/reading-actions.ps1
@@ -278,25 +295,31 @@ git commit -m "feat: add deck-aware card selection and prompts"
 **Files:**
 - Modify: `ARCHITECTURE.md`
 
-- [ ] **Step 1: Document current behavior**
+- [x] **Step 1: Document current behavior**
 
 Update the card-entry and identification sections to state:
 
-- Manual picker tabs infer tarot or playing-card mode.
+- Manual picker tabs browse tarot or playing-card mode; first selection or
+  explicit onboarding establishes the deck.
 - Switching after selections requires confirmation and clears incompatible
   cards only when confirmed.
-- Identification validates names against the active deck.
+- Photo-first identification detects and establishes exactly one deck, rejects
+  mixed or empty results, and otherwise validates names against the active deck.
 - Safe playing-card aliases normalize; ambiguous/unknown names are omitted.
+- Quick photo detection requires a `CARD_SYSTEM` marker and cannot override an
+  established deck.
 - Reading prompts use full active-orientation meanings and deck-specific pattern
   analysis.
+- Legacy autosaves infer establishment from valid saved cards.
 
-- [ ] **Step 2: Run the complete verification suite**
+- [x] **Step 2: Run the complete verification suite**
 
 Run:
 
 ```powershell
 npm run build
 npm test
+node --check js\app.js
 node --check js\ui.js
 node --check js\reading-engine.js
 git diff --check
@@ -304,7 +327,7 @@ git diff --check
 
 Expected: all commands exit 0; every regression reports passed.
 
-- [ ] **Step 3: Review scope**
+- [x] **Step 3: Review scope**
 
 Run:
 
@@ -317,7 +340,7 @@ git diff -- src/ai-identification.ts js/ai-identification.js js/ui.js js/reading
 Expected: changes are limited to the approved deck-aware implementation,
 generated output, tests, documentation, and this plan.
 
-- [ ] **Step 4: Commit documentation**
+- [x] **Step 4: Commit documentation**
 
 ```powershell
 git add ARCHITECTURE.md docs/superpowers/plans/2026-06-19-deck-aware-card-selection.md

@@ -19,7 +19,7 @@ async function initApp(){
   if(savedState&&savedState.spreadId){
     const resumeScreen=GUIDED_SCREENS[GUIDED_SCREENS.indexOf('screen-spread')];
     state=Object.assign(state,savedState);
-    currentCards=getCards();
+    migrateRestoredCardSystemState(savedState);
     goScreen('screen-spread');
   }else{
     goScreen(screenForRoute(location.hash.slice(1)||'welcome'),true);

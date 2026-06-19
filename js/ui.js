@@ -89,6 +89,7 @@ function startGuided(){
   const lifeStage=document.getElementById('reader-life-stage');
   if(lifeStage)lifeStage.value='';
   state.cardSystem='tarot';
+  state.cardSystemEstablished=false;
   currentCards=getCards();
   goScreen('screen-spread');
 }
@@ -99,6 +100,9 @@ function startQuick(){
   state.narrative='';
   state.readingUsageRecorded=false;
   state.cards={};
+  state.droppedCard=null;
+  state.hasDroppedCard=false;
+  state.cardSystemEstablished=false;
   state.readerLifeStage='';
   document.getElementById('quick-results').innerHTML='';
   document.getElementById('quick-concern').value='';
@@ -145,12 +149,14 @@ function saveConcerns(){
 // ===== CARD SYSTEM =====
 function selectSystem(sys,el){
   state.cardSystem=sys;
+  state.cardSystemEstablished=true;
   document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   currentCards=getCards();
 }
 function confirmSystem(){
   if(!state.cardSystem){alert('Please select a card system.');return;}
+  state.cardSystemEstablished=true;
   currentCards=getCards();
   goScreen('screen-spread');
 }
@@ -256,6 +262,95 @@ function updateProgressEstimate(screenId){
 // ===== SOCIAL SHARING =====
 function getReadingSpread(){
   return SPREADS.find(s=>s.id===(state.mode==='quick'?(state.quickSpreadId||state.spreadId):state.spreadId));
+}
+
+function replaceIdentifiedSpreadCards(spread,identified){
+  const allowedPositions=new Set(spread.positions.map(pos=>String(pos.id)));
+  Object.keys(state.cards||{}).forEach(position=>{
+    if(!allowedPositions.has(String(position)))delete state.cards[position];
+  });
+  spread.positions.forEach(pos=>{
+    delete state.cards[pos.id];
+  });
+  Object.entries(identified||{}).forEach(([position,entry])=>{
+    if(allowedPositions.has(String(position)))state.cards[position]=entry;
+  });
+}
+
+function getCardSystemPromptGuide(cardSystem,allowDetection){
+  if(allowDetection){
+    return `First determine whether the photograph contains traditional tarot or standard playing cards.
+If tarot, use standard Rider-Waite-Smith names.
+If playing cards:
+Keep playing-card names as Hearts, Diamonds, Clubs, and Spades; use Jack, Queen, and King; never rename them as Cups, Pentacles, Wands, Swords, Pages, or Knights.`;
+  }
+  if(cardSystem==='tarot'){
+    return 'This is a traditional tarot deck. Use standard Rider-Waite-Smith card names only.';
+  }
+  return 'This is a standard playing-card deck. Keep playing-card names as Hearts, Diamonds, Clubs, and Spades; use Jack, Queen, and King; never rename them as Cups, Pentacles, Wands, Swords, Pages, or Knights.';
+}
+
+function shouldDetectCardSystem(){
+  return !state.cardSystemEstablished;
+}
+
+function getIdentificationCardReferences(allowDetection){
+  if(allowDetection){
+    return [...TAROT_CARDS,...buildPlayingCards(false)];
+  }
+  return currentCards;
+}
+
+function establishDetectedCardSystem(identified){
+  const tarotNames=new Set(TAROT_CARDS.map(card=>card.name.toLowerCase()));
+  const playingNames=new Set(buildPlayingCards(false).map(card=>card.name.toLowerCase()));
+  const detectedSystems=new Set();
+  Object.values(identified||{}).forEach(entry=>{
+    const name=String(entry&&entry.name||'').toLowerCase();
+    if(tarotNames.has(name))detectedSystems.add('tarot');
+    if(playingNames.has(name))detectedSystems.add('playing');
+  });
+  if(detectedSystems.size>1){
+    throw new Error('Validated results contain multiple card systems. Please review the cards manually');
+  }
+  if(!detectedSystems.size)return false;
+  state.cardSystem=[...detectedSystems][0];
+  state.cardSystemEstablished=true;
+  currentCards=getCards();
+  return true;
+}
+
+function validateIdentificationResult(identified){
+  if(!Object.keys(identified||{}).length){
+    throw new Error('No valid cards were identified. Please review the spread manually');
+  }
+  return identified;
+}
+
+function migrateRestoredCardSystemState(savedState){
+  if(savedState && typeof savedState.cardSystemEstablished==='boolean'){
+    state.cardSystemEstablished=savedState.cardSystemEstablished;
+    currentCards=getCards();
+    return state.cardSystemEstablished;
+  }
+  const knownNames=new Set(getCards().map(card=>card.name.toLowerCase()));
+  const selected=Object.values(state.cards||{});
+  if(state.droppedCard)selected.push(state.droppedCard);
+  state.cardSystemEstablished=selected.length>0 && selected.every(entry=>
+    knownNames.has(String(entry&&entry.name||'').toLowerCase())
+  );
+  currentCards=getCards();
+  return state.cardSystemEstablished;
+}
+
+function getQuickPatternAnalysisGuide(cardSystem,allowDetection){
+  if(allowDetection){
+    return 'Keep pattern analysis consistent with the detected system: tarot may discuss Major Arcana, Minor Arcana suits, reversals, courts, and interactions; playing cards should discuss suits, repeated ranks, court patterns, reversals, and interactions, and must not discuss Major Arcana.';
+  }
+  if(cardSystem==='tarot'){
+    return 'Dominant suits, Major Arcana presence, Minor Arcana patterns, reversals, courts, and key interactions';
+  }
+  return 'Playing-card suits, repeated ranks, court patterns, reversals, and key interactions. Do not discuss Major Arcana';
 }
 
 function getAppShareUrl(){
@@ -857,8 +952,9 @@ async function identifyGuidedCards(){
   const btn=document.getElementById('guided-identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
   try{
+    const detectCardSystem=shouldDetectCardSystem();
     const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying tarot cards in a photograph of a spread.
+    const prompt=`You are identifying cards in a photograph of a spread.
 
 SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
@@ -867,30 +963,20 @@ POSITIONS:
 ${posDetails}
 
 Examine the photo carefully. For each numbered position, identify the card name and whether it is upright or reversed.
-Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
+${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
     const result=await callGemini(prompt,null,state.uploadedImage);
-    const parsedByArcana=window.ArcanaAI&&window.ArcanaAI.parseIdentifiedCards
-      ? window.ArcanaAI.parseIdentifiedCards(result,currentCards)
-      : null;
-    if(parsedByArcana){
-      Object.assign(state.cards,parsedByArcana);
-      buildManualEntries(spread);
-      document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified! Click "Review Cards" below to verify and continue.</p>';
-    }else{
-    const match=result.match(/\[[\s\S]*?\]/);
-    if(match){
-      const identified=JSON.parse(match[0]);
-      identified.forEach(item=>{
-        if(item.card){
-          state.cards[item.position]={name:item.card,orientation:item.orientation||'upright'};
-        }
-      });
-      buildManualEntries(spread);
-      document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">? Cards identified! Click "Review Cards" below to verify and continue.</p>';
+    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
+      throw new Error('Validated card identification is unavailable. Please review the cards manually');
     }
-    }
+    const cardReferences=getIdentificationCardReferences(detectCardSystem);
+    const parsedByArcana=window.ArcanaAI.parseIdentifiedCards(result,cardReferences,spread.positions.map(p=>p.id));
+    validateIdentificationResult(parsedByArcana);
+    if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
+    replaceIdentifiedSpreadCards(spread,parsedByArcana);
+    buildManualEntries(spread);
+    document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified! Click "Review Cards" below to verify and continue.</p>';
   }catch(err){
     document.getElementById('guided-identify-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try switching to Manual Entry tab.</p>`;
   }
@@ -1092,8 +1178,9 @@ async function identifyCards(){
   const btn=document.getElementById('identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
   try{
+    const detectCardSystem=shouldDetectCardSystem();
     const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying tarot cards in a photograph of a spread.
+    const prompt=`You are identifying cards in a photograph of a spread.
 
 SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
@@ -1102,30 +1189,20 @@ POSITIONS:
 ${posDetails}
 
 Examine the photo carefully. For each numbered position in the layout above, identify the card name and whether it is upright or reversed.
-Card names must use standard Rider-Waite-Smith names (e.g. "The Fool", "Ace of Cups", "Queen of Swords", "Ten of Pentacles").
+${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
     const result=await callGemini(prompt,null,state.uploadedImage);
-    const parsedByArcana=window.ArcanaAI&&window.ArcanaAI.parseIdentifiedCards
-      ? window.ArcanaAI.parseIdentifiedCards(result,currentCards)
-      : null;
-    if(parsedByArcana){
-      Object.assign(state.cards,parsedByArcana);
-      buildManualEntries(spread);
-      document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
-    }else{
-    const match=result.match(/\[[\s\S]*?\]/);
-    if(match){
-      const identified=JSON.parse(match[0]);
-      identified.forEach(item=>{
-        if(item.card){
-          state.cards[item.position]={name:item.card,orientation:item.orientation||'upright'};
-        }
-      });
-      buildManualEntries(spread);
-      document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
+    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
+      throw new Error('Validated card identification is unavailable. Please review the cards manually');
     }
-    }
+    const cardReferences=getIdentificationCardReferences(detectCardSystem);
+    const parsedByArcana=window.ArcanaAI.parseIdentifiedCards(result,cardReferences,spread.positions.map(p=>p.id));
+    validateIdentificationResult(parsedByArcana);
+    if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
+    replaceIdentifiedSpreadCards(spread,parsedByArcana);
+    buildManualEntries(spread);
+    document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
   }catch(err){
     document.getElementById('upload-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try manual entry instead.</p>`;
   }
@@ -1216,6 +1293,27 @@ function buildQuickSpreadRef(){
   ).join('\n');
 }
 
+function applyQuickReadingCardSystem(narrative,detectionRequired){
+  const text=String(narrative||'');
+  const marker=text.match(/^CARD_SYSTEM: (tarot|playing)(?:\r?\n|$)/);
+  if(!marker){
+    if(detectionRequired){
+      throw new Error('Quick reading did not return a valid CARD_SYSTEM marker. Please try again or choose the deck manually');
+    }
+    return text;
+  }
+  if(!detectionRequired){
+    if(marker[1]!==state.cardSystem){
+      throw new Error(`Quick reading CARD_SYSTEM marker conflicts with the established ${state.cardSystem} deck`);
+    }
+    return text.slice(marker[0].length);
+  }
+  state.cardSystem=marker[1];
+  state.cardSystemEstablished=true;
+  currentCards=getCards();
+  return text.slice(marker[0].length);
+}
+
 async function quickRead(){
   if(!canGenerateReading()){
     showUpgradeModal('daily-limit');
@@ -1227,27 +1325,33 @@ async function quickRead(){
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
   saveReaderContext('quick-reader-life-stage');
-  state.cardSystem=state.cardSystem||'tarot';
   const results=document.getElementById('quick-results');
   results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
   try{
+    const detectionRequired=shouldDetectCardSystem();
+    const cardSystemMarkerInstruction=detectionRequired
+      ? 'Your exact first line must be CARD_SYSTEM: tarot or CARD_SYSTEM: playing. Begin markdown on the next line.'
+      : '';
     const qs=state.quickSpreadId?SPREADS.find(s=>s.id===state.quickSpreadId):null;
     let prompt;
     if(qs){
       const layoutHint=getCleanSpreadLayoutHint(qs);
       const posLines=qs.positions.map(p=>p.id+'. '+p.name+': '+p.description).join('\n');
-      prompt=`You are a skilled tarot reader analyzing a photograph of a ${qs.name} spread (${qs.cardCount} cards).
+      prompt=`You are a skilled card reader analyzing a photograph of a ${qs.name} spread (${qs.cardCount} cards).
 
 ${layoutHint}
 
 POSITION MEANINGS:
 ${posLines}
 
+${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
+${cardSystemMarkerInstruction}
+
 For each visible card, identify its name, orientation (upright/reversed), and position, then interpret through that position's meaning.
 
 ## Introduction  - Overall theme and mood of this ${qs.name} reading
 ## Position-by-Position  - Card name + orientation + position meaning + interpretation
-## Pattern Analysis  - Dominant suits, Major Arcana presence, reversals, key interactions
+## Pattern Analysis  - ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
 ## Guidance  - Practical, actionable advice
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
@@ -1259,22 +1363,23 @@ Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 Write as a flowing narrative grounded in both card meaning and positional context. Be specific.`;
     }else{
       const spreadRef=buildQuickSpreadRef();
-      prompt=`You are a skilled tarot reader analyzing a photograph of a card spread.
+      prompt=`You are a skilled card reader analyzing a photograph of a card spread.
 
 KNOWN SPREADS (match the layout in the photo to one of these):
 ${spreadRef}
 
 STEP 1 - IDENTIFY:
-- Determine the card system (tarot Rider-Waite-Smith, or playing cards)
+${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
+${cardSystemMarkerInstruction}
 - Match the layout to a known spread above, or describe it if unknown
 - For each visible card, identify: position number, card name, orientation (upright/reversed)
-- Use standard RWS card names (e.g. "The Fool", "Ace of Cups", "Queen of Swords")
 
 STEP 2 - READ:
+Keep the ${detectionRequired?'detected':'established'} card system's terminology consistent throughout the reading.
 Generate a complete reading using ## markdown headers:
 ## Introduction - Overall theme and mood of the spread
 ## Position-by-Position - For each card, name the position and its meaning in this spread, then interpret the card through that positional lens
-## Pattern Analysis - Dominant suits, Major Arcana presence, reversals, card interactions
+## Pattern Analysis - ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
 ## Guidance - Practical, actionable advice
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
@@ -1285,7 +1390,8 @@ Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
 Write as a flowing narrative. Address BOTH the card meaning AND its positional context. Be specific.`;
     }
-    const narrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
+    const rawNarrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
+    const narrative=applyQuickReadingCardSystem(rawNarrative,detectionRequired);
     state.narrative=narrative;
     if(!state.readingUsageRecorded){
       recordCompletedReading();
@@ -1407,11 +1513,43 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('clic
 
 // ===== CARD PICKER =====
 let pickerPosId=null;
-function openCardPicker(posId){
-  pickerPosId=posId;
+function hasSelectedReadingCards(){
+  return Object.keys(state.cards||{}).length>0 || !!state.droppedCard;
+}
+function switchPickerCardSystem(nextSystem){
+  if(nextSystem===state.cardSystem)return true;
+  if(hasSelectedReadingCards()){
+    const ok=confirm('Switching deck types will clear the cards already selected for this reading. Continue?');
+    if(!ok)return false;
+    state.cards={};
+    state.droppedCard=null;
+    state.hasDroppedCard=false;
+    const dropToggle=document.getElementById('drop-toggle');
+    if(dropToggle)dropToggle.classList.remove('on');
+    const dropEntry=document.getElementById('drop-card-entry');
+    if(dropEntry)dropEntry.style.display='none';
+  }
+  state.cardSystem=nextSystem;
+  state.cardSystemEstablished=false;
+  currentCards=getCards();
+  activeSuitFilter=null;
+  buildSuitFilter();
+  renderPickerFilters();
+  renderPickerCards(null);
+  const spread=getSpread();
+  if(spread&&document.getElementById('manual-entries'))buildManualEntries(spread);
+  return true;
+}
+function renderPickerFilters(){
   const filterEl=document.getElementById('picker-filter');
-  filterEl.innerHTML='<button class="picker-suit-btn active" onclick="filterPickerSuit(null,this)">All</button>';
-  if(state.cardSystem==='tarot'){
+  if(!filterEl)return;
+  const tarotActive=state.cardSystem==='tarot';
+  filterEl.innerHTML=`<div class="picker-system-tabs" style="display:flex;gap:6px;width:100%">
+    <button type="button" class="picker-suit-btn${tarotActive?' active':''}" onclick="switchPickerCardSystem('tarot')">Tarot</button>
+    <button type="button" class="picker-suit-btn${tarotActive?'':' active'}" onclick="switchPickerCardSystem('playing')">Playing Cards</button>
+  </div>
+  <button class="picker-suit-btn active" onclick="filterPickerSuit(null,this)">All</button>`;
+  if(tarotActive){
     filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('major',this)">Major Arcana</button>`;
     TAROT_SUITS.forEach(s=>{
       filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</button>`;
@@ -1421,6 +1559,11 @@ function openCardPicker(posId){
       filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
     });
   }
+}
+function openCardPicker(posId){
+  pickerPosId=posId;
+  currentCards=getCards();
+  renderPickerFilters();
   document.getElementById('card-picker-modal').classList.add('open');
   document.body.style.overflow='hidden';
   renderPickerCards(null);
@@ -1431,7 +1574,7 @@ function closeCardPicker(){
   pickerPosId=null;
 }
 function filterPickerSuit(suit,el){
-  document.querySelectorAll('.picker-suit-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#picker-filter > .picker-suit-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   renderPickerCards(suit);
 }
@@ -1447,12 +1590,23 @@ function renderPickerCards(filter){
 }
 function selectPickerCard(name){
   if(!pickerPosId)return;
+  const card=currentCards.find(item=>item.name===name);
+  if(!card)return;
+  state.cardSystem=card.system==='tarot'?'tarot':(state.cardSystem==='playing-joker'?'playing-joker':'playing');
+  state.cardSystemEstablished=true;
   const btn=document.querySelector(`.card-pick-btn[data-pos="${pickerPosId}"]`);
-  if(btn){btn.textContent=name;btn.classList.add('selected');}
+  if(btn){btn.textContent=card.name;btn.classList.add('selected');}
   const orientBtn=document.querySelector(`.orient-btn[data-pos="${pickerPosId}"]`);
   const orient=orientBtn?orientBtn.dataset.orient:'upright';
-  if(pickerPosId==='drop'){state.droppedCard={name,orientation:orient};}
-  else{state.cards[pickerPosId]={name,orientation:orient};}
+  if(pickerPosId==='drop'){
+    state.droppedCard={name:card.name,orientation:orient};
+    state.hasDroppedCard=true;
+    const dropToggle=document.getElementById('drop-toggle');
+    if(dropToggle)dropToggle.classList.add('on');
+    const dropEntry=document.getElementById('drop-card-entry');
+    if(dropEntry)dropEntry.style.display='block';
+  }
+  else{state.cards[pickerPosId]={name:card.name,orientation:orient};}
   closeCardPicker();
 }
 

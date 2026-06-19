@@ -112,15 +112,32 @@ function readerSafetyInstruction(){
   return `Adapt the interpretation to the reader's life stage. A card that suggests independence, work, romance, conflict, or responsibility should be interpreted differently for a child, teen, young adult, adult, or senior. Keep the reading reflective and empowering, not deterministic. ${minorLine}`.trim();
 }
 
+function getReadingSystemInstructions(){
+  if(state.cardSystem==='tarot'){
+    return {
+      role:'You are a compassionate, insightful reader with deep knowledge of traditional tarot.',
+      naming:'Use traditional Rider-Waite-Smith tarot card names and terminology.',
+      pattern:'Major and Minor Arcana patterns, dominant suits, repeated numbers, reversals, court cards, and card interactions'
+    };
+  }
+  return {
+    role:'You are a compassionate, insightful reader with deep knowledge of playing-card cartomancy.',
+    naming:'Keep the original Hearts, Diamonds, Clubs, and Spades names and the Jack, Queen, and King ranks. Do not rename playing cards as tarot equivalents.',
+    pattern:'Playing-card suits, repeated ranks, court-card patterns, reversals, and card interactions. Do not discuss Major Arcana'
+  };
+}
+
 function buildAIReadingPrompt(settings){
   const spread=getSpread();
+  const systemInstructions=getReadingSystemInstructions();
   let cardLines='';
   spread.positions.forEach(pos=>{
     const entry=state.cards[pos.id];
     if(entry){
       const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
       const kws=card?card.keywords.join(', '):'';
-      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: ${entry.name} (${entry.orientation}) - Keywords: ${kws}\n`;
+      const meaning=card?(entry.orientation==='reversed'?card.reversed:card.upright):'';
+      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: ${entry.name} (${entry.orientation}) - Keywords: ${kws}. Meaning: ${meaning}\n`;
     }else{
       cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: (no card entered)\n`;
     }
@@ -128,14 +145,19 @@ function buildAIReadingPrompt(settings){
   let droppedLine='';
   if(state.hasDroppedCard&&state.droppedCard){
     const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
-    droppedLine=`\nDropped Card (fell out during shuffling): ${state.droppedCard.name} (${state.droppedCard.orientation}) - Keywords: ${dc?dc.keywords.join(', '):''}\nThis card may reveal an underlying theme influencing the entire reading.\n`;
+    const droppedMeaning=dc?(state.droppedCard.orientation==='reversed'?dc.reversed:dc.upright):'';
+    droppedLine=`\nDropped Card (fell out during shuffling): ${state.droppedCard.name} (${state.droppedCard.orientation}) - Keywords: ${dc?dc.keywords.join(', '):''}. Meaning: ${droppedMeaning}\nThis card may reveal an underlying theme influencing the entire reading.\n`;
   }
-  const specialNote=spread.id==='romany'?'\nNOTE: If the Health & Future column (cards 19-21) mirrors the Relationships column (cards 4-6) in theme, interpret it as the health of a relationship, not physical health.':spread.id==='yearly'?'\nNOTE: Any Ace signals new beginnings for that month. Major Arcana carry extra weight. A Knight indicates major life change in that period.':spread.id==='celtic-cross'?'\nNOTE: Card 2 (The Challenge) crosses Card 1 and retains its meaning regardless of orientation.':'';
-  return `You are a compassionate, insightful tarot reader with deep knowledge of ${state.cardSystem==='tarot'?'traditional tarot':'playing card cartomancy'}.
+  const yearlyNote=state.cardSystem==='tarot'
+    ? '\nNOTE: Any Ace signals new beginnings for that month. Major Arcana carry extra weight. A Knight indicates major life change in that period.'
+    : '\nNOTE: Any Ace signals new beginnings for that month. Court cards may highlight important people, roles, or influences in that period.';
+  const specialNote=spread.id==='romany'?'\nNOTE: If the Health & Future column (cards 19-21) mirrors the Relationships column (cards 4-6) in theme, interpret it as the health of a relationship, not physical health.':spread.id==='yearly'?yearlyNote:spread.id==='celtic-cross'?'\nNOTE: Card 2 (The Challenge) crosses Card 1 horizontally; this placement does not itself make the card reversed. Honor the recorded orientation and its supplied meaning.':'';
+  return `${systemInstructions.role}
+${systemInstructions.naming}
 Generate a complete reading with these sections, using markdown headers (##):
 ## Introduction - Overall theme and mood
 ## Position-by-Position - Each card interpreted in the specific meaning of its position
-## Pattern Analysis - Dominant suits, major arcana influence, repeated numbers, reversals, card interactions
+## Pattern Analysis - ${systemInstructions.pattern}
 ## Guidance - Practical, actionable advice
 
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.

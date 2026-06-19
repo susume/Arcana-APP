@@ -395,10 +395,25 @@ The placement screen has three modes that converge on `state.cards`:
 
 1. **Guided Draw** steps through positions while the user places physical cards.
 2. **Upload Photo** sends a completed spread image to Gemini identification.
-3. **Manual Entry** uses searchable card pickers and orientation controls.
+3. **Manual Entry** uses searchable card pickers, orientation controls, and
+   separate Tarot and Playing Cards tabs.
 
 Manual correction remains required product behavior. Orientation is stored as
 `upright` or `reversed`, including the optional dropped card.
+
+The active card system has a separate establishment marker. Browsing between
+manual-picker tabs changes the available cards but does not establish a deck.
+The first actual card selection establishes the selected card's system;
+choosing a system explicitly during onboarding establishes it immediately.
+When the active deck is Playing Cards plus Joker, selecting any playing card,
+including The Joker, preserves the `playing-joker` variant and its full card
+list.
+
+Switching picker tabs while spread cards or a dropped/jumper card are selected
+requires confirmation. Cancellation preserves the deck and every selection.
+Confirmation clears the incompatible spread and dropped-card state, leaves the
+new tab unestablished, and the replacement card selection establishes the new
+deck.
 
 ## 13. Gemini and card identification
 
@@ -439,12 +454,41 @@ The Worker has its own model fallback and retry logic for proxied requests.
 `src/ai-identification.ts` compiles to `js/ai-identification.js` and exposes:
 
 ```js
-window.ArcanaAI.parseIdentifiedCards(responseText, currentCards)
+window.ArcanaAI.parseIdentifiedCards(responseText, currentCards, allowedPositions)
 ```
 
-It extracts a JSON array from Gemini text, normalizes orientation, canonicalizes
-names against the active deck, and returns cards keyed by position. `js/ui.js`
-retains a fallback parsing path if the helper is unavailable.
+It extracts a JSON array from Gemini text, normalizes orientation, and returns
+cards keyed by position. Every name must match the supplied references either
+exactly or through approved normalization; unknown or out-of-deck names are
+omitted.
+
+Identification UI supplies the current spread's position IDs as
+`allowedPositions`. With that argument present, only positive scalar
+string/number positions whose normalized value belongs to the spread are
+accepted; malformed, arbitrary, and out-of-range positions are omitted. Empty
+results fail before replacement, and replacement removes stale non-spread keys
+from the spread-scoped `state.cards` object.
+
+For playing-card references, safe aliases include numeric ranks, tarot-suit
+equivalents (`Cups` -> `Hearts`, `Pentacles` -> `Diamonds`, `Wands` -> `Clubs`,
+and `Swords` -> `Spades`), and `Page` -> `Jack`. `Knight`, unknown ranks or
+suits, and any normalized name absent from the supplied deck are rejected.
+
+Photo-first guided identification uses `cardSystemEstablished === false` as the
+unestablished-state marker. Its prompt requests deck detection and validates
+against the combined tarot and standard-playing-card references. Valid results
+must be non-empty and belong to exactly one system; mixed or empty results are
+rejected before replacing spread state. Once detected, that system is
+established and later identification validates only exact or safely normalized
+names against the active deck. If the parser helper is unavailable,
+identification fails closed so the user can review cards manually.
+
+Quick photo readings follow the same established/unestablished distinction.
+When detection is required, the AI response must begin with the machine-readable
+`CARD_SYSTEM: tarot` or `CARD_SYSTEM: playing` marker. Arcana establishes and
+persists the detected deck before storing or rendering the marker-free
+narrative. Once a deck is established, a conflicting marker is rejected rather
+than overriding it.
 
 ## 14. Reading generation and readiness
 
@@ -464,11 +508,17 @@ AI prompts include:
 - Spread and layout context
 - Position names and meanings
 - Card names and orientations
-- Card keywords
+- Card keywords and the full meaning for each card's active orientation
 - Dropped card
 - Concerns and reader context
 - Reading style and tone
 - Safety language and advanced-layout guidance
+- Deck-specific role, terminology, and pattern-analysis instructions
+
+Guided tarot prompts use tarot terminology and Major/Minor Arcana pattern
+guidance. Playing-card prompts retain Hearts, Diamonds, Clubs, Spades, and
+playing-card cartomancy terminology; they analyze suits, ranks, court patterns,
+reversals, and interactions without discussing Major Arcana.
 
 Classic readings are fully local. They combine card meanings with pattern
 analysis such as dominant suits, Major Arcana count, reversals, repeated
@@ -593,6 +643,11 @@ Saved reading records contain the mode, spread, cards, dropped card, narrative,
 concerns, notes, and display metadata. Journal records contain date, spread, and
 reflection text.
 
+Current autosaves persist the explicit card-system establishment marker. During
+restore, legacy autosaves without that field infer establishment only when they
+contain at least one spread or dropped card and every saved name is valid for
+the saved active deck. An explicit modern `false` value is preserved.
+
 There is no cloud sync. Clearing browser storage removes this local data.
 Uploaded photos are used in the active flow and should be treated as private.
 
@@ -656,12 +711,14 @@ Selection surfaces use semantic `<button type="button">` elements. Preserve:
 `npm test` runs:
 
 1. TypeScript compilation
-2. `tests/worker-activation.mjs`
-3. `tests/monetization-config.ps1`
-4. `tests/journal-ui.ps1`
-5. `tests/reading-actions.ps1`
-6. `tests/homepage-ui.ps1`
-7. `tests/app-shell-ui.ps1`
+2. `tests/ai-identification.mjs`
+3. `tests/deck-selection.mjs`
+4. `tests/worker-activation.mjs`
+5. `tests/monetization-config.ps1`
+6. `tests/journal-ui.ps1`
+7. `tests/reading-actions.ps1`
+8. `tests/homepage-ui.ps1`
+9. `tests/app-shell-ui.ps1`
 
 Coverage is contract-oriented:
 

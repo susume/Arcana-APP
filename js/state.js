@@ -1,6 +1,6 @@
 // ===== APP STATE =====
 let state={
-  mode:'guided',concerns:[],cardSystem:'tarot',spreadId:null,
+  mode:'guided',concerns:[],cardSystem:'tarot',cardSystemEstablished:false,spreadId:null,
   cards:{},droppedCard:null,hasDroppedCard:false,
   uploadedImage:null,narrative:'',readingMode:'ai',
   readerLifeStage:'',

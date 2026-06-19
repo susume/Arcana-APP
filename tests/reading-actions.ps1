@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 $ui = Get-Content -LiteralPath (Join-Path $root 'js/ui.js') -Raw
+$app = Get-Content -LiteralPath (Join-Path $root 'js/app.js') -Raw
 $readingEngine = Get-Content -LiteralPath (Join-Path $root 'js/reading-engine.js') -Raw
 $storage = Get-Content -LiteralPath (Join-Path $root 'js/storage.js') -Raw
 $subscription = Get-Content -LiteralPath (Join-Path $root 'js/subscription.js') -Raw
@@ -23,7 +24,49 @@ function Assert-NotContains($Haystack, $Needle, $Message) {
   }
 }
 
+function Assert-Count($Haystack, $Needle, $Expected, $Message) {
+  $actual = ([regex]::Matches($Haystack, [regex]::Escape($Needle))).Count
+  if ($actual -ne $Expected) {
+    throw "$Message Expected $Expected occurrence(s), found $actual."
+  }
+}
+
 Assert-Contains $ui 'function getReadingSpread(' 'Expected shared getReadingSpread helper for guided and quick spread context.'
+Assert-Contains $ui 'function getCardSystemPromptGuide(' 'Expected shared deck-specific identification guidance.'
+Assert-Contains $ui 'function shouldDetectCardSystem(' 'Expected photo flows to distinguish a fallback deck from an established deck.'
+Assert-Contains $ui 'function establishDetectedCardSystem(' 'Expected validated photo results to establish one detected deck.'
+Assert-Contains $ui 'function validateIdentificationResult(identified)' 'Expected every identification mode to reject empty validated card results.'
+Assert-Count $ui 'validateIdentificationResult(parsedByArcana)' 2 'Expected both identification paths to fail closed before replacing spread state.'
+Assert-Contains $ui 'function migrateRestoredCardSystemState(' 'Expected legacy autosaves to infer deck establishment safely.'
+Assert-Contains $app 'migrateRestoredCardSystemState(savedState)' 'Expected restored autosaves to run deck establishment migration.'
+Assert-Contains $ui 'function applyQuickReadingCardSystem(' 'Expected quick readings to persist the detected deck before rendering.'
+Assert-Contains $ui 'Your exact first line must be CARD_SYSTEM: tarot or CARD_SYSTEM: playing' 'Expected quick detection prompts to require a machine-readable deck marker.'
+Assert-Contains $ui 'const narrative=applyQuickReadingCardSystem(rawNarrative,detectionRequired)' 'Expected quick reading deck state to be applied before narrative storage and rendering.'
+Assert-Count $ui 'getCardSystemPromptGuide(state.cardSystem,detectionRequired)' 2 'Expected known and unknown quick spreads to use established-deck guidance when detection is not required.'
+Assert-Count $ui 'getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)' 2 'Expected known and unknown quick spreads to use deck-specific pattern guidance.'
+Assert-NotContains $ui 'getCardSystemPromptGuide(null,true)' 'Expected unknown quick spreads not to force detection after a deck is established.'
+Assert-NotContains $ui 'getQuickPatternAnalysisGuide(null,true)' 'Expected unknown quick spreads not to force detection pattern guidance after a deck is established.'
+Assert-Contains $ui 'function switchPickerCardSystem(' 'Expected manual picker deck switching.'
+Assert-Contains $ui 'function hasSelectedReadingCards(' 'Expected guarded mixed-deck detection.'
+Assert-Contains $ui '>Tarot</button>' 'Expected visible Tarot manual-picker tab.'
+Assert-Contains $ui '>Playing Cards</button>' 'Expected visible Playing Cards manual-picker tab.'
+Assert-Contains $ui 'Keep playing-card names as Hearts, Diamonds, Clubs, and Spades' 'Expected playing-card naming guard.'
+Assert-Contains $readingEngine 'function getReadingSystemInstructions(' 'Expected deck-specific reading instructions.'
+Assert-Contains $readingEngine 'Meaning:' 'Expected full card meanings in AI prompt card lines.'
+Assert-Contains $readingEngine "entry.orientation==='reversed'?card.reversed:card.upright" 'Expected guided AI card lines to use the full active-orientation meaning.'
+Assert-Contains $readingEngine 'Do not rename playing cards as tarot equivalents' 'Expected playing-card terminology guard.'
+Assert-Contains $readingEngine 'Do not discuss Major Arcana' 'Expected playing-card pattern-analysis rule.'
+Assert-Contains $readingEngine 'Honor the recorded orientation and its supplied meaning' 'Expected Celtic Cross guidance to respect the recorded orientation.'
+Assert-NotContains $readingEngine 'retains its meaning regardless of orientation' 'Expected Celtic Cross guidance not to erase recorded orientation.'
+Assert-Contains $ui 'function replaceIdentifiedSpreadCards(spread,identified)' 'Expected a shared helper to replace only active spread identification state.'
+Assert-Contains $ui 'const allowedPositions=new Set(spread.positions.map(pos=>String(pos.id)))' 'Expected replacement to derive the current spread position allow-list.'
+Assert-Contains $ui 'if(!allowedPositions.has(String(position)))delete state.cards[position]' 'Expected replacement to remove stale non-spread card keys.'
+Assert-Contains $ui 'delete state.cards[pos.id]' 'Expected fresh identification to clear stale cards for each active spread position.'
+Assert-Contains $ui 'if(allowedPositions.has(String(position)))state.cards[position]=entry' 'Expected replacement to assign only validated current-spread positions.'
+Assert-Count $ui 'replaceIdentifiedSpreadCards(spread,parsedByArcana)' 2 'Expected guided and quick upload identification to share stale-state replacement behavior.'
+Assert-Count $ui 'spread.positions.map(p=>p.id)' 2 'Expected both identification parser calls to receive the current spread position allow-list.'
+Assert-NotContains $ui 'Object.assign(state.cards,parsedByArcana)' 'Expected identification paths not to merge validated results onto stale spread cards.'
+Assert-NotContains $ui 'result.match(/\[[\s\S]*?\]/)' 'Expected identification to fail closed when the validated parser is unavailable.'
 Assert-Contains $ui 'text:state.narrative' 'Expected sharing to use the stored narrative instead of a missing narrative-text element.'
 Assert-Contains $ui 'spread=getReadingSpread()' 'Expected journal saving to use the active guided or quick spread.'
 Assert-Contains $storage 'const spread=getReadingSpread()' 'Expected saved readings to use the active guided or quick spread.'

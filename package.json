@@ -7,7 +7,7 @@
     "build:css": "tailwindcss -i ./src/premium-theme.css -o ./css/premium.css --minify",
     "build:ts": "tsc -p tsconfig.json",
     "build": "npm run build:css && npm run build:ts",
-    "test": "npm run build:ts && node tests\\ai-identification.mjs && node tests\\deck-selection.mjs && node tests\\worker-activation.mjs && powershell -ExecutionPolicy Bypass -File tests\\monetization-config.ps1 && powershell -ExecutionPolicy Bypass -File tests\\journal-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\reading-actions.ps1 && powershell -ExecutionPolicy Bypass -File tests\\homepage-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\app-shell-ui.ps1",
+    "test": "npm run build:ts && node tests\\card-art.mjs && node tests\\ai-identification.mjs && node tests\\deck-selection.mjs && node tests\\worker-activation.mjs && powershell -ExecutionPolicy Bypass -File tests\\monetization-config.ps1 && powershell -ExecutionPolicy Bypass -File tests\\journal-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\reading-actions.ps1 && powershell -ExecutionPolicy Bypass -File tests\\homepage-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\app-shell-ui.ps1",
     "serve": "node scripts/serve-static.mjs"
   },
   "dependencies": {

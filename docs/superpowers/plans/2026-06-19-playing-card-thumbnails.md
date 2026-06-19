@@ -27,7 +27,7 @@
 - Modify: `package.json`
 - Modify: `tests/reading-actions.ps1`
 
-- [ ] **Step 1: Write the failing focused test**
+- [x] **Step 1: Write the failing focused test**
 
 Load `js/card-art.js` in a Node `vm` context with `getSuitSym()` and `GLYPH`
 stubs. Assert:
@@ -58,7 +58,7 @@ Also verify:
 - Joker rendering contains only the fallback and no `<img>`.
 - Existing tarot mapping for The Fool and Ace of Wands is unchanged.
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -68,7 +68,7 @@ node tests\card-art.mjs
 
 Expected: FAIL because playing cards currently return an empty filename.
 
-- [ ] **Step 3: Implement the minimum mapping**
+- [x] **Step 3: Implement the minimum mapping**
 
 In `js/card-art.js`:
 
@@ -80,7 +80,7 @@ In `js/card-art.js`:
 - Continue returning an empty filename for The Joker and malformed names.
 - Do not change tarot filename logic or URL generation.
 
-- [ ] **Step 4: Add regression contracts**
+- [x] **Step 4: Add regression contracts**
 
 In `tests/reading-actions.ps1`, require:
 
@@ -89,7 +89,7 @@ In `tests/reading-actions.ps1`, require:
 - The existing shared `renderCardArt()` use in picker and overview.
 - Joker's no-art fallback behavior.
 
-- [ ] **Step 5: Add the test to `npm test` and verify GREEN**
+- [x] **Step 5: Add the test to `npm test` and verify GREEN**
 
 Insert `node tests\card-art.mjs` after TypeScript compilation and before the
 other Node regressions.
@@ -105,7 +105,7 @@ git diff --check
 
 Expected: all commands exit 0.
 
-- [ ] **Step 6: Commit implementation**
+- [x] **Step 6: Commit implementation**
 
 ```powershell
 git add js/card-art.js tests/card-art.mjs tests/reading-actions.ps1 package.json
@@ -118,7 +118,7 @@ git commit -m "feat: add playing card thumbnails"
 - Modify: `ARCHITECTURE.md`
 - Modify: `docs/superpowers/plans/2026-06-19-playing-card-thumbnails.md`
 
-- [ ] **Step 1: Document the artwork source**
+- [x] **Step 1: Document the artwork source**
 
 Update the card-art and asset sections to record:
 
@@ -128,7 +128,7 @@ Update the card-art and asset sections to record:
 - Standard 52-card art is remote SVG.
 - Joker and failed images retain the local fallback.
 
-- [ ] **Step 2: Run full build and tests**
+- [x] **Step 2: Run full build and tests**
 
 ```powershell
 npm run build
@@ -139,7 +139,7 @@ git diff --check
 
 Expected: all commands exit 0.
 
-- [ ] **Step 3: Browser verification**
+- [x] **Step 3: Browser verification**
 
 Using the in-app browser on the local preview:
 
@@ -152,7 +152,7 @@ Using the in-app browser on the local preview:
 - Check desktop and a 390px viewport for clipping or overflow.
 - Check console errors.
 
-- [ ] **Step 4: Commit documentation**
+- [x] **Step 4: Commit documentation**
 
 ```powershell
 git add ARCHITECTURE.md docs/superpowers/plans/2026-06-19-playing-card-thumbnails.md

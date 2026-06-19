@@ -135,7 +135,7 @@ Arcana APP/
     tarot.js                   runtime card database and deck builders
     spreads.js                 spread loading and fallback
     state.js                   global mutable state
-    card-art.js                public-domain tarot art helpers
+    card-art.js                public-domain tarot and playing-card art helpers
     subscription.js            premium, usage, upgrade, narration
     config.js                  public runtime endpoint configuration
     storage.js                 settings/autosave/history persistence
@@ -366,6 +366,24 @@ than permanent reading history and expires after one hour.
 
 Runtime card records include identity, system, arcana/suit/number metadata,
 keywords, and upright/reversed meanings.
+
+### Card artwork
+
+`js/card-art.js` renders both card systems through one shared remote-art
+pipeline:
+
+- Public-domain Rider-Waite-Smith tarot images from Wikimedia Commons
+- Dmitry Fomin's CC0 English-pattern SVG set for the standard 52 playing cards
+
+The helper derives Wikimedia upload URLs from canonical filenames and is reused
+by picker, search, overview, and dropped-card surfaces. Playing-card files use
+names such as `English pattern ace of hearts.svg` and
+`English pattern queen of spades.svg`.
+
+The English-pattern set does not include a matching Joker. The optional Joker,
+malformed card names, failed remote requests, and offline use retain Arcana's
+existing suit/star fallback. Card selection and reading behavior never depend
+on artwork availability.
 
 ### Spreads
 
@@ -711,14 +729,15 @@ Selection surfaces use semantic `<button type="button">` elements. Preserve:
 `npm test` runs:
 
 1. TypeScript compilation
-2. `tests/ai-identification.mjs`
-3. `tests/deck-selection.mjs`
-4. `tests/worker-activation.mjs`
-5. `tests/monetization-config.ps1`
-6. `tests/journal-ui.ps1`
-7. `tests/reading-actions.ps1`
-8. `tests/homepage-ui.ps1`
-9. `tests/app-shell-ui.ps1`
+2. `tests/card-art.mjs`
+3. `tests/ai-identification.mjs`
+4. `tests/deck-selection.mjs`
+5. `tests/worker-activation.mjs`
+6. `tests/monetization-config.ps1`
+7. `tests/journal-ui.ps1`
+8. `tests/reading-actions.ps1`
+9. `tests/homepage-ui.ps1`
+10. `tests/app-shell-ui.ps1`
 
 Coverage is contract-oriented:
 
@@ -727,6 +746,7 @@ Coverage is contract-oriented:
 - Current lifetime pricing and Gemini-key settings
 - Journal wiring and post-reading actions
 - Spread/layout/card-orientation behavior
+- Tarot and playing-card artwork filenames, URLs, rendering, and fallback
 - Homepage content, assets, handlers, and embedded-template sync
 - Ritual Shell classes, semantic controls, Journal utility, mobile navigation,
   reading-ready behavior, and modal/template sync

@@ -1,4 +1,6 @@
-// Public-domain Rider-Waite-Smith card art via Wikimedia Commons.
+// Public-domain Rider-Waite-Smith tarot art via Wikimedia Commons.
+// CC0 English-pattern playing cards by Dmitry Fomin:
+// https://commons.wikimedia.org/wiki/File:English_pattern_playing_cards_deck.svg
 const CARD_ART_BASE_URL = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 const CARD_ART_UPLOAD_BASE_URL = 'https://upload.wikimedia.org/wikipedia/commons/';
 
@@ -34,6 +36,24 @@ const CARD_ART_MINOR_PREFIX = {
   pentacles: 'Pents'
 };
 
+const PLAYING_CARD_ART_RANKS = {
+  Ace: 'ace',
+  Two: '2',
+  Three: '3',
+  Four: '4',
+  Five: '5',
+  Six: '6',
+  Seven: '7',
+  Eight: '8',
+  Nine: '9',
+  Ten: '10',
+  Jack: 'jack',
+  Queen: 'queen',
+  King: 'king'
+};
+
+const PLAYING_CARD_ART_SUITS = new Set(['hearts', 'diamonds', 'clubs', 'spades']);
+
 function cardArtEscape(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -43,7 +63,15 @@ function cardArtEscape(value) {
 }
 
 function getCardArtFile(card) {
-  if (!card || card.system === 'playing') return '';
+  if (!card) return '';
+  if (card.system === 'playing') {
+    const match = String(card.name || '').match(/^(.+?) of (Hearts|Diamonds|Clubs|Spades)$/);
+    if (!match) return '';
+    const rank = PLAYING_CARD_ART_RANKS[match[1]];
+    const suit = match[2].toLowerCase();
+    if (!rank || !PLAYING_CARD_ART_SUITS.has(suit)) return '';
+    return `English pattern ${rank} of ${suit}.svg`;
+  }
   if (card.arcana === 'major') return CARD_ART_MAJOR_FILES[card.number] || '';
   const prefix = CARD_ART_MINOR_PREFIX[card.suit];
   if (!prefix || !card.number) return '';

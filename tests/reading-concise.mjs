@@ -21,7 +21,8 @@ function makeContext() {
       cards: {},
       hasDroppedCard: false,
       droppedCard: null,
-      readerLifeStage: 'adult'
+      readerLifeStage: 'adult',
+      uploadedImage: 'data:image/png;base64,uploaded-spread'
     },
     currentCards: [],
     SPREADS: [],
@@ -47,6 +48,10 @@ function makeContext() {
     },
     renderEntitlementsUI() {
       context.entitlementsRendered = true;
+    },
+    async callGemini(...args) {
+      context.callGeminiArgs = args;
+      return 'AI narrative';
     }
   };
   context.globalThis = context;
@@ -112,11 +117,27 @@ function seedRomany(context) {
   assert.match(prompt, /## Your Reading in 30 Seconds/);
   assert.match(prompt, /## Main Message/);
   assert.match(prompt, /## Practical Guidance/);
-  assert.match(prompt, /Romany: Group by the 7 columns/);
+  assert.match(prompt, /Romany: Group only by these 7 columns/);
   assert.match(prompt, /900-1,300 words maximum/);
+  assert.match(prompt, /The Positions and cards list is the locked source of truth/);
+  assert.match(prompt, /Do not infer cards from an image/);
+  assert.match(prompt, /Only interpret the exact cards listed in the exact positions shown/);
+  assert.match(prompt, /Avoid specific claims about inheritance, illness, pregnancy, divorce, marriage, legal outcomes, job loss, or guaranteed money/);
   assert.match(prompt, /This is an AI-assisted reflective tarot\/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice\./);
   assert.doesNotMatch(prompt, /Generate a complete reading/);
   assert.doesNotMatch(prompt, /Position-by-Position/);
+}
+
+{
+  const { context } = makeContext();
+  seedRomany(context);
+  const narrative = await context.generateAIReading({ readingStyle: 'intuitive', readingTone: 'warm' });
+
+  assert.equal(narrative, 'AI narrative');
+  assert.equal(context.callGeminiArgs[0], context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' }));
+  assert.equal(context.callGeminiArgs[1], null);
+  assert.equal(context.callGeminiArgs[2], null);
+  assert.equal(context.callGeminiArgs[3], null);
 }
 
 {
@@ -168,6 +189,7 @@ function seedRomany(context) {
 ### Small
 This has **bold**, *italic*, and <img src=x onerror=alert(1)>.
 - Bullet
+* Star bullet
 1. First action`);
 
   assert.match(content.innerHTML, /<h2>Top<\/h2>/);
@@ -175,6 +197,7 @@ This has **bold**, *italic*, and <img src=x onerror=alert(1)>.
   assert.match(content.innerHTML, /<h4>Small<\/h4>/);
   assert.match(content.innerHTML, /<strong>bold<\/strong>/);
   assert.match(content.innerHTML, /<em>italic<\/em>/);
+  assert.match(content.innerHTML, /<li>Star bullet<\/li>/);
   assert.match(content.innerHTML, /<ol>/);
   assert.match(content.innerHTML, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(content.innerHTML, /<img/);

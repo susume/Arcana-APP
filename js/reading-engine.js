@@ -141,7 +141,7 @@ function getReadingLengthInstruction(spread){
 }
 
 function getLargeSpreadGroupingInstruction(spread){
-  if(spread.id==='romany')return `Romany: Group by the 7 columns:
+  if(spread.id==='romany')return `Romany: Group only by these 7 columns:
 - Emotional Well-being
 - Relationships
 - Hopes & Career
@@ -176,7 +176,7 @@ function getReadingOutputInstructions(spread,systemInstructions){
   return `Use this exact markdown structure:
 
 ## Your Reading in 30 Seconds
-Write 3-4 short sentences summarizing the whole spread.
+Write 3-5 short sentences summarizing the whole spread.
 
 ## Main Message
 Write one clear paragraph, maximum 80 words.
@@ -191,14 +191,14 @@ ${getCardHighlightInstruction(spread)}
 Write maximum 3 bullet points. Only mention the strongest patterns: ${systemInstructions.pattern}. Do not write a long pattern-analysis essay.
 
 ## Practical Guidance
-Write exactly 3 numbered actions. Each action should be practical, reflective, safe, and no more than 35 words.
+Write exactly 3 numbered actions labeled 1., 2., and 3. Each action should be practical, reflective, safe, and no more than 35 words.
 
 ## Reflection Question
-End with one thoughtful journal question.`;
+End with exactly one thoughtful journal question.`;
 }
 
 function getReadingSafetyDisclaimer(){
-  return 'This is an AI-assisted reflective tarot/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions. Do not tell users to make major life decisions based only on the reading. Encourage trusted human or professional support when the topic is serious.';
+  return 'This is an AI-assisted reflective tarot/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions. Do not tell users to make major life decisions based only on the reading. Avoid specific claims about inheritance, illness, pregnancy, divorce, marriage, legal outcomes, job loss, or guaranteed money. Encourage trusted human or professional support when the topic is serious.';
 }
 
 function buildAIReadingPrompt(settings){
@@ -248,11 +248,12 @@ ${getCleanSpreadLayoutHint(spread)}
 Positions and cards:
 ${cardLines}${droppedLine}${specialNote}
 
+The Positions and cards list is the locked source of truth. Do not infer cards from an image. Do not add cards, remove cards, rename cards, change orientations, or move cards to different positions. Only interpret the exact cards listed in the exact positions shown. If a card is not listed, do not mention it.
 Interpret the cards through their position meanings and make connections between them. Do not require every card to receive a long paragraph. For large spreads, prioritize the main movement, strongest interactions, and grouped structure over exhaustive individual explanations.`;
 }
 
 async function generateAIReading(settings){
-  return await callGemini(buildAIReadingPrompt(settings),null,state.uploadedImage||null,document.getElementById('ai-status'));
+  return await callGemini(buildAIReadingPrompt(settings),null,null,document.getElementById('ai-status'));
 }
 
 function getReadingEntries(spread){
@@ -471,7 +472,7 @@ function renderReadingMarkdown(text){
       html+=`<h2>${markdownText(trimmed.slice(2))}</h2>`;
       return;
     }
-    if(trimmed.startsWith('- ')){
+    if(trimmed.startsWith('- ')||trimmed.startsWith('* ')){
       openList('ul');
       html+=`<li>${markdownText(trimmed.slice(2))}</li>`;
       return;

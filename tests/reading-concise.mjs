@@ -109,6 +109,49 @@ function seedRomany(context) {
   });
 }
 
+function seedSpread(context,{id,name,cardCount,layout}) {
+  const positions = Array.from({ length: cardCount }, (_, index) => ({
+    id: String(index + 1),
+    name: `Position ${index + 1}`,
+    description: `Meaning ${index + 1}`
+  }));
+  context.SPREADS = [{
+    id,
+    name,
+    description: `${cardCount}-card test spread`,
+    cardCount,
+    layout,
+    positions
+  }];
+  context.state.spreadId = id;
+  context.currentCards = [
+    {
+      name: 'The Fool',
+      arcana: 'major',
+      number: 0,
+      keywords: ['beginnings'],
+      upright: 'New beginnings and trust.',
+      reversed: 'Hesitation and risky leaps.'
+    },
+    {
+      name: 'Two of Cups',
+      suit: 'cups',
+      number: 2,
+      keywords: ['connection'],
+      upright: 'Mutual care and connection.',
+      reversed: 'Imbalance in relationship.'
+    }
+  ];
+  context.state.cards = {};
+  positions.forEach((pos, index) => {
+    const card = context.currentCards[index % context.currentCards.length];
+    context.state.cards[pos.id] = {
+      name: card.name,
+      orientation: index % 2 ? 'reversed' : 'upright'
+    };
+  });
+}
+
 {
   const { context } = makeContext();
   seedRomany(context);
@@ -126,6 +169,44 @@ function seedRomany(context) {
   assert.match(prompt, /This is an AI-assisted reflective tarot\/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice\./);
   assert.doesNotMatch(prompt, /Generate a complete reading/);
   assert.doesNotMatch(prompt, /Position-by-Position/);
+}
+
+{
+  const spreadCases = [
+    {
+      spread: { id: 'yearly', name: 'Yearly', cardCount: 12, layout: 'yearly' },
+      promptPattern: /Yearly: Group only by seasons or quarters/,
+      fallbackPatterns: [/First Quarter/, /Second Quarter/, /Third Quarter/, /Fourth Quarter/]
+    },
+    {
+      spread: { id: 'two-pathways', name: 'Two Pathways', cardCount: 14, layout: 'two-pathways' },
+      promptPattern: /Two Pathways: Group only by:/,
+      fallbackPatterns: [/Current Situation/, /Pathway 1/, /Pathway 2/, /Comparison/, /Suggested Reflection/]
+    },
+    {
+      spread: { id: 'relationship', name: 'Relationship', cardCount: 15, layout: 'relationship' },
+      promptPattern: /Relationship: Group only by:/,
+      fallbackPatterns: [/You/, /The Other Person/, /Shared Dynamic/, /Future Direction/]
+    },
+    {
+      spread: { id: 'celtic-cross', name: 'Celtic Cross', cardCount: 10, layout: 'celtic' },
+      promptPattern: /Celtic Cross: Group only by central issue, challenge, root\/crown, past\/future, and staff cards/,
+      fallbackPatterns: [/Central Issue/, /Root and Crown/, /Past and Future/, /Staff Cards/]
+    }
+  ];
+
+  spreadCases.forEach(({ spread, promptPattern, fallbackPatterns }) => {
+    const { context } = makeContext();
+    seedSpread(context,spread);
+    const prompt = context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' });
+    const fallback = context.generateClassicReading();
+
+    assert.match(prompt, promptPattern);
+    assert.match(prompt, /The Positions and cards list is the locked source of truth/);
+    assert.match(prompt, /Do not infer cards from an image/);
+    fallbackPatterns.forEach(pattern => assert.match(fallback, pattern));
+    assert.doesNotMatch(fallback, /## Position-by-Position/);
+  });
 }
 
 {

@@ -128,7 +128,7 @@ function getReadingSystemInstructions(){
 }
 
 function isLargeSpread(spread){
-  return spread.cardCount>10||['romany','yearly','two-pathways','relationship'].includes(spread.id);
+  return spread.cardCount>10||['romany','yearly','two-pathways','relationship','celtic-cross'].includes(spread.id);
 }
 
 function getReadingLengthInstruction(spread){
@@ -150,19 +150,19 @@ function getLargeSpreadGroupingInstruction(spread){
 - Obstacles
 - Health & Future Well-being
 For each Romany column, summarize the past/present/future movement in 1-2 concise sentences. Do not write separate long paragraphs for all 21 cards.`;
-  if(spread.id==='yearly')return 'Yearly: Group by seasons or quarters unless a specific month is especially important. Do not write 12 long monthly paragraphs.';
-  if(spread.id==='two-pathways')return `Two Pathways: Group by:
+  if(spread.id==='yearly')return 'Yearly: Group only by seasons or quarters unless one specific month is especially important. Do not write 12 monthly paragraphs, and do not invent events for unlisted months.';
+  if(spread.id==='two-pathways')return `Two Pathways: Group only by:
 - Current situation
 - Pathway 1
 - Pathway 2
 - Comparison
 - Suggested reflection`;
-  if(spread.id==='relationship')return `Relationship: Group by:
+  if(spread.id==='relationship')return `Relationship: Group only by:
 - You
 - The other person
 - Shared dynamic
 - Future direction`;
-  if(spread.id==='celtic-cross')return 'Celtic Cross: Briefly cover the central issue, challenge, root/crown, past/future, and staff cards. Do not overexplain every card.';
+  if(spread.id==='celtic-cross')return 'Celtic Cross: Group only by central issue, challenge, root/crown, past/future, and staff cards. Briefly summarize each group; do not overexplain every card.';
   return 'Large spread: group nearby or related positions into sections, then highlight only the cards that change the reading most.';
 }
 

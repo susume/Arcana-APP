@@ -1333,6 +1333,10 @@ async function quickRead(){
       ? 'Your exact first line must be CARD_SYSTEM: tarot or CARD_SYSTEM: playing. Begin markdown on the next line.'
       : '';
     const qs=state.quickSpreadId?SPREADS.find(s=>s.id===state.quickSpreadId):null;
+    const quickPromptSpread=qs||{id:'unknown-photo-spread',name:'Unknown Photo Spread',description:'A photographed spread whose structure should be inferred from the image',cardCount:0,layout:'photo',positions:[]};
+    const quickSystemInstructions=getReadingSystemInstructions();
+    const quickOutputGuide=getReadingOutputInstructions(quickPromptSpread,quickSystemInstructions);
+    const quickSafety=getReadingSafetyDisclaimer();
     let prompt;
     if(qs){
       const layoutHint=getCleanSpreadLayoutHint(qs);
@@ -1347,20 +1351,20 @@ ${posLines}
 ${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
 ${cardSystemMarkerInstruction}
 
-For each visible card, identify its name, orientation (upright/reversed), and position, then interpret through that position's meaning.
+For each visible card, identify its name, orientation (upright/reversed), and position. Then write a concise, mobile-friendly reading through the position meanings.
 
-## Introduction  - Overall theme and mood of this ${qs.name} reading
-## Position-by-Position  - Card name + orientation + position meaning + interpretation
-## Pattern Analysis  - ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
-## Guidance  - Practical, actionable advice
+Length: ${getReadingLengthInstruction(qs)}
+${quickOutputGuide}
+Pattern focus: ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
 Reader context: ${readerContextLine()}
 Life-stage guidance: ${readerSafetyInstruction()}
-Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
+Safety: ${quickSafety}
+For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
-Write as a flowing narrative grounded in both card meaning and positional context. Be specific.`;
+Do not write a long paragraph for every card in large spreads. Group highlights by the spread structure when the spread has many cards.`;
     }else{
       const spreadRef=buildQuickSpreadRef();
       prompt=`You are a skilled card reader analyzing a photograph of a card spread.
@@ -1376,19 +1380,19 @@ ${cardSystemMarkerInstruction}
 
 STEP 2 - READ:
 Keep the ${detectionRequired?'detected':'established'} card system's terminology consistent throughout the reading.
-Generate a complete reading using ## markdown headers:
-## Introduction - Overall theme and mood of the spread
-## Position-by-Position - For each card, name the position and its meaning in this spread, then interpret the card through that positional lens
-## Pattern Analysis - ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
-## Guidance - Practical, actionable advice
+Write a concise, premium, mobile-friendly reading using this guide:
+Length: ${getReadingLengthInstruction(quickPromptSpread)}
+${quickOutputGuide}
+Pattern focus: ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
 
 ${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
 Reader context: ${readerContextLine()}
 Life-stage guidance: ${readerSafetyInstruction()}
-Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
+Safety: ${quickSafety}
+For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 
-Write as a flowing narrative. Address BOTH the card meaning AND its positional context. Be specific.`;
+Address both card meaning and positional context, but avoid exhaustive card-by-card essays.`;
     }
     const rawNarrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
     const narrative=applyQuickReadingCardSystem(rawNarrative,detectionRequired);
@@ -1420,34 +1424,9 @@ Write as a flowing narrative. Address BOTH the card meaning AND its positional c
 }
 
 function renderReadingInto(container,text){
-  // Reuse same markdown logic as renderReading
-  const lines=text.split('\n');
-  let html='';let inList=false;
-  lines.forEach(line=>{
-    const trimmed=line.trim();
-    if(trimmed.startsWith('## ')){
-      if(inList){html+='</ul>';inList=false}
-      html+=`<div class="reading-section"><h3>${trimmed.slice(3)}</h3>`;
-    }else if(trimmed.startsWith('- ')){
-      if(!inList){html+='<ul>';inList=true}
-      html+=`<li>${trimmed.slice(2)}</li>`;
-    }else if(trimmed===''){
-      if(inList){html+='</ul>';inList=false}
-      html+='</p><p>';
-    }else{
-      if(inList){html+='</ul>';inList=false}
-      html+=trimmed+'<br>';
-    }
-  });
-  if(inList)html+='</ul>';
-  html='<p>'+html+'</p>';
-  html=html.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
-  html=html.replace(/<p><\/p>/g,'').replace(/<p><br>/g,'<p>').replace(/<br><\/p>/g,'</p>');
-  const sections=html.split('<div class="reading-section">');
-  if(sections.length>1){
-    html=sections[0]+sections.slice(1).map(s=>'<div class="reading-section">'+s+'</div>').join('');
-  }
-  container.innerHTML=html;
+  container.innerHTML=typeof renderReadingMarkdown==='function'
+    ? renderReadingMarkdown(text)
+    : String(text||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
 // ===== TOAST NOTIFICATION =====

@@ -122,9 +122,83 @@ function getReadingSystemInstructions(){
   }
   return {
     role:'You are a compassionate, insightful reader with deep knowledge of playing-card cartomancy.',
-    naming:'Keep the original Hearts, Diamonds, Clubs, and Spades names and the Jack, Queen, and King ranks. Do not rename playing cards as tarot equivalents.',
+    naming:'Keep Hearts, Diamonds, Clubs, and Spades names and the Jack, Queen, and King ranks. Do not rename playing cards as tarot equivalents.',
     pattern:'Playing-card suits, repeated ranks, court-card patterns, reversals, and card interactions. Do not discuss Major Arcana'
   };
+}
+
+function isLargeSpread(spread){
+  return spread.cardCount>10||['romany','yearly','two-pathways','relationship'].includes(spread.id);
+}
+
+function getReadingLengthInstruction(spread){
+  const n=spread.cardCount;
+  if(n<=1)return '1-card spread: 150-250 words total. Use 1 short paragraph, 2 short bullets, and 1 reflection question.';
+  if(n===3)return '3-card spread: 300-450 words total. Write one brief bullet per card in Card Highlights.';
+  if(n===6)return '6-card spread: 500-700 words total. Write one brief bullet per position.';
+  if(n===10)return '10-card spread: 700-850 words total. Brief position highlights are allowed; do not overexplain.';
+  return '10+ card spreads: 900-1,300 words maximum. Do not write a long card-by-card essay; group the reading by spread structure and mention individual cards only when they strongly affect the interpretation.';
+}
+
+function getLargeSpreadGroupingInstruction(spread){
+  if(spread.id==='romany')return `Romany: Group by the 7 columns:
+- Emotional Well-being
+- Relationships
+- Hopes & Career
+- Finances
+- Spiritual Journey
+- Obstacles
+- Health & Future Well-being
+For each Romany column, summarize the past/present/future movement in 1-2 concise sentences. Do not write separate long paragraphs for all 21 cards.`;
+  if(spread.id==='yearly')return 'Yearly: Group by seasons or quarters unless a specific month is especially important. Do not write 12 long monthly paragraphs.';
+  if(spread.id==='two-pathways')return `Two Pathways: Group by:
+- Current situation
+- Pathway 1
+- Pathway 2
+- Comparison
+- Suggested reflection`;
+  if(spread.id==='relationship')return `Relationship: Group by:
+- You
+- The other person
+- Shared dynamic
+- Future direction`;
+  if(spread.id==='celtic-cross')return 'Celtic Cross: Briefly cover the central issue, challenge, root/crown, past/future, and staff cards. Do not overexplain every card.';
+  return 'Large spread: group nearby or related positions into sections, then highlight only the cards that change the reading most.';
+}
+
+function getCardHighlightInstruction(spread){
+  if(isLargeSpread(spread))return `For large spreads, group Card Highlights by section, column, pathway, month/quarter, or relationship side.
+${getLargeSpreadGroupingInstruction(spread)}`;
+  return 'For small spreads, briefly mention each card. Use one concise bullet per card or position when that is clearer on mobile.';
+}
+
+function getReadingOutputInstructions(spread,systemInstructions){
+  return `Use this exact markdown structure:
+
+## Your Reading in 30 Seconds
+Write 3-4 short sentences summarizing the whole spread.
+
+## Main Message
+Write one clear paragraph, maximum 80 words.
+
+## Key Themes
+Write exactly 3 bullet points. Each bullet must be no more than 25 words.
+
+## Card Highlights
+${getCardHighlightInstruction(spread)}
+
+## Patterns Worth Noticing
+Write maximum 3 bullet points. Only mention the strongest patterns: ${systemInstructions.pattern}. Do not write a long pattern-analysis essay.
+
+## Practical Guidance
+Write exactly 3 numbered actions. Each action should be practical, reflective, safe, and no more than 35 words.
+
+## Reflection Question
+End with one thoughtful journal question.`;
+}
+
+function getReadingSafetyDisclaimer(){
+  return 'This is an AI-assisted reflective tarot/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions. Do not tell users to make major life decisions based only on the reading. Encourage trusted human or professional support when the topic is serious.';
 }
 
 function buildAIReadingPrompt(settings){
@@ -154,17 +228,19 @@ function buildAIReadingPrompt(settings){
   const specialNote=spread.id==='romany'?'\nNOTE: If the Health & Future column (cards 19-21) mirrors the Relationships column (cards 4-6) in theme, interpret it as the health of a relationship, not physical health.':spread.id==='yearly'?yearlyNote:spread.id==='celtic-cross'?'\nNOTE: Card 2 (The Challenge) crosses Card 1 horizontally; this placement does not itself make the card reversed. Honor the recorded orientation and its supplied meaning.':'';
   return `${systemInstructions.role}
 ${systemInstructions.naming}
-Generate a complete reading with these sections, using markdown headers (##):
-## Introduction - Overall theme and mood
-## Position-by-Position - Each card interpreted in the specific meaning of its position
-## Pattern Analysis - ${systemInstructions.pattern}
-## Guidance - Practical, actionable advice
+Keep the reading concise-first, premium, skimmable, and useful on a phone.
+Use warm, mystical, calm, emotionally intelligent language. Avoid filler, fear-based language, fake certainty, long generic explanations, and repeated phrases like "this suggests" or "this card speaks of."
+Use direct phrases when natural: "The heart of this reading is...", "The strongest pattern is...", "Your next step is...", "Watch for...", "This points to...", "The cards are emphasizing..."
 
 Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 ${state.concerns.length?'Concerns: '+state.concerns.join(', '):'No specific concerns - provide general guidance.'}
 Reader context: ${readerContextLine()}
 Life-stage guidance: ${readerSafetyInstruction()}
-Disclaimer: This is an AI-assisted reflective reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions and encourage professional or trusted human support when the topic is serious.
+Safety: ${getReadingSafetyDisclaimer()}
+For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
+
+Length: ${getReadingLengthInstruction(spread)}
+${getReadingOutputInstructions(spread,systemInstructions)}
 
 Spread: ${spread.name} - ${spread.description}
 ${getCleanSpreadLayoutHint(spread)}
@@ -172,109 +248,249 @@ ${getCleanSpreadLayoutHint(spread)}
 Positions and cards:
 ${cardLines}${droppedLine}${specialNote}
 
-For each card in the Position-by-Position section, explicitly address what that specific position represents in this spread AND how the card's energy expresses through that positional lens. Write as a flowing narrative, not a list of definitions. Make connections between the cards.`;
+Interpret the cards through their position meanings and make connections between them. Do not require every card to receive a long paragraph. For large spreads, prioritize the main movement, strongest interactions, and grouped structure over exhaustive individual explanations.`;
 }
 
 async function generateAIReading(settings){
   return await callGemini(buildAIReadingPrompt(settings),null,state.uploadedImage||null,document.getElementById('ai-status'));
 }
 
-function generateClassicReading(){
-  const spread=getSpread();
-  let reading='';
-  // Analyze patterns
-  let suitCounts={};let majorCount=0;let reversedCount=0;
+function getReadingEntries(spread){
   const entries=[];
   spread.positions.forEach(pos=>{
     const entry=state.cards[pos.id];
     if(!entry)return;
     const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
     if(!card)return;
-    entries.push({pos,entry,card});
+    const meaning=entry.orientation==='upright'?card.upright:card.reversed;
+    entries.push({pos,entry,card,meaning});
+  });
+  return entries;
+}
+
+function analyzeReadingPatterns(entries){
+  const suitCounts={};
+  let majorCount=0;let reversedCount=0;
+  entries.forEach(({entry,card})=>{
     if(card.suit)suitCounts[card.suit]=(suitCounts[card.suit]||0)+1;
     if(card.arcana==='major')majorCount++;
     if(entry.orientation==='reversed')reversedCount++;
   });
   const dominantSuit=Object.entries(suitCounts).sort((a,b)=>b[1]-a[1])[0];
-
-  // Dropped card
-  if(state.hasDroppedCard&&state.droppedCard){
-    const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
-    reading+=`## The Dropped Card\n\nBefore the reading begins, a card fell from the deck: **${state.droppedCard.name}** (${state.droppedCard.orientation}). ${dc?`This card speaks of ${state.droppedCard.orientation==='upright'?dc.upright:dc.reversed}`:'This card carries its own message.'} This jumper card often reveals an underlying energy influencing the entire spread — keep its message in mind as you read on.\n\n`;
-  }
-
-  // Introduction
-  reading+=`## Introduction\n\n`;
-  if(majorCount>=3)reading+=`This reading carries significant weight — ${majorCount} Major Arcana cards appear, suggesting powerful life forces and spiritual lessons at play. `;
-  if(dominantSuit){
-    const suitThemes={wands:'passion and creative energy',cups:'emotions and relationships',swords:'mental clarity and challenges',pentacles:'material matters and practical concerns',hearts:'love and emotional connections',spades:'mental challenges and difficult truths',diamonds:'material prosperity and practical matters',clubs:'ambition and dynamic energy'};
-    reading+=`The dominant suit is ${dominantSuit[0]} (${dominantSuit[1]} cards), centering this reading on themes of ${suitThemes[dominantSuit[0]]||dominantSuit[0]}. `;
-  }
-  if(reversedCount>0)reading+=`${reversedCount} reversed card${reversedCount>1?'s':''} suggest${reversedCount===1?'s':''} blocked energy or internal challenges to work through. `;
-  reading+=`\n\nLet us explore what the cards reveal.\n\n`;
-
-  // Position by position
-  reading+=`## Position-by-Position\n\n`;
-  entries.forEach(({pos,entry,card})=>{
-    const meaning=entry.orientation==='upright'?card.upright:card.reversed;
-    reading+=`**${pos.name} — ${entry.name}** (${entry.orientation})\n\n`;
-    reading+=`In the position of *${pos.description}*, ${card.name} speaks of ${meaning.toLowerCase().endsWith('.')?meaning:meaning+'.'}`;
-    reading+=` Keywords to reflect on: ${card.keywords.join(', ')}.\n\n`;
-  });
-
-  // Pattern Analysis
-  reading+=`## Pattern Analysis\n\n`;
-  if(majorCount>0)reading+=`- **Major Arcana presence:** ${majorCount} card${majorCount>1?'s':''} — significant spiritual and life-path themes are active.\n`;
-  if(dominantSuit)reading+=`- **Dominant suit:** ${dominantSuit[0]} appears ${dominantSuit[1]} times.\n`;
-  if(reversedCount>0)reading+=`- **Reversals:** ${reversedCount} reversed card${reversedCount>1?'s':''} indicate areas of blocked or internalized energy.\n`;
-  const numbers=entries.map(e=>e.card.number);
+  const numbers=entries.map(e=>e.card.number).filter(n=>n!==undefined&&n!==null);
   const numCounts={};numbers.forEach(n=>{numCounts[n]=(numCounts[n]||0)+1});
   const repeatedNums=Object.entries(numCounts).filter(([_,c])=>c>1);
-  if(repeatedNums.length)reading+=`- **Repeated numbers:** ${repeatedNums.map(([n,c])=>`${n} appears ${c} times`).join('; ')}.\n`;
+  const courtCount=entries.filter(e=>e.card.number>=11&&e.card.number<=14).length;
+  return {suitCounts,majorCount,reversedCount,dominantSuit,repeatedNums,courtCount};
+}
+
+function getSuitTheme(suit){
+  const suitThemes={wands:'passion, action, and creative energy',cups:'emotion, intuition, and relationships',swords:'thought, truth, and hard conversations',pentacles:'work, money, body, home, and practical stability',hearts:'love and emotional connection',spades:'mental pressure, conflict, and difficult truths',diamonds:'resources, work, and practical value',clubs:'ambition, movement, and effort'};
+  return suitThemes[suit]||suit;
+}
+
+function getEntryLabel(entry){
+  return `**${entry.pos.name} - ${entry.entry.name}** (${entry.entry.orientation})`;
+}
+
+function getShortMeaning(meaning){
+  return (meaning||'This card carries a reflective message.').split(/[.!?]/)[0].trim();
+}
+
+function getSpreadGroups(spread,entries){
+  const byId=id=>entries.find(e=>String(e.pos.id)===String(id));
+  const group=(label,ids)=>({label,items:ids.map(byId).filter(Boolean)});
+  if(spread.id==='romany')return [
+    group('Emotional Well-being',[1,2,3]),
+    group('Relationships',[4,5,6]),
+    group('Hopes & Career',[7,8,9]),
+    group('Finances',[10,11,12]),
+    group('Spiritual Journey',[13,14,15]),
+    group('Obstacles',[16,17,18]),
+    group('Health & Future Well-being',[19,20,21])
+  ];
+  if(spread.id==='yearly')return [
+    group('First Quarter',[1,2,3]),
+    group('Second Quarter',[4,5,6]),
+    group('Third Quarter',[7,8,9]),
+    group('Fourth Quarter',[10,11,12])
+  ];
+  if(spread.id==='two-pathways')return [
+    group('Current Situation',[1,2]),
+    group('Pathway 1',[3,5,6,9,10,13]),
+    group('Pathway 2',[4,7,8,11,12,14]),
+    group('Comparison',[3,4,13,14]),
+    group('Suggested Reflection',[1,2,13,14])
+  ];
+  if(spread.id==='relationship')return [
+    group('You',[1,2,3,7,9,11,13]),
+    group('The Other Person',[4,5,6,8,10,12,14]),
+    group('Shared Dynamic',[1,4,7,8,9,10,11,12]),
+    group('Future Direction',[13,14,15])
+  ];
+  if(spread.id==='celtic-cross')return [
+    group('Central Issue',[1,2]),
+    group('Root and Crown',[3,5]),
+    group('Past and Future',[4,6]),
+    group('Staff Cards',[7,8,9,10])
+  ];
+  return [{label:spread.name,items:entries}];
+}
+
+function summarizeGroup(group){
+  if(!group.items.length)return `- **${group.label}:** No cards entered for this section.`;
+  const names=group.items.map(e=>`${e.entry.name} ${e.entry.orientation==='reversed'?'reversed':'upright'}`).join(', ');
+  const keywords=group.items.flatMap(e=>e.card.keywords||[]).slice(0,4).join(', ');
+  return `- **${group.label}:** ${names}. Watch the movement around ${keywords||'the section theme'}; keep the message practical and reflective.`;
+}
+
+function getPatternBullets(patterns){
+  const bullets=[];
+  if(state.cardSystem==='tarot'&&patterns.majorCount>0)bullets.push(`- **Major Arcana:** ${patterns.majorCount} card${patterns.majorCount>1?'s':''} point to larger life lessons and inner turning points.`);
+  if(patterns.dominantSuit)bullets.push(`- **Dominant suit:** ${patterns.dominantSuit[0]} appears ${patterns.dominantSuit[1]} times, emphasizing ${getSuitTheme(patterns.dominantSuit[0])}.`);
+  if(patterns.reversedCount>0)bullets.push(`- **Reversals:** ${patterns.reversedCount} reversed card${patterns.reversedCount>1?'s':''} highlight energy that may be internal, delayed, or ready for gentle repair.`);
+  if(patterns.courtCount>1)bullets.push(`- **Court cards:** ${patterns.courtCount} people cards suggest roles, relationships, or parts of yourself are central.`);
+  if(patterns.repeatedNums.length)bullets.push(`- **Repeated ranks:** ${patterns.repeatedNums.map(([n,c])=>`${n} appears ${c} times`).join('; ')}, giving the reading a repeating rhythm.`);
+  return bullets.slice(0,3);
+}
+
+function generateClassicReading(){
+  const spread=getSpread();
+  const entries=getReadingEntries(spread);
+  const patterns=analyzeReadingPatterns(entries);
+  let reading='';
+
+  if(state.hasDroppedCard&&state.droppedCard){
+    const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
+    const droppedMeaning=dc?(state.droppedCard.orientation==='upright'?dc.upright:dc.reversed):'This card carries its own message.';
+    reading+=`## The Dropped Card\n\n**${state.droppedCard.name}** (${state.droppedCard.orientation}) adds an underlying note: ${getShortMeaning(droppedMeaning)}. Keep it as a quiet thread through the reading, not a fixed prediction.\n\n`;
+  }
+
+  reading+=`## Your Reading in 30 Seconds\n\n`;
+  reading+=`The heart of this reading is ${patterns.dominantSuit?getSuitTheme(patterns.dominantSuit[0]):'the pattern formed by the cards you placed'}. `;
+  if(state.cardSystem==='tarot'&&patterns.majorCount)reading+=`${patterns.majorCount} Major Arcana card${patterns.majorCount>1?'s':''} add depth without making the outcome fixed. `;
+  if(patterns.reversedCount)reading+=`${patterns.reversedCount} reversal${patterns.reversedCount>1?'s':''} ask for patience, honesty, and inner adjustment. `;
+  reading+=state.concerns.length?`Around ${state.concerns.join(' and ')}, use the spread as a mirror for your next grounded choice.\n\n`:'Use the spread as a mirror for your next grounded choice.\n\n';
+
+  reading+=`## Card Highlights\n\n`;
+  if(isLargeSpread(spread)){
+    getSpreadGroups(spread,entries).forEach(group=>{reading+=summarizeGroup(group)+'\n'});
+  }else{
+    entries.forEach(entry=>{
+      reading+=`- ${getEntryLabel(entry)}: ${getShortMeaning(entry.meaning)}. Reflect on ${entry.pos.description.toLowerCase()}.\n`;
+    });
+  }
   reading+='\n';
 
-  // Guidance
-  reading+=`## Guidance\n\n`;
-  reading+=`Based on this reading, consider taking time to reflect on the themes that have emerged. `;
-  if(state.concerns.length)reading+=`In relation to your concerns about ${state.concerns.join(' and ')}, the cards suggest paying attention to the areas highlighted above. `;
-  reading+=`Trust your intuition as you move forward, and remember that the cards reflect possibilities, not certainties. Your choices shape your path.\n\n`;
+  reading+=`## Patterns Worth Noticing\n\n`;
+  const patternBullets=getPatternBullets(patterns);
+  reading+=(patternBullets.length?patternBullets.join('\n'):'- **Overall pattern:** The strongest message comes from the specific cards you placed and the concern you brought.').trim()+'\n\n';
+
+  reading+=`## Practical Guidance\n\n`;
+  reading+=`1. Name the one theme that feels most true, then write down one small choice that would honor it today.\n`;
+  reading+=`2. If the topic is serious, pair reflection with trusted human or professional support instead of relying on the cards alone.\n`;
+  reading+=`3. Return to the spread after a quiet pause and notice which card still pulls your attention.\n\n`;
+
+  reading+=`## Reflection Question\n\n`;
+  reading+=`What is this spread asking you to see more honestly, and what gentle action would help you respond?\n\n`;
 
   return reading;
 }
 
-function renderReading(text){
-  const content=document.getElementById('reading-content');
-  // Markdown rendering — process lists properly
-  const lines=text.split('\n');
-  let html='';let inList=false;
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,ch=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
+
+function applyInlineMarkdown(text){
+  return text
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
+}
+
+function markdownText(line){
+  return applyInlineMarkdown(escapeHtml(line));
+}
+
+function renderReadingMarkdown(text){
+  const lines=String(text||'').split('\n');
+  let html='';
+  let listType=null;
+  let paragraphOpen=false;
+  let sectionOpen=false;
+
+  const closeParagraph=()=>{
+    if(paragraphOpen){html+='</p>';paragraphOpen=false}
+  };
+  const closeList=()=>{
+    if(listType){html+=`</${listType}>`;listType=null}
+  };
+  const closeSection=()=>{
+    closeParagraph();
+    closeList();
+    if(sectionOpen){html+='</div>';sectionOpen=false}
+  };
+  const openList=type=>{
+    closeParagraph();
+    if(listType&&listType!==type)closeList();
+    if(!listType){html+=`<${type}>`;listType=type}
+  };
+  const addParagraphLine=line=>{
+    closeList();
+    if(!paragraphOpen){html+='<p>';paragraphOpen=true}
+    else html+='<br>';
+    html+=markdownText(line);
+  };
+
   lines.forEach(line=>{
     const trimmed=line.trim();
-    if(trimmed.startsWith('## ')){
-      if(inList){html+='</ul>';inList=false}
-      html+=`<div class="reading-section"><h3>${trimmed.slice(3)}</h3>`;
-    }else if(trimmed.startsWith('- ')){
-      if(!inList){html+='<ul>';inList=true}
-      html+=`<li>${trimmed.slice(2)}</li>`;
-    }else if(trimmed===''){
-      if(inList){html+='</ul>';inList=false}
-      html+='</p><p>';
-    }else{
-      if(inList){html+='</ul>';inList=false}
-      html+=trimmed+'<br>';
+    if(trimmed===''){
+      closeParagraph();
+      closeList();
+      return;
     }
+    if(trimmed.startsWith('### ')){
+      closeParagraph();
+      closeList();
+      html+=`<h4>${markdownText(trimmed.slice(4))}</h4>`;
+      return;
+    }
+    if(trimmed.startsWith('## ')){
+      closeSection();
+      html+=`<div class="reading-section"><h3>${markdownText(trimmed.slice(3))}</h3>`;
+      sectionOpen=true;
+      return;
+    }
+    if(trimmed.startsWith('# ')){
+      closeSection();
+      html+=`<h2>${markdownText(trimmed.slice(2))}</h2>`;
+      return;
+    }
+    if(trimmed.startsWith('- ')){
+      openList('ul');
+      html+=`<li>${markdownText(trimmed.slice(2))}</li>`;
+      return;
+    }
+    const numbered=trimmed.match(/^\d+\.\s+(.+)$/);
+    if(numbered){
+      openList('ol');
+      html+=`<li>${markdownText(numbered[1])}</li>`;
+      return;
+    }
+    addParagraphLine(trimmed);
   });
-  if(inList)html+='</ul>';
-  html='<p>'+html+'</p>';
-  // Bold and italic
-  html=html.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
-  // Clean up empty paragraphs
-  html=html.replace(/<p><\/p>/g,'').replace(/<p><br>/g,'<p>').replace(/<br><\/p>/g,'</p>');
-  // Close reading sections
-  const sections=html.split('<div class="reading-section">');
-  if(sections.length>1){
-    html=sections[0]+sections.slice(1).map(s=>'<div class="reading-section">'+s+'</div>').join('');
-  }
-  content.innerHTML=html;
+  closeSection();
+  return html;
+}
+
+function renderReading(text){
+  const content=document.getElementById('reading-content');
+  content.innerHTML=renderReadingMarkdown(text);
   enhanceReadingOutput();
   const jSec=document.getElementById('journal-section');
   if(jSec){

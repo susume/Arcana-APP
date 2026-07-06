@@ -1,4 +1,7 @@
 // ===== READING GENERATION =====
+// Arcana reading engine with structured AI output and a shareable canvas infographic.
+// This file remains framework-free and works with the existing global runtime.
+
 async function generateReading(){
   if(!canGenerateReading()){
     showUpgradeModal('daily-limit');
@@ -11,6 +14,7 @@ async function generateReading(){
   content.innerHTML=thoughtfulLoadingHtml('ai-status');
   const settings=loadSettings();
   const hasConfiguredAI=hasAIConfiguration();
+
   if(hasConfiguredAI&&state.readingMode!=='classic-forced'){
     state.readingMode='ai';
     try{
@@ -31,7 +35,10 @@ async function generateReading(){
         state.readingUsageRecorded=true;
       }
       highlightReadingBtn('classic');
-      content.insertAdjacentHTML('afterbegin',`<p style="color:var(--danger);font-size:11px;margin-bottom:12px">AI reading failed (${e.message}). Showing classic reading instead.</p>`);
+      content.insertAdjacentHTML(
+        'afterbegin',
+        `<p style="color:var(--danger);font-size:11px;margin-bottom:12px">AI reading failed (${escapeReadingHtml(e.message)}). Showing the private, on-device classic reading instead.</p>`
+      );
     }
   }else{
     state.readingMode='classic';
@@ -47,8 +54,10 @@ async function generateReading(){
 }
 
 function highlightReadingBtn(mode){
-  document.getElementById('btn-ai-read').classList.toggle('btn-primary',mode==='ai');
-  document.getElementById('btn-classic-read').classList.toggle('btn-primary',mode==='classic');
+  const aiButton=document.getElementById('btn-ai-read');
+  const classicButton=document.getElementById('btn-classic-read');
+  if(aiButton)aiButton.classList.toggle('btn-primary',mode==='ai');
+  if(classicButton)classicButton.classList.toggle('btn-primary',mode==='classic');
 }
 
 async function switchReadingMode(mode){
@@ -62,9 +71,8 @@ async function switchReadingMode(mode){
       const narrative=await generateAIReading(settings);
       state.narrative=narrative;
       renderReading(narrative);
-      enhanceReadingOutput();
     }catch(e){
-      content.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
+      content.innerHTML=`<p style="color:var(--danger)">Error: ${escapeReadingHtml(e.message)}</p>`;
     }
   }else{
     setReadingReadyState(false);
@@ -108,7 +116,9 @@ function readerContextLine(){
 function readerSafetyInstruction(){
   const stage=String(state.readerLifeStage||'').toLowerCase();
   const isMinor=stage.includes('child')||stage.includes('teen');
-  const minorLine=isMinor?'The reader may be a minor: keep the language especially gentle, age-appropriate, non-alarming, and encourage support from a trusted adult for serious worries. Do not frame romance, sexuality, money, career, or life decisions in an adult way for a child.':'';
+  const minorLine=isMinor
+    ? 'The reader may be a minor: keep the language especially gentle, age-appropriate, non-alarming, and encourage support from a trusted adult for serious worries. Do not frame romance, sexuality, money, career, or life decisions in an adult way for a child.'
+    : '';
   return `Adapt the interpretation to the reader's life stage. A card that suggests independence, work, romance, conflict, or responsibility should be interpreted differently for a child, teen, young adult, adult, or senior. Keep the reading reflective and empowering, not deterministic. ${minorLine}`.trim();
 }
 
@@ -122,383 +132,1072 @@ function getReadingSystemInstructions(){
   }
   return {
     role:'You are a compassionate, insightful reader with deep knowledge of playing-card cartomancy.',
-    naming:'Keep Hearts, Diamonds, Clubs, and Spades names and the Jack, Queen, and King ranks. Do not rename playing cards as tarot equivalents.',
+    naming:'Keep the original Hearts, Diamonds, Clubs, and Spades names and the Jack, Queen, and King ranks. Do not rename playing cards as tarot equivalents.',
     pattern:'Playing-card suits, repeated ranks, court-card patterns, reversals, and card interactions. Do not discuss Major Arcana'
   };
 }
 
-function isLargeSpread(spread){
-  return spread.cardCount>10||['romany','yearly','two-pathways','relationship','celtic-cross'].includes(spread.id);
+function getReadingLocale(){
+  const htmlLang=document.documentElement&&document.documentElement.lang;
+  return htmlLang||navigator.language||'en';
 }
 
-function getReadingLengthInstruction(spread){
-  const n=spread.cardCount;
-  if(n<=1)return '1-card spread: 150-250 words total. Use 1 short paragraph, 2 short bullets, and 1 reflection question.';
-  if(n===3)return '3-card spread: 300-450 words total. Write one brief bullet per card in Card Highlights.';
-  if(n===6)return '6-card spread: 500-700 words total. Write one brief bullet per position.';
-  if(n===10)return '10-card spread: 700-850 words total. Brief position highlights are allowed; do not overexplain.';
-  return '10+ card spreads: 900-1,300 words maximum. Do not write a long card-by-card essay; group the reading by spread structure and mention individual cards only when they strongly affect the interpretation.';
+function getLocalDateContext(){
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=String(now.getMonth()+1).padStart(2,'0');
+  const day=String(now.getDate()).padStart(2,'0');
+  return `${year}-${month}-${day}`;
 }
 
-function getLargeSpreadGroupingInstruction(spread){
-  if(spread.id==='romany')return `Romany: Group only by these 7 columns:
-- Emotional Well-being
-- Relationships
-- Hopes & Career
-- Finances
-- Spiritual Journey
-- Obstacles
-- Health & Future Well-being
-For each Romany column, summarize the past/present/future movement in 1-2 concise sentences. Do not write separate long paragraphs for all 21 cards.`;
-  if(spread.id==='yearly')return 'Yearly: Group only by seasons or quarters unless one specific month is especially important. Do not write 12 monthly paragraphs, and do not invent events for unlisted months.';
-  if(spread.id==='two-pathways')return `Two Pathways: Group only by:
-- Current situation
-- Pathway 1
-- Pathway 2
-- Comparison
-- Suggested reflection`;
-  if(spread.id==='relationship')return `Relationship: Group only by:
-- You
-- The other person
-- Shared dynamic
-- Future direction`;
-  if(spread.id==='celtic-cross')return 'Celtic Cross: Group only by central issue, challenge, root/crown, past/future, and staff cards. Briefly summarize each group; do not overexplain every card.';
-  return 'Large spread: group nearby or related positions into sections, then highlight only the cards that change the reading most.';
-}
-
-function getCardHighlightInstruction(spread){
-  if(isLargeSpread(spread))return `For large spreads, group Card Highlights by section, column, pathway, month/quarter, or relationship side.
-${getLargeSpreadGroupingInstruction(spread)}`;
-  return 'For small spreads, briefly mention each card. Use one concise bullet per card or position when that is clearer on mobile.';
-}
-
-function getReadingOutputInstructions(spread,systemInstructions){
-  return `Use this exact markdown structure:
-
-## Your Reading in 30 Seconds
-Write 3-5 short sentences summarizing the whole spread.
-
-## Main Message
-Write one clear paragraph, maximum 80 words.
-
-## Key Themes
-Write exactly 3 bullet points. Each bullet must be no more than 25 words.
-
-## Card Highlights
-${getCardHighlightInstruction(spread)}
-
-## Patterns Worth Noticing
-Write maximum 3 bullet points. Only mention the strongest patterns: ${systemInstructions.pattern}. Do not write a long pattern-analysis essay.
-
-## Practical Guidance
-Write exactly 3 numbered actions labeled 1., 2., and 3. Each action should be practical, reflective, safe, and no more than 35 words.
-
-## Reflection Question
-End with exactly one thoughtful journal question.`;
-}
-
-function getReadingSafetyDisclaimer(){
-  return 'This is an AI-assisted reflective tarot/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice. Avoid definitive predictions. Do not tell users to make major life decisions based only on the reading. Avoid specific claims about inheritance, illness, pregnancy, divorce, marriage, legal outcomes, job loss, or guaranteed money. Encourage trusted human or professional support when the topic is serious.';
+function getPositionDisplayLabel(spread,pos,index){
+  if(spread.layout==='yearly'||spread.id==='yearly'){
+    const monthDate=new Date();
+    monthDate.setDate(1);
+    monthDate.setMonth(monthDate.getMonth()+index);
+    try{
+      return new Intl.DateTimeFormat(getReadingLocale(),{
+        month:'long',
+        year:monthDate.getFullYear()!==new Date().getFullYear()?'numeric':undefined
+      }).format(monthDate);
+    }catch(_e){
+      return pos.name;
+    }
+  }
+  return pos.name;
 }
 
 function buildAIReadingPrompt(settings){
   const spread=getSpread();
   const systemInstructions=getReadingSystemInstructions();
   let cardLines='';
-  spread.positions.forEach(pos=>{
+
+  spread.positions.forEach((pos,index)=>{
     const entry=state.cards[pos.id];
+    const displayLabel=getPositionDisplayLabel(spread,pos,index);
     if(entry){
       const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
       const kws=card?card.keywords.join(', '):'';
       const meaning=card?(entry.orientation==='reversed'?card.reversed:card.upright):'';
-      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: ${entry.name} (${entry.orientation}) - Keywords: ${kws}. Meaning: ${meaning}\n`;
+      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: ${entry.name} (${entry.orientation}). Keywords: ${kws}. Reference meaning: ${meaning}\n`;
     }else{
-      cardLines+=`  ${pos.id}. ${pos.name} [${pos.description}]: (no card entered)\n`;
+      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: (no card entered)\n`;
     }
   });
+
   let droppedLine='';
   if(state.hasDroppedCard&&state.droppedCard){
     const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
     const droppedMeaning=dc?(state.droppedCard.orientation==='reversed'?dc.reversed:dc.upright):'';
-    droppedLine=`\nDropped Card (fell out during shuffling): ${state.droppedCard.name} (${state.droppedCard.orientation}) - Keywords: ${dc?dc.keywords.join(', '):''}. Meaning: ${droppedMeaning}\nThis card may reveal an underlying theme influencing the entire reading.\n`;
+    droppedLine=`\nDropped card: ${state.droppedCard.name} (${state.droppedCard.orientation}). Keywords: ${dc?dc.keywords.join(', '):''}. Reference meaning: ${droppedMeaning}. Treat it as an underlying influence, not an extra timeline position.\n`;
   }
+
   const yearlyNote=state.cardSystem==='tarot'
-    ? '\nNOTE: Any Ace signals new beginnings for that month. Major Arcana carry extra weight. A Knight indicates major life change in that period.'
-    : '\nNOTE: Any Ace signals new beginnings for that month. Court cards may highlight important people, roles, or influences in that period.';
-  const specialNote=spread.id==='romany'?'\nNOTE: If the Health & Future column (cards 19-21) mirrors the Relationships column (cards 4-6) in theme, interpret it as the health of a relationship, not physical health.':spread.id==='yearly'?yearlyNote:spread.id==='celtic-cross'?'\nNOTE: Card 2 (The Challenge) crosses Card 1 horizontally; this placement does not itself make the card reversed. Honor the recorded orientation and its supplied meaning.':'';
+    ? 'For the yearly spread, an Ace can emphasize a fresh start, Major Arcana can mark a weightier chapter, and court cards may describe a person, role, or way of acting. Do not claim that any card guarantees an event.'
+    : 'For the yearly spread, an Ace can emphasize a fresh start and court cards may describe a person, role, or way of acting. Do not claim that any card guarantees an event.';
+
+  const specialNote=spread.id==='romany'
+    ? 'If the Health & Future column mirrors the Relationships column in theme, it may describe the health of a relationship rather than physical health. Never diagnose illness.'
+    : spread.id==='yearly'
+      ? yearlyNote
+      : spread.id==='celtic-cross'
+        ? 'Card 2 crosses Card 1 horizontally; this placement does not make it reversed. Honor only the recorded orientation.'
+        : '';
+
+  const concerns=Array.isArray(state.concerns)&&state.concerns.length
+    ? state.concerns.join(', ')
+    : 'No specific concern was provided; give balanced general guidance.';
+
   return `${systemInstructions.role}
 ${systemInstructions.naming}
-Keep the reading concise-first, premium, skimmable, and useful on a phone.
-Use warm, mystical, calm, emotionally intelligent language. Avoid filler, fear-based language, fake certainty, long generic explanations, and repeated phrases like "this suggests" or "this card speaks of."
-Use direct phrases when natural: "The heart of this reading is...", "The strongest pattern is...", "Your next step is...", "Watch for...", "This points to...", "The cards are emphasizing..."
 
-Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
-${state.concerns.length?'Concerns: '+state.concerns.join(', '):'No specific concerns - provide general guidance.'}
-Reader context: ${readerContextLine()}
-Life-stage guidance: ${readerSafetyInstruction()}
-Safety: ${getReadingSafetyDisclaimer()}
-For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
+Create one coherent, useful reading from the supplied cards. Interpret the spread as a developing story rather than repeating dictionary meanings. Be specific about tensions, turning points, support, and practical choices. Avoid vague filler such as "trust your intuition" unless you explain what the reader can actually notice or do. Keep all statements reflective and non-deterministic.
 
-Length: ${getReadingLengthInstruction(spread)}
-${getReadingOutputInstructions(spread,systemInstructions)}
+Return ONLY one valid JSON object. Do not use markdown fences, commentary, or text before or after the JSON.
 
-Spread: ${spread.name} - ${spread.description}
+Required JSON schema:
+{
+  "title": "A concise title for this reading",
+  "quickSummary": "A 2-3 sentence reading-at-a-glance summary",
+  "mainMessage": "A focused paragraph explaining the central movement of the spread",
+  "keyThemes": [
+    {"title":"2-5 word theme","message":"One concise explanatory sentence"}
+  ],
+  "positions": [
+    {
+      "position":"Use the exact supplied position ID",
+      "headline":"A short, memorable message for this position",
+      "interpretation":"1-3 specific sentences connecting the card to this exact position",
+      "action":"One realistic action or reflection focus"
+    }
+  ],
+  "patterns": ["2-5 concise observations about card interactions, suits, numbers, reversals, court cards, or Major Arcana"],
+  "guidance": ["3-5 practical, non-alarming next steps"],
+  "reflectionQuestions": ["2-3 useful journal questions"],
+  "closingMessage": "One reassuring closing sentence suitable for the bottom of an infographic"
+}
+
+Quality requirements:
+- Include one positions item for every entered spread card, in the supplied position order.
+- Do not invent, rename, omit, or change the orientation of any card.
+- For every positions item, explicitly interpret what that spread position represents and how this card behaves through that lens.
+- Make connections across cards. Identify phases, contrasts, repetitions, and turning points.
+- For long spreads, keep each position concise enough to scan.
+- keyThemes must contain exactly 3 items.
+- Keep each headline under 55 characters, each action under 110 characters, and each infographic-friendly interpretation under 260 characters.
+- Use the language of the reader's concern or question when clear. Otherwise use the interface locale: ${getReadingLocale()}.
+- Current local date: ${getLocalDateContext()}. For a yearly spread, position 1 is the current month and the supplied display labels are authoritative.
+- Pattern analysis should cover ${systemInstructions.pattern} where relevant.
+- Reader context: ${readerContextLine()}.
+- Life-stage guidance: ${readerSafetyInstruction()}.
+- Concern or focus: ${concerns}.
+- Reading style: ${settings.readingStyle||'balanced'}. Tone: ${settings.readingTone||'compassionate'}.
+- This is reflective guidance, not medical, legal, financial, mental-health, or crisis advice. Encourage trusted human or professional support when a concern is serious.
+
+Spread: ${spread.name} — ${spread.description}
 ${getCleanSpreadLayoutHint(spread)}
+${specialNote}
 
-Positions and cards:
-${cardLines}${droppedLine}${specialNote}
-
-The Positions and cards list is the locked source of truth. Do not infer cards from an image. Do not add cards, remove cards, rename cards, change orientations, or move cards to different positions. Only interpret the exact cards listed in the exact positions shown. If a card is not listed, do not mention it.
-Interpret the cards through their position meanings and make connections between them. Do not require every card to receive a long paragraph. For large spreads, prioritize the main movement, strongest interactions, and grouped structure over exhaustive individual explanations.`;
+Cards and positions:
+${cardLines}${droppedLine}`;
 }
 
 async function generateAIReading(settings){
-  return await callGemini(buildAIReadingPrompt(settings),null,null,document.getElementById('ai-status'));
+  const raw=await callGemini(
+    buildAIReadingPrompt(settings),
+    null,
+    state.uploadedImage||null,
+    document.getElementById('ai-status')
+  );
+  const readingPackage=parseAIReadingPackage(raw);
+  state.readingPackage=readingPackage;
+  state.readingInfographic=buildInfographicModel(readingPackage);
+  return readingPackageToMarkdown(readingPackage);
 }
 
-function getReadingEntries(spread){
+function parseAIReadingPackage(raw){
+  const text=String(raw||'').trim();
+  const candidates=[];
+  const fenced=text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if(fenced)candidates.push(fenced[1].trim());
+  candidates.push(text);
+
+  const firstBrace=text.indexOf('{');
+  const lastBrace=text.lastIndexOf('}');
+  if(firstBrace!==-1&&lastBrace>firstBrace)candidates.push(text.slice(firstBrace,lastBrace+1));
+
+  let parsed=null;
+  let lastError=null;
+  for(const candidate of candidates){
+    try{
+      parsed=JSON.parse(candidate);
+      break;
+    }catch(error){
+      lastError=error;
+    }
+  }
+
+  if(!parsed||typeof parsed!=='object'){
+    throw new Error(`The AI returned an unreadable reading format${lastError?`: ${lastError.message}`:''}`);
+  }
+  return normalizeReadingPackage(parsed);
+}
+
+function normalizeReadingPackage(input){
+  const spread=getSpread();
+  const rawPositions=Array.isArray(input.positions)?input.positions:[];
+  const byPosition=new Map();
+
+  rawPositions.forEach(item=>{
+    if(!item||typeof item!=='object')return;
+    const id=String(item.position??'').trim();
+    if(!id)return;
+    byPosition.set(id,item);
+  });
+
+  const positions=[];
+  spread.positions.forEach((pos,index)=>{
+    const entry=state.cards[pos.id];
+    if(!entry)return;
+    const item=byPosition.get(String(pos.id))||{};
+    const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
+    const fallbackMeaning=card?(entry.orientation==='reversed'?card.reversed:card.upright):'';
+    positions.push({
+      position:String(pos.id),
+      displayLabel:getPositionDisplayLabel(spread,pos,index),
+      positionName:pos.name,
+      positionDescription:pos.description,
+      cardName:entry.name,
+      orientation:entry.orientation,
+      headline:cleanReadingText(item.headline)||`${pos.name}: ${entry.name}`,
+      interpretation:cleanReadingText(item.interpretation)||fallbackMeaning||'Consider how this card changes the meaning of this position.',
+      action:cleanReadingText(item.action)||'Notice where this theme is already present and choose one small, constructive response.'
+    });
+  });
+
+  if(!positions.length)throw new Error('No entered cards were available for the generated reading.');
+
+  return {
+    title:cleanReadingText(input.title)||`${spread.name} Reading`,
+    quickSummary:cleanReadingText(input.quickSummary)||'This spread highlights the movement between the current situation, the central challenge, and the choices available next.',
+    mainMessage:cleanReadingText(input.mainMessage)||'The cards invite a thoughtful response rather than a fixed prediction. Their value is in showing where attention and deliberate action may help.',
+    keyThemes:normalizeThemeItems(input.keyThemes).slice(0,3),
+    positions,
+    patterns:normalizeStringArray(input.patterns,5),
+    guidance:normalizeStringArray(input.guidance,5),
+    reflectionQuestions:normalizeStringArray(input.reflectionQuestions,3),
+    closingMessage:cleanReadingText(input.closingMessage)||'The cards describe possibilities; your next choices shape how the story develops.'
+  };
+}
+
+function cleanReadingText(value){
+  return String(value??'')
+    .replace(/\s+/g,' ')
+    .replace(/^[-•*\s]+/,'')
+    .trim();
+}
+
+function normalizeStringArray(value,maxItems){
+  if(!Array.isArray(value))return [];
+  return value
+    .map(cleanReadingText)
+    .filter(Boolean)
+    .slice(0,maxItems);
+}
+
+function normalizeThemeItems(value){
+  if(!Array.isArray(value))return [];
+  const themes=value.map(item=>{
+    if(typeof item==='string')return {title:'Theme',message:cleanReadingText(item)};
+    if(!item||typeof item!=='object')return null;
+    return {
+      title:cleanReadingText(item.title)||'Theme',
+      message:cleanReadingText(item.message)
+    };
+  }).filter(item=>item&&item.message);
+
+  while(themes.length<3){
+    const fallbacks=[
+      {title:'Awareness',message:'Notice what the spread is bringing into clearer focus.'},
+      {title:'Choice',message:'Separate what can be influenced now from what needs patience.'},
+      {title:'Growth',message:'Use one small, repeatable action to support the direction you want.'}
+    ];
+    themes.push(fallbacks[themes.length]);
+  }
+  return themes;
+}
+
+function readingPackageToMarkdown(readingPackage){
+  const lines=[];
+  lines.push('## Your Reading in 30 Seconds','',readingPackage.quickSummary,'');
+  lines.push('## Main Message','',readingPackage.mainMessage,'');
+  lines.push('## Key Themes','');
+  readingPackage.keyThemes.forEach(theme=>{
+    lines.push(`- **${theme.title}:** ${theme.message}`);
+  });
+  lines.push('','## Position-by-Position','');
+
+  readingPackage.positions.forEach(item=>{
+    const orientation=item.orientation==='reversed'?'Reversed':'Upright';
+    lines.push(`**${item.displayLabel} — ${item.cardName} (${orientation})**`,'');
+    lines.push(`**${item.headline}** — ${item.interpretation}`,'');
+    lines.push(`*Practical focus:* ${item.action}`,'');
+  });
+
+  if(readingPackage.patterns.length){
+    lines.push('## Patterns and Turning Points','');
+    readingPackage.patterns.forEach(pattern=>lines.push(`- ${pattern}`));
+    lines.push('');
+  }
+
+  if(readingPackage.guidance.length){
+    lines.push('## Practical Guidance','');
+    readingPackage.guidance.forEach(item=>lines.push(`- ${item}`));
+    lines.push('');
+  }
+
+  if(readingPackage.reflectionQuestions.length){
+    lines.push('## Reflection Questions','');
+    readingPackage.reflectionQuestions.forEach(item=>lines.push(`- ${item}`));
+    lines.push('');
+  }
+
+  lines.push('## Closing Message','',readingPackage.closingMessage,'');
+  lines.push('*This AI-assisted reading is for reflection, not a guaranteed prediction or professional advice.*');
+  return lines.join('\n');
+}
+
+function generateClassicReading(){
+  const readingPackage=buildClassicReadingPackage();
+  state.readingPackage=readingPackage;
+  state.readingInfographic=buildInfographicModel(readingPackage);
+  return readingPackageToMarkdown(readingPackage);
+}
+
+function buildClassicReadingPackage(){
+  const spread=getSpread();
   const entries=[];
-  spread.positions.forEach(pos=>{
+  const suitCounts={};
+  let majorCount=0;
+  let reversedCount=0;
+
+  spread.positions.forEach((pos,index)=>{
     const entry=state.cards[pos.id];
     if(!entry)return;
     const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
     if(!card)return;
-    const meaning=entry.orientation==='upright'?card.upright:card.reversed;
-    entries.push({pos,entry,card,meaning});
-  });
-  return entries;
-}
-
-function analyzeReadingPatterns(entries){
-  const suitCounts={};
-  let majorCount=0;let reversedCount=0;
-  entries.forEach(({entry,card})=>{
+    entries.push({pos,index,entry,card});
     if(card.suit)suitCounts[card.suit]=(suitCounts[card.suit]||0)+1;
     if(card.arcana==='major')majorCount++;
     if(entry.orientation==='reversed')reversedCount++;
   });
+
   const dominantSuit=Object.entries(suitCounts).sort((a,b)=>b[1]-a[1])[0];
-  const numbers=entries.map(e=>e.card.number).filter(n=>n!==undefined&&n!==null);
-  const numCounts={};numbers.forEach(n=>{numCounts[n]=(numCounts[n]||0)+1});
-  const repeatedNums=Object.entries(numCounts).filter(([_,c])=>c>1);
-  const courtCount=entries.filter(e=>e.card.number>=11&&e.card.number<=14).length;
-  return {suitCounts,majorCount,reversedCount,dominantSuit,repeatedNums,courtCount};
-}
+  const suitThemes={
+    wands:'energy, motivation, creativity, and initiative',
+    cups:'feelings, relationships, empathy, and emotional needs',
+    swords:'thought patterns, communication, decisions, and pressure',
+    pentacles:'study, work, health routines, resources, and practical stability',
+    hearts:'feelings, relationships, empathy, and emotional needs',
+    spades:'thought patterns, communication, decisions, and pressure',
+    diamonds:'resources, routines, effort, and practical stability',
+    clubs:'energy, ambition, activity, and initiative'
+  };
 
-function getSuitTheme(suit){
-  const suitThemes={wands:'passion, action, and creative energy',cups:'emotion, intuition, and relationships',swords:'thought, truth, and hard conversations',pentacles:'work, money, body, home, and practical stability',hearts:'love and emotional connection',spades:'mental pressure, conflict, and difficult truths',diamonds:'resources, work, and practical value',clubs:'ambition, movement, and effort'};
-  return suitThemes[suit]||suit;
-}
+  const first=entries[0];
+  const last=entries[entries.length-1];
+  const quickParts=[];
+  if(first)quickParts.push(`The reading opens with ${first.entry.name}, placing attention on ${first.card.keywords.slice(0,2).join(' and ')||'the present situation'}.`);
+  if(last&&last!==first)quickParts.push(`It develops toward ${last.entry.name}, suggesting that the later direction depends on how you respond to ${last.card.keywords.slice(0,2).join(' and ')||'the final theme'}.`);
+  if(dominantSuit)quickParts.push(`The strongest practical thread is ${suitThemes[dominantSuit[0]]||dominantSuit[0]}.`);
 
-function getEntryLabel(entry){
-  return `**${entry.pos.name} - ${entry.entry.name}** (${entry.entry.orientation})`;
-}
+  const themes=[];
+  if(dominantSuit){
+    themes.push({title:`${capitalizeReadingText(dominantSuit[0])} emphasis`,message:`Several cards return to ${suitThemes[dominantSuit[0]]||dominantSuit[0]}, so this area deserves steady attention.`});
+  }
+  if(reversedCount){
+    themes.push({title:'Inner work',message:`${reversedCount} reversed card${reversedCount===1?'':'s'} point to energy that may be delayed, internalized, or ready for review.`});
+  }
+  if(majorCount){
+    themes.push({title:'Bigger lesson',message:`${majorCount} Major Arcana card${majorCount===1?'':'s'} add weight to the choices and lessons represented in the spread.`});
+  }
+  normalizeThemeItems(themes).slice(0,3);
 
-function getShortMeaning(meaning){
-  return (meaning||'This card carries a reflective message.').split(/[.!?]/)[0].trim();
-}
+  const positions=entries.map(({pos,index,entry,card})=>{
+    const meaning=entry.orientation==='reversed'?card.reversed:card.upright;
+    const keyword=card.keywords&&card.keywords.length?card.keywords[0]:'awareness';
+    return {
+      position:String(pos.id),
+      displayLabel:getPositionDisplayLabel(spread,pos,index),
+      positionName:pos.name,
+      positionDescription:pos.description,
+      cardName:entry.name,
+      orientation:entry.orientation,
+      headline:`Focus on ${keyword}`,
+      interpretation:`In the position of ${pos.description}, ${card.name} points to ${ensureSentence(meaning)}`,
+      action:`Ask where ${keyword} is already visible here, then choose one small response you can repeat.`
+    };
+  });
 
-function getSpreadGroups(spread,entries){
-  const byId=id=>entries.find(e=>String(e.pos.id)===String(id));
-  const group=(label,ids)=>({label,items:ids.map(byId).filter(Boolean)});
-  if(spread.id==='romany')return [
-    group('Emotional Well-being',[1,2,3]),
-    group('Relationships',[4,5,6]),
-    group('Hopes & Career',[7,8,9]),
-    group('Finances',[10,11,12]),
-    group('Spiritual Journey',[13,14,15]),
-    group('Obstacles',[16,17,18]),
-    group('Health & Future Well-being',[19,20,21])
+  const patterns=[];
+  if(majorCount)patterns.push(`${majorCount} Major Arcana card${majorCount===1?'':'s'} suggest that some parts of this reading concern longer-term lessons rather than a passing mood.`);
+  if(dominantSuit)patterns.push(`${capitalizeReadingText(dominantSuit[0])} appears most often, emphasizing ${suitThemes[dominantSuit[0]]||dominantSuit[0]}.`);
+  if(reversedCount)patterns.push(`${reversedCount} reversal${reversedCount===1?'':'s'} ask for review, patience, or an internal adjustment before outward progress.`);
+
+  const numbers=entries.map(item=>item.card.number).filter(value=>value!==undefined&&value!==null);
+  const numberCounts={};
+  numbers.forEach(number=>{numberCounts[number]=(numberCounts[number]||0)+1;});
+  const repeated=Object.entries(numberCounts).filter(([,count])=>count>1);
+  if(repeated.length)patterns.push(`Repeated number pattern: ${repeated.map(([number,count])=>`${number} appears ${count} times`).join('; ')}.`);
+
+  const guidance=[
+    'Choose one theme from the reading and turn it into a small action that can be repeated this week.',
+    'Review any reversed card as an area to simplify, practise, or discuss rather than as a warning.',
+    'Use the later positions as a direction to prepare for, not as a fixed outcome.'
   ];
-  if(spread.id==='yearly')return [
-    group('First Quarter',[1,2,3]),
-    group('Second Quarter',[4,5,6]),
-    group('Third Quarter',[7,8,9]),
-    group('Fourth Quarter',[10,11,12])
-  ];
-  if(spread.id==='two-pathways')return [
-    group('Current Situation',[1,2]),
-    group('Pathway 1',[3,5,6,9,10,13]),
-    group('Pathway 2',[4,7,8,11,12,14]),
-    group('Comparison',[3,4,13,14]),
-    group('Suggested Reflection',[1,2,13,14])
-  ];
-  if(spread.id==='relationship')return [
-    group('You',[1,2,3,7,9,11,13]),
-    group('The Other Person',[4,5,6,8,10,12,14]),
-    group('Shared Dynamic',[1,4,7,8,9,10,11,12]),
-    group('Future Direction',[13,14,15])
-  ];
-  if(spread.id==='celtic-cross')return [
-    group('Central Issue',[1,2]),
-    group('Root and Crown',[3,5]),
-    group('Past and Future',[4,6]),
-    group('Staff Cards',[7,8,9,10])
-  ];
-  return [{label:spread.name,items:entries}];
+
+  const packageThemes=normalizeThemeItems(themes).slice(0,3);
+  return {
+    title:`${spread.name}: A Reflective Reading`,
+    quickSummary:quickParts.join(' ')||'This spread offers a reflective look at the present situation, the forces shaping it, and the choices available next.',
+    mainMessage:first&&last
+      ? `The spread moves from ${first.entry.name} toward ${last.entry.name}. The useful question is not whether these cards predict a fixed result, but how the qualities they describe can help you respond more deliberately.`
+      : 'The cards invite a deliberate response rather than a fixed prediction. Notice what is within your influence and begin with one manageable step.',
+    keyThemes:packageThemes,
+    positions,
+    patterns,
+    guidance,
+    reflectionQuestions:[
+      'Which card describes what I can influence most directly right now?',
+      'Where am I expecting certainty when a small experiment would teach me more?',
+      'What support, routine, or conversation would make the next step easier?'
+    ],
+    closingMessage:'The spread is a map for reflection; your steady choices are what move the journey forward.'
+  };
 }
 
-function summarizeGroup(group){
-  if(!group.items.length)return `- **${group.label}:** No cards entered for this section.`;
-  const names=group.items.map(e=>`${e.entry.name} ${e.entry.orientation==='reversed'?'reversed':'upright'}`).join(', ');
-  const keywords=group.items.flatMap(e=>e.card.keywords||[]).slice(0,4).join(', ');
-  return `- **${group.label}:** ${names}. Watch the movement around ${keywords||'the section theme'}; keep the message practical and reflective.`;
+function ensureSentence(value){
+  const text=cleanReadingText(value);
+  if(!text)return 'a theme that deserves careful reflection.';
+  return /[.!?。！？]$/.test(text)?text:`${text}.`;
 }
 
-function getPatternBullets(patterns){
-  const bullets=[];
-  if(state.cardSystem==='tarot'&&patterns.majorCount>0)bullets.push(`- **Major Arcana:** ${patterns.majorCount} card${patterns.majorCount>1?'s':''} point to larger life lessons and inner turning points.`);
-  if(patterns.dominantSuit)bullets.push(`- **Dominant suit:** ${patterns.dominantSuit[0]} appears ${patterns.dominantSuit[1]} times, emphasizing ${getSuitTheme(patterns.dominantSuit[0])}.`);
-  if(patterns.reversedCount>0)bullets.push(`- **Reversals:** ${patterns.reversedCount} reversed card${patterns.reversedCount>1?'s':''} highlight energy that may be internal, delayed, or ready for gentle repair.`);
-  if(patterns.courtCount>1)bullets.push(`- **Court cards:** ${patterns.courtCount} people cards suggest roles, relationships, or parts of yourself are central.`);
-  if(patterns.repeatedNums.length)bullets.push(`- **Repeated ranks:** ${patterns.repeatedNums.map(([n,c])=>`${n} appears ${c} times`).join('; ')}, giving the reading a repeating rhythm.`);
-  return bullets.slice(0,3);
+function capitalizeReadingText(value){
+  const text=String(value||'');
+  return text?text.charAt(0).toUpperCase()+text.slice(1):text;
 }
 
-function generateClassicReading(){
+function buildInfographicModel(readingPackage){
   const spread=getSpread();
-  const entries=getReadingEntries(spread);
-  const patterns=analyzeReadingPatterns(entries);
-  let reading='';
+  return {
+    title:readingPackage.title||`${spread.name} Reading`,
+    subtitle:spread.layout==='yearly'||spread.id==='yearly'
+      ? 'A month-by-month flow and practical guidance'
+      : `${spread.name} — themes, turning points, and guidance`,
+    summary:readingPackage.quickSummary,
+    themes:readingPackage.keyThemes.slice(0,3),
+    cards:readingPackage.positions.map(item=>({
+      position:item.position,
+      label:item.displayLabel||item.positionName,
+      positionName:item.positionName,
+      cardName:item.cardName,
+      orientation:item.orientation,
+      headline:item.headline,
+      message:item.interpretation,
+      action:item.action,
+      artUrl:resolveInfographicCardArtUrl(item.cardName,item.orientation)
+    })),
+    advice:readingPackage.guidance.slice(0,4),
+    closingMessage:readingPackage.closingMessage,
+    spreadName:spread.name,
+    layout:spread.layout||spread.id,
+    generatedDate:getLocalDateContext()
+  };
+}
 
-  if(state.hasDroppedCard&&state.droppedCard){
-    const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
-    const droppedMeaning=dc?(state.droppedCard.orientation==='upright'?dc.upright:dc.reversed):'This card carries its own message.';
-    reading+=`## The Dropped Card\n\n**${state.droppedCard.name}** (${state.droppedCard.orientation}) adds an underlying note: ${getShortMeaning(droppedMeaning)}. Keep it as a quiet thread through the reading, not a fixed prediction.\n\n`;
+function resolveInfographicCardArtUrl(cardName,orientation){
+  const card=currentCards.find(c=>c.name.toLowerCase()===String(cardName).toLowerCase());
+  if(card){
+    const direct=card.imageUrl||card.imageURL||card.artUrl||card.artURL||card.image||card.src;
+    if(typeof direct==='string'&&direct.trim())return direct.trim();
   }
 
-  reading+=`## Your Reading in 30 Seconds\n\n`;
-  reading+=`The heart of this reading is ${patterns.dominantSuit?getSuitTheme(patterns.dominantSuit[0]):'the pattern formed by the cards you placed'}. `;
-  if(state.cardSystem==='tarot'&&patterns.majorCount)reading+=`${patterns.majorCount} Major Arcana card${patterns.majorCount>1?'s':''} add depth without making the outcome fixed. `;
-  if(patterns.reversedCount)reading+=`${patterns.reversedCount} reversal${patterns.reversedCount>1?'s':''} ask for patience, honesty, and inner adjustment. `;
-  reading+=state.concerns.length?`Around ${state.concerns.join(' and ')}, use the spread as a mirror for your next grounded choice.\n\n`:'Use the spread as a mirror for your next grounded choice.\n\n';
-
-  reading+=`## Card Highlights\n\n`;
-  if(isLargeSpread(spread)){
-    getSpreadGroups(spread,entries).forEach(group=>{reading+=summarizeGroup(group)+'\n'});
-  }else{
-    entries.forEach(entry=>{
-      reading+=`- ${getEntryLabel(entry)}: ${getShortMeaning(entry.meaning)}. Reflect on ${entry.pos.description.toLowerCase()}.\n`;
-    });
+  const helperNames=[
+    'getCardArtUrl',
+    'getCardImageUrl',
+    'getCardArtworkUrl',
+    'cardArtUrlFor',
+    'buildCardArtUrl'
+  ];
+  for(const name of helperNames){
+    const helper=window[name];
+    if(typeof helper!=='function')continue;
+    try{
+      const value=helper(card||cardName,orientation,state.cardSystem);
+      if(typeof value==='string'&&value.trim())return value.trim();
+      if(value&&typeof value.src==='string')return value.src;
+    }catch(_e){
+      // The installed helper may use a different signature; try the next one.
+    }
   }
-  reading+='\n';
-
-  reading+=`## Patterns Worth Noticing\n\n`;
-  const patternBullets=getPatternBullets(patterns);
-  reading+=(patternBullets.length?patternBullets.join('\n'):'- **Overall pattern:** The strongest message comes from the specific cards you placed and the concern you brought.').trim()+'\n\n';
-
-  reading+=`## Practical Guidance\n\n`;
-  reading+=`1. Name the one theme that feels most true, then write down one small choice that would honor it today.\n`;
-  reading+=`2. If the topic is serious, pair reflection with trusted human or professional support instead of relying on the cards alone.\n`;
-  reading+=`3. Return to the spread after a quiet pause and notice which card still pulls your attention.\n\n`;
-
-  reading+=`## Reflection Question\n\n`;
-  reading+=`What is this spread asking you to see more honestly, and what gentle action would help you respond?\n\n`;
-
-  return reading;
+  return '';
 }
 
-function escapeHtml(value){
-  return String(value).replace(/[&<>"']/g,ch=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[ch]));
+function renderReading(text){
+  const content=document.getElementById('reading-content');
+  content.innerHTML=readingMarkdownToHtml(text);
+  enhanceReadingOutput();
+  renderReadingInfographicPanel(content);
+
+  const jSec=document.getElementById('journal-section');
+  if(jSec){
+    jSec.style.display='block';
+    const journalEntry=document.getElementById('journal-entry');
+    if(journalEntry)journalEntry.value='';
+    if(typeof wireJournalSection==='function')wireJournalSection(jSec);
+  }
+  setReadingReadyState(true);
+  renderEntitlementsUI();
 }
 
-function applyInlineMarkdown(text){
-  return text
-    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
-    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
-}
-
-function markdownText(line){
-  return applyInlineMarkdown(escapeHtml(line));
-}
-
-function renderReadingMarkdown(text){
+function readingMarkdownToHtml(text){
   const lines=String(text||'').split('\n');
   let html='';
-  let listType=null;
-  let paragraphOpen=false;
   let sectionOpen=false;
+  let listOpen=false;
+  let paragraph=[];
 
-  const closeParagraph=()=>{
-    if(paragraphOpen){html+='</p>';paragraphOpen=false}
-  };
-  const closeList=()=>{
-    if(listType){html+=`</${listType}>`;listType=null}
-  };
-  const closeSection=()=>{
-    closeParagraph();
+  function flushParagraph(){
+    if(!paragraph.length)return;
+    html+=`<p>${paragraph.map(line=>formatReadingInline(line)).join('<br>')}</p>`;
+    paragraph=[];
+  }
+  function closeList(){
+    if(listOpen){html+='</ul>';listOpen=false;}
+  }
+  function closeSection(){
+    flushParagraph();
     closeList();
-    if(sectionOpen){html+='</div>';sectionOpen=false}
-  };
-  const openList=type=>{
-    closeParagraph();
-    if(listType&&listType!==type)closeList();
-    if(!listType){html+=`<${type}>`;listType=type}
-  };
-  const addParagraphLine=line=>{
-    closeList();
-    if(!paragraphOpen){html+='<p>';paragraphOpen=true}
-    else html+='<br>';
-    html+=markdownText(line);
-  };
+    if(sectionOpen){html+='</div>';sectionOpen=false;}
+  }
 
   lines.forEach(line=>{
     const trimmed=line.trim();
-    if(trimmed===''){
-      closeParagraph();
-      closeList();
-      return;
-    }
-    if(trimmed.startsWith('### ')){
-      closeParagraph();
-      closeList();
-      html+=`<h4>${markdownText(trimmed.slice(4))}</h4>`;
-      return;
-    }
     if(trimmed.startsWith('## ')){
       closeSection();
-      html+=`<div class="reading-section"><h3>${markdownText(trimmed.slice(3))}</h3>`;
+      html+=`<div class="reading-section"><h3>${formatReadingInline(trimmed.slice(3))}</h3>`;
       sectionOpen=true;
       return;
     }
-    if(trimmed.startsWith('# ')){
-      closeSection();
-      html+=`<h2>${markdownText(trimmed.slice(2))}</h2>`;
+    if(trimmed.startsWith('- ')){
+      flushParagraph();
+      if(!listOpen){html+='<ul>';listOpen=true;}
+      html+=`<li>${formatReadingInline(trimmed.slice(2))}</li>`;
       return;
     }
-    if(trimmed.startsWith('- ')||trimmed.startsWith('* ')){
-      openList('ul');
-      html+=`<li>${markdownText(trimmed.slice(2))}</li>`;
+    if(!trimmed){
+      flushParagraph();
+      closeList();
       return;
     }
-    const numbered=trimmed.match(/^\d+\.\s+(.+)$/);
-    if(numbered){
-      openList('ol');
-      html+=`<li>${markdownText(numbered[1])}</li>`;
-      return;
-    }
-    addParagraphLine(trimmed);
+    closeList();
+    paragraph.push(trimmed);
   });
   closeSection();
   return html;
 }
 
-function renderReading(text){
-  const content=document.getElementById('reading-content');
-  content.innerHTML=renderReadingMarkdown(text);
-  enhanceReadingOutput();
-  const jSec=document.getElementById('journal-section');
-  if(jSec){
-    jSec.style.display='block';
-    document.getElementById('journal-entry').value='';
-    if(typeof wireJournalSection==='function')wireJournalSection(jSec);
+function formatReadingInline(value){
+  return escapeReadingHtml(value)
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>');
+}
+
+function escapeReadingHtml(value){
+  return String(value??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function renderReadingInfographicPanel(content){
+  const model=state.readingInfographic||buildInfographicFromCurrentState();
+  if(!model||!model.cards.length)return;
+
+  const panel=document.createElement('section');
+  panel.id='reading-infographic-panel';
+  panel.className='reading-section';
+  panel.style.marginTop='24px';
+  panel.innerHTML=`
+    <h3>Shareable Reading Infographic</h3>
+    <p style="margin-bottom:14px">A visual summary made from the confirmed cards and the reading above. Card names and orientations come from your reviewed spread.</p>
+    <div style="border:1px solid rgba(205,169,92,.42);border-radius:8px;overflow:hidden;background:#f6f0df;box-shadow:0 18px 50px rgba(0,0,0,.22)">
+      <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading" style="display:block;width:100%;height:auto"></canvas>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
+      <button type="button" id="download-reading-infographic" class="btn btn-primary">Download PNG</button>
+      <button type="button" id="redraw-reading-infographic" class="btn">Redraw</button>
+      <span id="reading-infographic-status" role="status" aria-live="polite" style="font-size:12px;opacity:.78">Building infographic…</span>
+    </div>`;
+  content.appendChild(panel);
+
+  const canvas=panel.querySelector('#reading-infographic-canvas');
+  const status=panel.querySelector('#reading-infographic-status');
+  const downloadButton=panel.querySelector('#download-reading-infographic');
+  const redrawButton=panel.querySelector('#redraw-reading-infographic');
+
+  drawReadingInfographic(canvas,model)
+    .then(()=>{status.textContent='Ready to download.';})
+    .catch(error=>{status.textContent=`Preview could not be completed: ${error.message}`;});
+
+  downloadButton.addEventListener('click',()=>downloadReadingInfographic(canvas,model,status));
+  redrawButton.addEventListener('click',async()=>{
+    status.textContent='Redrawing…';
+    try{
+      await drawReadingInfographic(canvas,model);
+      status.textContent='Ready to download.';
+    }catch(error){
+      status.textContent=`Redraw failed: ${error.message}`;
+    }
+  });
+}
+
+function buildInfographicFromCurrentState(){
+  try{
+    const packageData=state.readingPackage||buildClassicReadingPackage();
+    return buildInfographicModel(packageData);
+  }catch(_e){
+    return null;
   }
-  setReadingReadyState(true);
-  renderEntitlementsUI();
+}
+
+async function drawReadingInfographic(canvas,model,options={}){
+  const width=1200;
+  const cardCount=model.cards.length;
+  const columns=cardCount<=4?1:(cardCount>14?3:2);
+  const sidePadding=54;
+  const columnGap=24;
+  const cardWidth=(width-sidePadding*2-columnGap*(columns-1))/columns;
+  const cardHeight=columns===1?250:(columns===3?250:240);
+  const rows=Math.ceil(cardCount/columns);
+  const headerHeight=430;
+  const adviceHeight=360;
+  const footerHeight=190;
+  const bodyTop=headerHeight+30;
+  const height=Math.max(1500,bodyTop+rows*(cardHeight+18)+adviceHeight+footerHeight+80);
+
+  canvas.width=width;
+  canvas.height=height;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('Canvas is not supported in this browser.');
+
+  const palette={
+    navy:'#092b55',
+    navyDeep:'#061f3f',
+    teal:'#1c7c83',
+    green:'#2c816d',
+    cream:'#fbf4df',
+    paper:'#fffaf0',
+    ink:'#15355f',
+    gold:'#d6aa4f',
+    goldLight:'#f1d48a',
+    muted:'#657184',
+    white:'#fffdf7',
+    line:'#dfc68c'
+  };
+
+  ctx.fillStyle=palette.cream;
+  ctx.fillRect(0,0,width,height);
+  drawInfographicHeader(ctx,model,width,headerHeight,palette);
+
+  // Subtle paper texture.
+  ctx.save();
+  ctx.globalAlpha=.05;
+  ctx.fillStyle=palette.navy;
+  for(let y=headerHeight;y<height;y+=14){
+    for(let x=(y/14)%2?7:0;x<width;x+=18){ctx.fillRect(x,y,1,1);}
+  }
+  ctx.restore();
+
+  const imageMap=options.skipImages?new Map():await loadInfographicCardImages(model.cards);
+  model.cards.forEach((card,index)=>{
+    const column=index%columns;
+    const row=Math.floor(index/columns);
+    const x=sidePadding+column*(cardWidth+columnGap);
+    const y=bodyTop+row*(cardHeight+18);
+    drawInfographicCardPanel(ctx,card,index,x,y,cardWidth,cardHeight,palette,imageMap.get(index));
+  });
+
+  const adviceTop=bodyTop+rows*(cardHeight+18)+28;
+  drawInfographicAdvice(ctx,model,sidePadding,adviceTop,width-sidePadding*2,adviceHeight-20,palette);
+  drawInfographicFooter(ctx,model,width,adviceTop+adviceHeight,height,palette);
+  return canvas;
+}
+
+function drawInfographicHeader(ctx,model,width,height,palette){
+  const gradient=ctx.createLinearGradient(0,0,width,height);
+  gradient.addColorStop(0,palette.navyDeep);
+  gradient.addColorStop(1,palette.navy);
+  ctx.fillStyle=gradient;
+  ctx.fillRect(0,0,width,height);
+
+  drawStarField(ctx,width,height,palette.goldLight);
+  ctx.fillStyle=palette.gold;
+  ctx.fillRect(54,184,width-108,2);
+
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle=palette.white;
+  setCanvasFont(ctx,64,true,true);
+  drawFittedCanvasText(ctx,model.title,width/2,82,width-150,64);
+
+  ctx.fillStyle=palette.goldLight;
+  setCanvasFont(ctx,27,true,false);
+  drawFittedCanvasText(ctx,model.subtitle,width/2,145,width-190,27);
+
+  roundedCanvasRect(ctx,58,212,width-116,158,18);
+  ctx.fillStyle='rgba(255,250,240,.97)';
+  ctx.fill();
+  ctx.strokeStyle=palette.gold;
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.textAlign='left';
+  ctx.fillStyle=palette.ink;
+  setCanvasFont(ctx,27,true,false);
+  ctx.fillText('Reading at a glance',86,246);
+  setCanvasFont(ctx,23,false,false);
+  drawWrappedCanvasText(ctx,model.summary,86,280,width-172,31,3,palette.ink);
+
+  const themes=model.themes.slice(0,3);
+  const chipTop=382;
+  const chipGap=14;
+  const chipWidth=(width-116-chipGap*2)/3;
+  themes.forEach((theme,index)=>{
+    const x=58+index*(chipWidth+chipGap);
+    roundedCanvasRect(ctx,x,chipTop,chipWidth,38,19);
+    ctx.fillStyle='rgba(255,255,255,.11)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(241,212,138,.55)';
+    ctx.stroke();
+    ctx.textAlign='center';
+    ctx.fillStyle=palette.goldLight;
+    setCanvasFont(ctx,18,true,false);
+    drawFittedCanvasText(ctx,theme.title,x+chipWidth/2,chipTop+20,chipWidth-20,18);
+  });
+}
+
+function drawStarField(ctx,width,height,color){
+  ctx.save();
+  ctx.fillStyle=color;
+  ctx.strokeStyle=color;
+  for(let i=0;i<38;i++){
+    const x=18+((i*83)%Math.max(1,width-36));
+    const y=18+((i*47)%Math.max(1,height-36));
+    const size=i%7===0?5:(i%3===0?3:1.8);
+    ctx.globalAlpha=i%5===0?.95:.62;
+    ctx.beginPath();
+    ctx.arc(x,y,size,0,Math.PI*2);
+    ctx.fill();
+    if(i%7===0){
+      ctx.beginPath();
+      ctx.moveTo(x-11,y);ctx.lineTo(x+11,y);
+      ctx.moveTo(x,y-11);ctx.lineTo(x,y+11);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawInfographicCardPanel(ctx,card,index,x,y,width,height,palette,image){
+  ctx.save();
+  ctx.shadowColor='rgba(33,48,70,.12)';
+  ctx.shadowBlur=12;
+  ctx.shadowOffsetY=5;
+  roundedCanvasRect(ctx,x,y,width,height,18);
+  ctx.fillStyle=palette.paper;
+  ctx.fill();
+  ctx.shadowColor='transparent';
+  ctx.strokeStyle=index===0?palette.teal:palette.line;
+  ctx.lineWidth=index===0?3:1.7;
+  ctx.stroke();
+
+  const badgeSize=58;
+  ctx.beginPath();
+  ctx.arc(x+40,y+42,badgeSize/2,0,Math.PI*2);
+  ctx.fillStyle=index===0?palette.navy:palette.teal;
+  ctx.fill();
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle=palette.white;
+  setCanvasFont(ctx,19,true,false);
+  drawFittedCanvasText(ctx,card.label,x+40,y+42,badgeSize-8,19);
+
+  const artX=x+74;
+  const artY=y+20;
+  const artW=82;
+  const artH=126;
+  drawInfographicCardArt(ctx,card,image,artX,artY,artW,artH,palette);
+
+  const textX=x+174;
+  const textWidth=width-194;
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  ctx.fillStyle=palette.ink;
+  setCanvasFont(ctx,24,true,true);
+  drawFittedCanvasTextLeft(ctx,`${card.cardName}${card.orientation==='reversed'?' · Reversed':''}`,textX,y+22,textWidth,24);
+
+  ctx.fillStyle=index===0?palette.teal:palette.navy;
+  setCanvasFont(ctx,20,true,false);
+  drawWrappedCanvasText(ctx,card.headline,textX,y+60,textWidth,25,2,ctx.fillStyle);
+
+  ctx.fillStyle=palette.ink;
+  setCanvasFont(ctx,17,false,false);
+  drawWrappedCanvasText(ctx,card.message,textX,y+112,textWidth,23,3,palette.ink);
+
+  ctx.fillStyle=palette.green;
+  setCanvasFont(ctx,15,true,false);
+  drawWrappedCanvasText(ctx,`Focus: ${card.action}`,x+24,y+height-59,width-48,20,2,palette.green);
+  ctx.restore();
+}
+
+function drawInfographicCardArt(ctx,card,image,x,y,width,height,palette){
+  roundedCanvasRect(ctx,x,y,width,height,7);
+  ctx.fillStyle='#e7dfc9';
+  ctx.fill();
+  ctx.strokeStyle=palette.gold;
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  if(image){
+    ctx.save();
+    roundedCanvasRect(ctx,x+3,y+3,width-6,height-6,5);
+    ctx.clip();
+    if(card.orientation==='reversed'){
+      ctx.translate(x+width/2,y+height/2);
+      ctx.rotate(Math.PI);
+      drawImageCover(ctx,image,-width/2+3,-height/2+3,width-6,height-6);
+    }else{
+      drawImageCover(ctx,image,x+3,y+3,width-6,height-6);
+    }
+    ctx.restore();
+    return;
+  }
+
+  const grad=ctx.createLinearGradient(x,y,x+width,y+height);
+  grad.addColorStop(0,palette.navy);
+  grad.addColorStop(1,palette.navyDeep);
+  roundedCanvasRect(ctx,x+4,y+4,width-8,height-8,5);
+  ctx.fillStyle=grad;
+  ctx.fill();
+  ctx.strokeStyle=palette.goldLight;
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(x+width/2,y+height/2);
+  if(card.orientation==='reversed')ctx.rotate(Math.PI);
+  ctx.strokeStyle=palette.goldLight;
+  ctx.fillStyle=palette.goldLight;
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(0,0,21,0,Math.PI*2);
+  ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<8;i++){
+    const angle=(Math.PI*2*i)/8;
+    ctx.moveTo(Math.cos(angle)*9,Math.sin(angle)*9);
+    ctx.lineTo(Math.cos(angle)*29,Math.sin(angle)*29);
+  }
+  ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawImageCover(ctx,image,x,y,width,height){
+  const scale=Math.max(width/image.width,height/image.height);
+  const drawWidth=image.width*scale;
+  const drawHeight=image.height*scale;
+  ctx.drawImage(image,x+(width-drawWidth)/2,y+(height-drawHeight)/2,drawWidth,drawHeight);
+}
+
+async function loadInfographicCardImages(cards){
+  const imageMap=new Map();
+  await Promise.all(cards.map(async(card,index)=>{
+    if(!card.artUrl)return;
+    try{
+      const image=await loadCanvasImage(card.artUrl);
+      imageMap.set(index,image);
+    }catch(_e){
+      // Artwork is decorative. A branded card-back fallback is always available.
+    }
+  }));
+  return imageMap;
+}
+
+function loadCanvasImage(src){
+  return new Promise((resolve,reject)=>{
+    const image=new Image();
+    if(!String(src).startsWith('data:')&&!String(src).startsWith('blob:'))image.crossOrigin='anonymous';
+    image.onload=()=>resolve(image);
+    image.onerror=()=>reject(new Error('Card artwork could not be loaded.'));
+    image.src=src;
+  });
+}
+
+function drawInfographicAdvice(ctx,model,x,y,width,height,palette){
+  roundedCanvasRect(ctx,x,y,width,height,22);
+  ctx.fillStyle=palette.paper;
+  ctx.fill();
+  ctx.strokeStyle=palette.gold;
+  ctx.lineWidth=2.2;
+  ctx.stroke();
+
+  roundedCanvasRect(ctx,x+90,y-22,width-180,62,15);
+  ctx.fillStyle=palette.navy;
+  ctx.fill();
+  ctx.strokeStyle=palette.gold;
+  ctx.stroke();
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle=palette.white;
+  setCanvasFont(ctx,30,true,true);
+  ctx.fillText('Practical Guidance',x+width/2,y+9);
+
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  const advice=model.advice.length?model.advice:[
+    'Choose one small action that supports the direction you want.',
+    'Review difficulties early instead of carrying them alone.',
+    'Treat the spread as guidance for reflection, not a fixed outcome.'
+  ];
+  let cursorY=y+70;
+  advice.slice(0,4).forEach((item,index)=>{
+    ctx.fillStyle=palette.gold;
+    setCanvasFont(ctx,28,true,false);
+    ctx.fillText('✦',x+38,cursorY-1);
+    ctx.fillStyle=palette.ink;
+    setCanvasFont(ctx,21,false,false);
+    const used=drawWrappedCanvasText(ctx,item,x+78,cursorY,width-122,29,2,palette.ink);
+    cursorY+=Math.max(55,used+18);
+  });
+}
+
+function drawInfographicFooter(ctx,model,width,startY,height,palette){
+  const ribbonY=startY+42;
+  const ribbonH=95;
+  roundedCanvasRect(ctx,48,ribbonY,width-96,ribbonH,18);
+  ctx.fillStyle=palette.navy;
+  ctx.fill();
+  ctx.strokeStyle=palette.gold;
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle=palette.white;
+  setCanvasFont(ctx,28,true,true);
+  drawWrappedCanvasText(ctx,model.closingMessage,width/2,ribbonY+24,width-170,34,2,palette.white,true);
+
+  ctx.fillStyle=palette.muted;
+  setCanvasFont(ctx,14,false,false);
+  ctx.fillText(`ArcanaGuide · ${model.spreadName} · ${model.generatedDate}`,width/2,height-34);
+  ctx.fillText('Reflective guidance only — not a guaranteed prediction or professional advice.',width/2,height-14);
+}
+
+function roundedCanvasRect(ctx,x,y,width,height,radius){
+  const r=Math.min(radius,width/2,height/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+width,y,x+width,y+height,r);
+  ctx.arcTo(x+width,y+height,x,y+height,r);
+  ctx.arcTo(x,y+height,x,y,r);
+  ctx.arcTo(x,y,x+width,y,r);
+  ctx.closePath();
+}
+
+function setCanvasFont(ctx,size,bold,serif){
+  const weight=bold?700:400;
+  const family=serif
+    ? '"Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", Georgia, serif'
+    : '"Noto Sans JP", "Yu Gothic", "Hiragino Sans", Arial, sans-serif';
+  ctx.font=`${weight} ${size}px ${family}`;
+}
+
+function drawFittedCanvasText(ctx,text,x,y,maxWidth,startSize){
+  let size=startSize;
+  while(size>15&&ctx.measureText(String(text)).width>maxWidth){
+    size-=1;
+    setCanvasFont(ctx,size,true,size>=25);
+  }
+  ctx.fillText(String(text),x,y);
+}
+
+function drawFittedCanvasTextLeft(ctx,text,x,y,maxWidth,startSize){
+  let size=startSize;
+  while(size>13&&ctx.measureText(String(text)).width>maxWidth){
+    size-=1;
+    setCanvasFont(ctx,size,true,size>=22);
+  }
+  ctx.fillText(String(text),x,y);
+}
+
+function drawWrappedCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines,color,centered=false){
+  const lines=wrapCanvasText(ctx,String(text||''),maxWidth,maxLines);
+  ctx.fillStyle=color||ctx.fillStyle;
+  ctx.textAlign=centered?'center':'left';
+  ctx.textBaseline='top';
+  lines.forEach((line,index)=>ctx.fillText(line,x,y+index*lineHeight));
+  return lines.length*lineHeight;
+}
+
+function wrapCanvasText(ctx,text,maxWidth,maxLines){
+  const clean=String(text||'').replace(/\s+/g,' ').trim();
+  if(!clean)return [];
+  let tokens;
+  try{
+    const segmenter=new Intl.Segmenter(getReadingLocale(),{granularity:'word'});
+    tokens=Array.from(segmenter.segment(clean),segment=>segment.segment);
+  }catch(_e){
+    tokens=clean.includes(' ')?clean.split(/(\s+)/):Array.from(clean);
+  }
+
+  const lines=[];
+  let line='';
+  for(const token of tokens){
+    const test=line+token;
+    if(line&&ctx.measureText(test).width>maxWidth){
+      lines.push(line.trim());
+      line=token.trimStart();
+      if(lines.length===maxLines)break;
+    }else{
+      line=test;
+    }
+  }
+  if(lines.length<maxLines&&line.trim())lines.push(line.trim());
+  if(lines.length>maxLines)lines.length=maxLines;
+
+  if(lines.length===maxLines){
+    const consumed=lines.join('').replace(/\s/g,'');
+    const original=clean.replace(/\s/g,'');
+    if(consumed.length<original.length){
+      let last=lines[maxLines-1];
+      while(last.length&&ctx.measureText(`${last}…`).width>maxWidth)last=last.slice(0,-1);
+      lines[maxLines-1]=`${last.trimEnd()}…`;
+    }
+  }
+  return lines;
+}
+
+async function downloadReadingInfographic(canvas,model,statusElement){
+  if(statusElement)statusElement.textContent='Preparing PNG…';
+  try{
+    let blob=await canvasToPngBlob(canvas);
+    if(!blob){
+      await drawReadingInfographic(canvas,model,{skipImages:true});
+      blob=await canvasToPngBlob(canvas);
+    }
+    if(!blob)throw new Error('The image could not be exported.');
+
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    const spreadSlug=String(model.spreadName||'reading').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'reading';
+    link.href=url;
+    link.download=`arcana-${spreadSlug}-${model.generatedDate}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    if(statusElement)statusElement.textContent='PNG downloaded.';
+  }catch(error){
+    // Cross-origin artwork can taint a canvas on some hosts. Redraw with the built-in card backs and retry once.
+    try{
+      await drawReadingInfographic(canvas,model,{skipImages:true});
+      const safeBlob=await canvasToPngBlob(canvas);
+      if(!safeBlob)throw error;
+      const url=URL.createObjectURL(safeBlob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download=`arcana-reading-${model.generatedDate}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      if(statusElement)statusElement.textContent='PNG downloaded with the built-in card design.';
+    }catch(finalError){
+      if(statusElement)statusElement.textContent=`Download failed: ${finalError.message}`;
+    }
+  }
+}
+
+function canvasToPngBlob(canvas){
+  return new Promise(resolve=>{
+    try{
+      canvas.toBlob(blob=>resolve(blob),'image/png',1);
+    }catch(_e){
+      resolve(null);
+    }
+  });
 }

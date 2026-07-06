@@ -262,12 +262,12 @@ Cards and positions:
 ${cardLines}${droppedLine}`;
 }
 
-async function generateAIReading(settings){
+async function generateAIReading(settings,statusElement){
   const raw=await callGemini(
     buildAIReadingPrompt(settings),
     null,
-    state.uploadedImage||null,
-    document.getElementById('ai-status')
+    null,
+    statusElement||document.getElementById('ai-status')
   );
   const readingPackage=parseAIReadingPackage(raw);
   state.readingPackage=readingPackage;
@@ -1200,4 +1200,118 @@ function canvasToPngBlob(canvas){
       resolve(null);
     }
   });
+}
+
+
+// ===== QUICK PHOTO READING OVERRIDE =====
+// ui.js defines an older quickRead() that asks Gemini for one markdown response.
+// This later definition intentionally replaces it because reading-engine.js loads
+// after ui.js. It identifies the cards first, stores validated cards in state,
+// then uses the same structured reading + infographic pipeline as guided readings.
+async function quickRead(){
+  if(!canGenerateReading()){
+    showUpgradeModal('daily-limit');
+    return;
+  }
+
+  const settings=loadSettings();
+  try{requireAIConfiguration();}catch(error){alert(error.message);return;}
+  if(!state.uploadedImage){alert('Please upload a photo first.');return;}
+
+  const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
+  if(!spread){alert('Please choose the spread used in the photo.');return;}
+
+  const concernElement=document.getElementById('quick-concern');
+  const concern=concernElement?concernElement.value.trim():'';
+  state.concerns=concern?[concern]:[];
+  if(typeof saveReaderContext==='function')saveReaderContext('quick-reader-life-stage');
+
+  // getSpread() reads state.spreadId, so make the selected quick spread the
+  // authoritative spread before creating the structured reading package.
+  state.spreadId=spread.id;
+  state.readingPackage=null;
+  state.readingInfographic=null;
+  state.cards={};
+
+  const results=document.getElementById('quick-results');
+  results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
+  const statusElement=document.getElementById('quick-ai-status');
+
+  try{
+    if(statusElement)statusElement.textContent='Identifying and validating the cards…';
+    const detectionRequired=shouldDetectCardSystem();
+    const positionDetails=spread.positions
+      .map(position=>`${position.id}. ${position.name} — ${position.description}`)
+      .join('\n');
+
+    const identificationPrompt=`You are identifying physical cards in a photograph of a completed spread.
+
+SPREAD: ${spread.name} (${spread.cardCount} cards) — ${spread.description}
+${getCleanSpreadLayoutHint(spread)}
+
+POSITIONS:
+${positionDetails}
+
+${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
+
+For every visible spread position, identify the exact card name and whether it is upright or reversed.
+Return ONLY a valid JSON array with no markdown or commentary:
+[{"position":1,"card":"Card Name","orientation":"upright"}]
+Use the supplied position IDs exactly. If a card cannot be identified, use null for its card value.`;
+
+    const identificationRaw=await callGemini(
+      identificationPrompt,
+      null,
+      state.uploadedImage,
+      statusElement
+    );
+
+    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
+      throw new Error('Validated card identification is unavailable. Please reload the page and try again.');
+    }
+
+    const references=getIdentificationCardReferences(detectionRequired);
+    const identified=window.ArcanaAI.parseIdentifiedCards(
+      identificationRaw,
+      references,
+      spread.positions.map(position=>position.id)
+    );
+    validateIdentificationResult(identified);
+    if(detectionRequired)establishDetectedCardSystem(identified);
+    replaceIdentifiedSpreadCards(spread,identified);
+    currentCards=getCards();
+
+    if(statusElement)statusElement.textContent='Creating the reading and infographic…';
+    const narrative=await generateAIReading(settings,statusElement);
+    state.narrative=narrative;
+
+    if(!state.readingUsageRecorded){
+      recordCompletedReading();
+      state.readingUsageRecorded=true;
+    }
+
+    results.innerHTML='';
+    const content=document.createElement('div');
+    content.id='quick-reading-content';
+    content.innerHTML=readingMarkdownToHtml(narrative);
+    results.appendChild(content);
+    renderReadingInfographicPanel(content);
+
+    results.insertAdjacentHTML('beforeend',`
+      <div class="reading-actions no-print">
+        <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
+        <div class="reading-actions-secondary">
+          <button class="btn" onclick="shareReading()">Share</button>
+          <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
+          <button class="btn" onclick="goScreen('screen-welcome')">Start Again</button>
+        </div>
+      </div>`);
+
+    renderJournalSection(results);
+    const journal=results.querySelector('.journal-section');
+    if(journal)wireJournalSection(journal);
+    renderEntitlementsUI();
+  }catch(error){
+    results.innerHTML=`<p style="color:var(--danger)">Error: ${escapeReadingHtml(error.message)}</p>`;
+  }
 }

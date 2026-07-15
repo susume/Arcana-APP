@@ -58,6 +58,7 @@ foreach ($semanticControl in @(
   '<button type="button" class="tag-chip"',
   '<button type="button" class="tab-btn',
   '<button type="button" class="upload-zone"',
+  '<button type="button" class="upload-deck-option',
   '<button type="button" class="orient-btn"',
   '<button type="button" class="footer-link footer-link-button"'
 )) {
@@ -68,6 +69,10 @@ foreach ($semanticControl in @(
 
 if ($theme -notlike '*.ritual-home .ritual-nav-links*' -or $theme -notlike '*grid-row: 2*') {
   throw "Mobile homepage navigation is missing its two-row reflow treatment."
+}
+
+if ($theme -notlike '*.ritual-screen-workspace .upload-deck-selector*' -or $theme -notlike '*min-height: 44px*') {
+  throw "Upload deck selection is missing its responsive touch-target treatment."
 }
 
 if (

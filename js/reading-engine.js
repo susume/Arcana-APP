@@ -548,6 +548,18 @@ function capitalizeReadingText(value){
   return text?text.charAt(0).toUpperCase()+text.slice(1):text;
 }
 
+function cleanInfographicHeadline(headline,positionName,cardName){
+  let text=cleanReadingText(headline);
+  const prefixes=[positionName,`The ${positionName}`]
+    .filter(Boolean)
+    .map(value=>String(value).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+  if(prefixes.length){
+    text=text.replace(new RegExp(`^(?:${prefixes.join('|')})\\s*(?:[:—-])\\s*`,'i'),'').trim();
+  }
+  if(text.toLowerCase()===String(cardName||'').toLowerCase())return '';
+  return text;
+}
+
 function buildInfographicModel(readingPackage){
   const spread=getSpread();
   return {
@@ -563,9 +575,8 @@ function buildInfographicModel(readingPackage){
       positionName:item.positionName,
       cardName:item.cardName,
       orientation:item.orientation,
-      headline:item.headline,
+      headline:cleanInfographicHeadline(item.headline,item.positionName,item.cardName),
       message:item.interpretation,
-      action:item.action,
       artUrl:resolveInfographicCardArtUrl(item.cardName,item.orientation)
     })),
     advice:readingPackage.guidance.slice(0,4),
@@ -735,20 +746,117 @@ function buildInfographicFromCurrentState(){
   }
 }
 
-async function drawReadingInfographic(canvas,model,options={}){
-  const width=1200;
+function getInfographicTemplate(model){
   const cardCount=model.cards.length;
-  const columns=cardCount<=4?1:(cardCount>14?3:2);
+  const spreadLayout=String(model.layout||'').toLowerCase();
+  const indexes=Array.from({length:cardCount},(_,index)=>index);
+  const chunk=(items,size)=>{
+    const rows=[];
+    for(let index=0;index<items.length;index+=size)rows.push(items.slice(index,index+size));
+    return rows;
+  };
+
+  if(spreadLayout==='two-pathways'){
+    return {
+      id:'comparison',variant:'standard',columns:2,cardHeight:220,rowGap:22,
+      title:'Two paths, side by side',subtitle:'Shared context first, then each route from near future to result',
+      rows:[[0,1],[2,3],[4,6],[5,7],[8,10],[9,11],[12,13]].filter(row=>row.every(index=>index<cardCount)),
+      rowLabels:['Shared ground','The choice','Near future','','Distant future','','Results'],expandSingle:true
+    };
+  }
+  if(spreadLayout==='relationship'){
+    return {
+      id:'relationship',variant:'standard',columns:2,cardHeight:220,rowGap:22,
+      title:'The relationship landscape',subtitle:'Each perspective is paired so similarities and tensions are easier to see',
+      rows:[[0,5],[1,4],[2,3],[6,7],[8,9],[10,11],[12,13],[14]].filter(row=>row.every(index=>index<cardCount)),
+      rowLabels:['What each person brings','Present position','Hopes','How you see each other','Past perceptions','Doubts & fears','External influences','Relationship direction'],expandSingle:true
+    };
+  }
+  if(spreadLayout==='yearly'){
+    return {
+      id:'timeline',variant:'dense',columns:3,cardHeight:210,rowGap:20,
+      title:'Your year, month by month',subtitle:'Read from left to right, then continue on the next row',
+      rows:chunk(indexes,3),rowLabels:['Quarter 1','Quarter 2','Quarter 3','Quarter 4'],expandSingle:false
+    };
+  }
+  if(spreadLayout==='romany'){
+    return {
+      id:'matrix',variant:'dense',columns:3,cardHeight:210,rowGap:20,
+      title:'Past · Present · Future',subtitle:'Seven life areas arranged as a clear three-part timeline',
+      rows:chunk(indexes,3),
+      rowLabels:['Emotions','Relationships','Hopes & career','Finances','Spiritual life','Obstacles','Health'],expandSingle:false
+    };
+  }
+  if(cardCount===1){
+    return {
+      id:'focus',variant:'feature',columns:1,cardHeight:340,rowGap:22,
+      title:'Your card',subtitle:'One clear message to carry forward',rows:[indexes],rowLabels:[],expandSingle:true
+    };
+  }
+  if(cardCount===3){
+    return {
+      id:'sequence',variant:'compact',columns:3,cardHeight:280,rowGap:22,
+      title:'Past · Present · Future',subtitle:'A three-part story from influence to direction',rows:[indexes],rowLabels:[],expandSingle:false
+    };
+  }
+
+  const columns=cardCount>14?3:2;
+  return {
+    id:cardCount<=6?'balanced':'position-grid',
+    variant:columns===3?'dense':'standard',
+    columns,
+    cardHeight:columns===3?210:220,
+    rowGap:22,
+    title:cardCount<=6?'The heart of the reading':'Position by position',
+    subtitle:cardCount<=6?'Core influences, tensions, and direction':'Follow the spread from the opening position to the outcome',
+    rows:chunk(indexes,columns),rowLabels:[],expandSingle:false
+  };
+}
+
+function buildInfographicBodyLayout(model,width,bodyTop){
+  const template=getInfographicTemplate(model);
   const sidePadding=54;
   const columnGap=24;
-  const cardWidth=(width-sidePadding*2-columnGap*(columns-1))/columns;
-  const cardHeight=columns===1?250:(columns===3?250:240);
-  const rows=Math.ceil(cardCount/columns);
-  const headerHeight=430;
-  const adviceHeight=360;
-  const footerHeight=190;
-  const bodyTop=headerHeight+30;
-  const height=Math.max(1500,bodyTop+rows*(cardHeight+18)+adviceHeight+footerHeight+80);
+  const contentWidth=width-sidePadding*2;
+  const baseCardWidth=(contentWidth-columnGap*(template.columns-1))/template.columns;
+  const placements=[];
+  const rowHeaders=[];
+  let cursorY=bodyTop;
+
+  template.rows.forEach((row,rowIndex)=>{
+    const rowLabel=template.rowLabels[rowIndex]||'';
+    if(rowLabel){
+      rowHeaders.push({label:rowLabel,x:sidePadding,y:cursorY,width:contentWidth});
+      cursorY+=42;
+    }
+    const expands=row.length===1&&template.expandSingle;
+    const rowWidth=expands?contentWidth:(row.length*baseCardWidth+(row.length-1)*columnGap);
+    const rowX=sidePadding+(contentWidth-rowWidth)/2;
+    row.forEach((cardIndex,columnIndex)=>{
+      placements.push({
+        cardIndex,
+        x:rowX+columnIndex*(baseCardWidth+columnGap),
+        y:cursorY,
+        width:expands?contentWidth:baseCardWidth,
+        height:template.cardHeight
+      });
+    });
+    cursorY+=template.cardHeight+template.rowGap;
+  });
+
+  return {template,placements,rowHeaders,contentBottom:cursorY-template.rowGap};
+}
+
+async function drawReadingInfographic(canvas,model,options={}){
+  const width=1200;
+  const sidePadding=54;
+  const headerHeight=440;
+  const adviceHeight=430;
+  const footerHeight=215;
+  const bodyHeadingTop=headerHeight+30;
+  const bodyLayout=buildInfographicBodyLayout(model,width,headerHeight+112);
+  const adviceTop=bodyLayout.contentBottom+30;
+  const height=Math.max(1500,adviceTop+adviceHeight+footerHeight+80);
 
   canvas.width=width;
   canvas.height=height;
@@ -783,16 +891,18 @@ async function drawReadingInfographic(canvas,model,options={}){
   }
   ctx.restore();
 
+  drawInfographicBodyHeading(ctx,bodyLayout.template,sidePadding,bodyHeadingTop,width-sidePadding*2,palette);
+  bodyLayout.rowHeaders.forEach(row=>drawInfographicRowLabel(ctx,row.label,row.x,row.y,row.width,palette));
+
   const imageMap=options.skipImages?new Map():await loadInfographicCardImages(model.cards);
-  model.cards.forEach((card,index)=>{
-    const column=index%columns;
-    const row=Math.floor(index/columns);
-    const x=sidePadding+column*(cardWidth+columnGap);
-    const y=bodyTop+row*(cardHeight+18);
-    drawInfographicCardPanel(ctx,card,index,x,y,cardWidth,cardHeight,palette,imageMap.get(index));
+  bodyLayout.placements.forEach(placement=>{
+    const card=model.cards[placement.cardIndex];
+    drawInfographicCardPanel(
+      ctx,card,placement.cardIndex,placement.x,placement.y,placement.width,placement.height,
+      palette,imageMap.get(placement.cardIndex),bodyLayout.template
+    );
   });
 
-  const adviceTop=bodyTop+rows*(cardHeight+18)+28;
   drawInfographicAdvice(ctx,model,sidePadding,adviceTop,width-sidePadding*2,adviceHeight-20,palette);
   drawInfographicFooter(ctx,model,width,adviceTop+adviceHeight,height,palette);
   return canvas;
@@ -851,6 +961,31 @@ function drawInfographicHeader(ctx,model,width,height,palette){
   });
 }
 
+function drawInfographicBodyHeading(ctx,template,x,y,width,palette){
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  ctx.fillStyle=palette.navy;
+  setCanvasFont(ctx,29,true,true);
+  ctx.fillText(template.title,x,y);
+  ctx.textAlign='right';
+  ctx.fillStyle=palette.muted;
+  setCanvasFont(ctx,16,false,false);
+  drawFittedCanvasText(ctx,template.subtitle,x+width,y+9,Math.min(650,width*.6),16);
+  ctx.fillStyle=palette.gold;
+  ctx.fillRect(x,y+51,width,2);
+}
+
+function drawInfographicRowLabel(ctx,label,x,y,width,palette){
+  ctx.textAlign='left';
+  ctx.textBaseline='middle';
+  ctx.fillStyle=palette.teal;
+  setCanvasFont(ctx,17,true,false);
+  ctx.fillText(label,x,y+17);
+  const labelWidth=Math.min(width*.42,ctx.measureText(label).width+18);
+  ctx.fillStyle='rgba(28,124,131,.22)';
+  ctx.fillRect(x+labelWidth,y+16,width-labelWidth,1.5);
+}
+
 function drawStarField(ctx,width,height,color){
   ctx.save();
   ctx.fillStyle=color;
@@ -873,7 +1008,7 @@ function drawStarField(ctx,width,height,color){
   ctx.restore();
 }
 
-function drawInfographicCardPanel(ctx,card,index,x,y,width,height,palette,image){
+function drawInfographicCardPanel(ctx,card,index,x,y,width,height,palette,image,template={variant:'standard'}){
   ctx.save();
   ctx.shadowColor='rgba(33,48,70,.12)';
   ctx.shadowBlur=12;
@@ -883,46 +1018,90 @@ function drawInfographicCardPanel(ctx,card,index,x,y,width,height,palette,image)
   ctx.fill();
   ctx.shadowColor='transparent';
   ctx.strokeStyle=index===0?palette.teal:palette.line;
-  ctx.lineWidth=index===0?3:1.7;
+  ctx.lineWidth=index===0?2.5:1.7;
   ctx.stroke();
 
-  const badgeSize=58;
-  ctx.beginPath();
-  ctx.arc(x+40,y+42,badgeSize/2,0,Math.PI*2);
+  const label=getInfographicDisplayLabel(card,template);
+  const isDense=template.variant==='dense';
+  const isCompact=template.variant==='compact';
+  const isFeature=template.variant==='feature';
+  const labelFont=isDense?13:14;
+  const labelHeight=isDense?30:34;
+  const labelMax=isDense?150:188;
+  const labelX=x+(isDense||isCompact?18:20);
+  const labelY=y+(isDense||isCompact?14:17);
+  setCanvasFont(ctx,labelFont,true,false);
+  const labelWidth=Math.min(labelMax,Math.max(isDense?78:92,ctx.measureText(label).width+(isDense?24:30)));
+  roundedCanvasRect(ctx,labelX,labelY,labelWidth,labelHeight,labelHeight/2);
   ctx.fillStyle=index===0?palette.navy:palette.teal;
   ctx.fill();
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillStyle=palette.white;
-  setCanvasFont(ctx,19,true,false);
-  drawFittedCanvasText(ctx,card.label,x+40,y+42,badgeSize-8,19);
+  setCanvasFont(ctx,labelFont,true,false);
+  drawFittedCanvasText(ctx,label,labelX+labelWidth/2,labelY+labelHeight/2,labelWidth-18,labelFont);
 
-  const artX=x+74;
-  const artY=y+20;
-  const artW=82;
-  const artH=126;
+  const displayName=`${card.cardName}${card.orientation==='reversed'?' · Reversed':''}`;
+  let artX;
+  let artY;
+  let artW;
+  let artH;
+  let textX;
+  let textWidth;
+  let messageY;
+  let messageFont;
+  let messageLineHeight;
+  let messageLines;
+
+  ctx.textAlign='left';
+  ctx.fillStyle=palette.ink;
+  if(isFeature){
+    const nameX=x+20+labelWidth+18;
+    drawFittedCanvasTextLeft(ctx,displayName,nameX,y+34,width-(nameX-x)-24,28);
+    artX=x+34;artY=y+78;artW=150;artH=225;
+    textX=x+220;textWidth=width-260;messageY=y+92;
+    messageFont=21;messageLineHeight=29;messageLines=7;
+  }else if(isDense||isCompact){
+    ctx.textBaseline='middle';
+    const nameY=y+(isDense?60:65);
+    drawFittedCanvasTextLeft(ctx,displayName,x+20,nameY,width-40,isDense?20:22);
+    artX=x+20;artY=y+(isDense?82:94);artW=isDense?64:78;artH=isDense?96:117;
+    textX=x+(isDense?102:118);textWidth=width-(isDense?122:138);messageY=artY+2;
+    messageFont=isDense?14:15;messageLineHeight=isDense?18:20;messageLines=isDense?5:6;
+  }else{
+    const nameX=x+20+labelWidth+16;
+    ctx.textBaseline='middle';
+    drawFittedCanvasTextLeft(ctx,displayName,nameX,y+34,width-(nameX-x)-20,23);
+    artX=x+24;artY=y+67;artW=88;artH=132;
+    textX=x+132;textWidth=width-154;messageY=y+72;
+    messageFont=16;messageLineHeight=21;messageLines=5;
+  }
+
   drawInfographicCardArt(ctx,card,image,artX,artY,artW,artH,palette);
-
-  const textX=x+174;
-  const textWidth=width-194;
   ctx.textAlign='left';
   ctx.textBaseline='top';
+  if(card.headline&&!isDense){
+    ctx.fillStyle=index===0?palette.teal:palette.navy;
+    const headlineFont=isFeature?24:(isCompact?16:18);
+    const headlineLineHeight=isFeature?30:(isCompact?20:22);
+    setCanvasFont(ctx,headlineFont,true,false);
+    const headlineHeight=drawWrappedCanvasText(ctx,card.headline,textX,messageY,textWidth,headlineLineHeight,2,ctx.fillStyle);
+    messageY+=headlineHeight+(isFeature?13:8);
+  }
+
   ctx.fillStyle=palette.ink;
-  setCanvasFont(ctx,24,true,true);
-  drawFittedCanvasTextLeft(ctx,`${card.cardName}${card.orientation==='reversed'?' · Reversed':''}`,textX,y+22,textWidth,24);
-
-  ctx.fillStyle=index===0?palette.teal:palette.navy;
-  setCanvasFont(ctx,20,true,false);
-  drawWrappedCanvasText(ctx,card.headline,textX,y+60,textWidth,25,2,ctx.fillStyle);
-
-  ctx.fillStyle=palette.ink;
-  setCanvasFont(ctx,17,false,false);
-  drawWrappedCanvasText(ctx,card.message,textX,y+112,textWidth,23,3,palette.ink);
-
-  ctx.fillStyle=palette.green;
-  setCanvasFont(ctx,15,true,false);
-  drawWrappedCanvasText(ctx,`Focus: ${card.action}`,x+24,y+height-59,width-48,20,2,palette.green);
+  setCanvasFont(ctx,messageFont,false,false);
+  drawWrappedCanvasText(ctx,card.message,textX,messageY,textWidth,messageLineHeight,messageLines,palette.ink);
   ctx.restore();
+}
+
+function getInfographicDisplayLabel(card,template){
+  const label=String(card.label||card.positionName||`Position ${card.position}`);
+  if(template.id!=='matrix')return label;
+  if(/\bpast\b/i.test(label))return 'Past';
+  if(/\b(present|now)\b/i.test(label))return 'Present';
+  if(/\bfuture\b/i.test(label))return 'Future';
+  return label;
 }
 
 function drawInfographicCardArt(ctx,card,image,x,y,width,height,palette){
@@ -1017,7 +1196,7 @@ function drawInfographicAdvice(ctx,model,x,y,width,height,palette){
   ctx.lineWidth=2.2;
   ctx.stroke();
 
-  roundedCanvasRect(ctx,x+90,y-22,width-180,62,15);
+  roundedCanvasRect(ctx,x+24,y+20,width-48,58,15);
   ctx.fillStyle=palette.navy;
   ctx.fill();
   ctx.strokeStyle=palette.gold;
@@ -1026,7 +1205,7 @@ function drawInfographicAdvice(ctx,model,x,y,width,height,palette){
   ctx.textBaseline='middle';
   ctx.fillStyle=palette.white;
   setCanvasFont(ctx,30,true,true);
-  ctx.fillText('Practical Guidance',x+width/2,y+9);
+  ctx.fillText('Practical Guidance',x+width/2,y+49);
 
   ctx.textAlign='left';
   ctx.textBaseline='top';
@@ -1035,21 +1214,24 @@ function drawInfographicAdvice(ctx,model,x,y,width,height,palette){
     'Review difficulties early instead of carrying them alone.',
     'Treat the spread as guidance for reflection, not a fixed outcome.'
   ];
-  let cursorY=y+70;
+  let cursorY=y+102;
   advice.slice(0,4).forEach((item,index)=>{
+    ctx.save();
+    ctx.translate(x+43,cursorY+10);
+    ctx.rotate(Math.PI/4);
     ctx.fillStyle=palette.gold;
-    setCanvasFont(ctx,28,true,false);
-    ctx.fillText('✦',x+38,cursorY-1);
+    ctx.fillRect(-6,-6,12,12);
+    ctx.restore();
     ctx.fillStyle=palette.ink;
     setCanvasFont(ctx,21,false,false);
-    const used=drawWrappedCanvasText(ctx,item,x+78,cursorY,width-122,29,2,palette.ink);
-    cursorY+=Math.max(55,used+18);
+    const used=drawWrappedCanvasText(ctx,item,x+76,cursorY,width-116,29,2,palette.ink);
+    cursorY+=Math.max(62,used+20);
   });
 }
 
 function drawInfographicFooter(ctx,model,width,startY,height,palette){
-  const ribbonY=startY+42;
-  const ribbonH=95;
+  const ribbonY=startY+38;
+  const ribbonH=112;
   roundedCanvasRect(ctx,48,ribbonY,width-96,ribbonH,18);
   ctx.fillStyle=palette.navy;
   ctx.fill();
@@ -1065,7 +1247,7 @@ function drawInfographicFooter(ctx,model,width,startY,height,palette){
 
   ctx.fillStyle=palette.muted;
   setCanvasFont(ctx,14,false,false);
-  ctx.fillText(`ArcanaGuide · ${model.spreadName} · ${model.generatedDate}`,width/2,height-34);
+  ctx.fillText(`Arcana Guide · ${model.spreadName} · ${model.generatedDate}`,width/2,height-34);
   ctx.fillText('Reflective guidance only — not a guaranteed prediction or professional advice.',width/2,height-14);
 }
 

@@ -80,6 +80,7 @@ run("state.cardSystemEstablished=true; startGuided()");
 assert.equal(run("state.cardSystemEstablished"), false);
 run("state.cardSystemEstablished=true; state.droppedCard={name:'The Fool',orientation:'upright'}; state.hasDroppedCard=true; startQuick()");
 assert.equal(run("state.cardSystemEstablished"), false);
+assert.equal(run("state.cardSystem"), "tarot");
 assert.equal(run("state.droppedCard"), null);
 assert.equal(run("state.hasDroppedCard"), false);
 run("state.cardSystem='tarot'; state.cardSystemEstablished=false; confirmSystem()");
@@ -146,11 +147,28 @@ assert.equal(run("state.cardSystemEstablished"), true);
 
 run("state.cardSystem='tarot'; state.cardSystemEstablished=false");
 const detectionPrompt = run("getCardSystemPromptGuide(state.cardSystem, shouldDetectCardSystem())");
-assert.match(detectionPrompt, /First determine whether/);
+assert.match(detectionPrompt, /classify the entire deck as traditional tarot or standard playing cards/);
 run("state.cardSystem='playing'; state.cardSystemEstablished=true");
 const playingPrompt = run("getCardSystemPromptGuide(state.cardSystem, shouldDetectCardSystem())");
 assert.match(playingPrompt, /standard playing-card deck/);
-assert.doesNotMatch(playingPrompt, /First determine whether/);
+assert.doesNotMatch(playingPrompt, /classify the entire deck/);
+assert.match(playingPrompt, /Never substitute Cups, Pentacles, Wands, Swords, Pages, Knights, or Major Arcana cards/);
+
+run("state.cards={}; state.droppedCard=null; state.hasDroppedCard=false; state.cardSystem='tarot'; state.cardSystemEstablished=false; currentCards=getCards()");
+assert.equal(run("selectUploadCardSystem('playing')"), true);
+assert.equal(run("state.cardSystem"), "playing");
+assert.equal(run("state.cardSystemEstablished"), true);
+assert.equal(run("shouldDetectCardSystem()"), false);
+assert.equal(run("getIdentificationCardReferences(false).every(card=>card.system==='playing')"), true);
+assert.equal(run("getIdentificationCardReferences(false).some(card=>card.name==='The Fool')"), false);
+assert.match(run("getCardSystemPromptGuide(state.cardSystem,shouldDetectCardSystem())"), /playing-card deck used for cartomancy/);
+
+assert.equal(run("selectUploadCardSystem('auto')"), true);
+assert.equal(run("state.cardSystem"), "tarot");
+assert.equal(run("state.cardSystemEstablished"), false);
+assert.equal(run("shouldDetectCardSystem()"), true);
+assert.equal(run("getIdentificationCardReferences(true).some(card=>card.name==='The Fool')"), true);
+assert.equal(run("getIdentificationCardReferences(true).some(card=>card.name==='Ace of Hearts')"), true);
 
 run("state.cardSystem='tarot'; state.cardSystemEstablished=false; currentCards=getCards()");
 assert.equal(

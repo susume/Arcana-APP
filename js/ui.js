@@ -91,6 +91,7 @@ function startGuided(){
   state.cardSystem='tarot';
   state.cardSystemEstablished=false;
   currentCards=getCards();
+  syncUploadDeckSelectors();
   goScreen('screen-spread');
 }
 function startQuick(){
@@ -102,7 +103,9 @@ function startQuick(){
   state.cards={};
   state.droppedCard=null;
   state.hasDroppedCard=false;
+  state.cardSystem='tarot';
   state.cardSystemEstablished=false;
+  currentCards=getCards();
   state.readerLifeStage='';
   document.getElementById('quick-results').innerHTML='';
   document.getElementById('quick-concern').value='';
@@ -110,8 +113,9 @@ function startQuick(){
   if(lifeStage)lifeStage.value='';
   const zone=document.getElementById('quick-upload-zone');
   zone.classList.remove('has-image');
-  zone.innerHTML='<p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>';
+  zone.innerHTML='<span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<span style="font-size:11px">JPG, PNG, WEBP</span></span>';
   document.getElementById('quick-go').style.display='none';
+  syncUploadDeckSelectors();
   renderQuickSpreads();
   goScreen('screen-quick');
 }
@@ -153,11 +157,13 @@ function selectSystem(sys,el){
   document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   currentCards=getCards();
+  syncUploadDeckSelectors();
 }
 function confirmSystem(){
   if(!state.cardSystem){alert('Please select a card system.');return;}
   state.cardSystemEstablished=true;
   currentCards=getCards();
+  syncUploadDeckSelectors();
   goScreen('screen-spread');
 }
 
@@ -279,15 +285,59 @@ function replaceIdentifiedSpreadCards(spread,identified){
 
 function getCardSystemPromptGuide(cardSystem,allowDetection){
   if(allowDetection){
-    return `First determine whether the photograph contains traditional tarot or standard playing cards.
+    return `The photograph contains one physical deck. Before naming any card, classify the entire deck as traditional tarot or standard playing cards and use that one system consistently.
+Ignore spread-position numbers, printed diagram markers, labels, and decorative numerals. They are not card identities. Never choose a tarot card merely to represent a visible number.
 If tarot, use standard Rider-Waite-Smith names.
-If playing cards:
-Keep playing-card names as Hearts, Diamonds, Clubs, and Spades; use Jack, Queen, and King; never rename them as Cups, Pentacles, Wands, Swords, Pages, or Knights.`;
+If playing cards, preserve the printed rank and suit: Ace through Ten, Jack, Queen, or King of Hearts, Diamonds, Clubs, or Spades. Never rename playing cards as Cups, Pentacles, Wands, Swords, Pages, Knights, or Major Arcana cards. If a playing card is unclear, return null instead of guessing a tarot equivalent.`;
   }
   if(cardSystem==='tarot'){
-    return 'This is a traditional tarot deck. Use standard Rider-Waite-Smith card names only.';
+    return 'This is a traditional tarot deck. Use standard Rider-Waite-Smith card names only. Ignore spread-position numbers and diagram labels; they are not card identities.';
   }
-  return 'This is a standard playing-card deck. Keep playing-card names as Hearts, Diamonds, Clubs, and Spades; use Jack, Queen, and King; never rename them as Cups, Pentacles, Wands, Swords, Pages, or Knights.';
+  return 'This is a standard playing-card deck used for cartomancy. Identify only Ace through Ten, Jack, Queen, or King of Hearts, Diamonds, Clubs, or Spades. Preserve the printed rank and suit. Ignore spread-position numbers and diagram labels; they are not cards. Never substitute Cups, Pentacles, Wands, Swords, Pages, Knights, or Major Arcana cards. If a card is unclear, return null instead of guessing a tarot equivalent.';
+}
+
+function syncUploadDeckSelectors(){
+  const activeSystem=state.cardSystemEstablished
+    ? (state.cardSystem==='tarot'?'tarot':'playing')
+    : 'auto';
+  document.querySelectorAll('.upload-deck-selector .upload-deck-option').forEach(button=>{
+    const active=button.dataset.cardSystem===activeSystem;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+
+  const noun=activeSystem==='playing'?'Playing Cards':(activeSystem==='tarot'?'Tarot Cards':'Cards');
+  const identifyButton=document.getElementById('identify-btn');
+  const guidedButton=document.getElementById('guided-identify-btn');
+  const quickButton=document.getElementById('quick-go');
+  if(identifyButton)identifyButton.innerHTML=GLYPH.star4+` Identify ${noun} with AI`;
+  if(guidedButton)guidedButton.innerHTML=GLYPH.star4+` Identify ${noun} with AI`;
+  if(quickButton)quickButton.innerHTML=GLYPH.star4+` Generate My ${activeSystem==='playing'?'Cartomancy ':''}Reading`;
+}
+
+function selectUploadCardSystem(choice){
+  const selected=choice==='tarot'||choice==='playing'?choice:'auto';
+  const nextSystem=selected==='auto'?'tarot':selected;
+  const changesDeck=selected==='auto'||nextSystem!==state.cardSystem||!state.cardSystemEstablished;
+  if(changesDeck&&hasSelectedReadingCards()){
+    const ok=confirm('Changing the uploaded-photo deck will clear cards already identified for this reading. Continue?');
+    if(!ok)return false;
+    state.cards={};
+    state.droppedCard=null;
+    state.hasDroppedCard=false;
+    const dropToggle=document.getElementById('drop-toggle');
+    if(dropToggle){dropToggle.classList.remove('on');dropToggle.setAttribute('aria-pressed','false');}
+    const dropEntry=document.getElementById('drop-card-entry');
+    if(dropEntry)dropEntry.style.display='none';
+  }
+  state.cardSystem=nextSystem;
+  state.cardSystemEstablished=selected!=='auto';
+  currentCards=getCards();
+  syncUploadDeckSelectors();
+  const spread=getReadingSpread();
+  if(spread&&document.getElementById('manual-entries'))buildManualEntries(spread);
+  autoSaveState();
+  return true;
 }
 
 function shouldDetectCardSystem(){
@@ -317,6 +367,7 @@ function establishDetectedCardSystem(identified){
   state.cardSystem=[...detectedSystems][0];
   state.cardSystemEstablished=true;
   currentCards=getCards();
+  syncUploadDeckSelectors();
   return true;
 }
 
@@ -954,7 +1005,7 @@ async function identifyGuidedCards(){
   try{
     const detectCardSystem=shouldDetectCardSystem();
     const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying cards in a photograph of a spread.
+    const prompt=`You are identifying physical cards in a photograph of a completed spread.
 
 SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
@@ -962,7 +1013,7 @@ ${getSpreadLayoutHint(spread)}
 POSITIONS:
 ${posDetails}
 
-Examine the photo carefully. For each numbered position, identify the card name and whether it is upright or reversed.
+Examine the physical card at each spread position. Position numbers describe the layout only and must never be converted into card names.
 ${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
@@ -1187,7 +1238,7 @@ async function identifyCards(){
   try{
     const detectCardSystem=shouldDetectCardSystem();
     const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying cards in a photograph of a spread.
+    const prompt=`You are identifying physical cards in a photograph of a completed spread.
 
 SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
 ${getSpreadLayoutHint(spread)}
@@ -1195,7 +1246,7 @@ ${getSpreadLayoutHint(spread)}
 POSITIONS:
 ${posDetails}
 
-Examine the photo carefully. For each numbered position in the layout above, identify the card name and whether it is upright or reversed.
+Examine the physical card at each spread position. Position numbers describe the layout only and must never be converted into card names.
 ${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
 Return ONLY a valid JSON array with no other text:
 [{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
@@ -1518,6 +1569,7 @@ function switchPickerCardSystem(nextSystem){
   state.cardSystem=nextSystem;
   state.cardSystemEstablished=false;
   currentCards=getCards();
+  syncUploadDeckSelectors();
   activeSuitFilter=null;
   buildSuitFilter();
   renderPickerFilters();
@@ -1580,6 +1632,7 @@ function selectPickerCard(name){
   if(!card)return;
   state.cardSystem=card.system==='tarot'?'tarot':(state.cardSystem==='playing-joker'?'playing-joker':'playing');
   state.cardSystemEstablished=true;
+  syncUploadDeckSelectors();
   const btn=document.querySelector(`.card-pick-btn[data-pos="${pickerPosId}"]`);
   if(btn){btn.textContent=card.name;btn.classList.add('selected');}
   const orientBtn=document.querySelector(`.orient-btn[data-pos="${pickerPosId}"]`);

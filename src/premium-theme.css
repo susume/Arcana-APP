@@ -4999,6 +4999,44 @@
   line-height: 1.55;
 }
 
+.ritual-screen-workspace .upload-deck-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+}
+
+.ritual-screen-workspace .upload-deck-option {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 10px;
+  border: 1px solid rgba(204, 164, 83, 0.24);
+  border-radius: 9px;
+  background: rgba(10, 13, 30, 0.62);
+  color: var(--text);
+  font: 700 12px/1.25 var(--font-ui);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.ritual-screen-workspace .upload-deck-option:hover,
+.ritual-screen-workspace .upload-deck-option.active {
+  border-color: rgba(234, 200, 118, 0.76);
+  background: rgba(204, 164, 83, 0.12);
+  color: var(--ritual-gold-bright);
+}
+
+.ritual-screen-workspace .upload-deck-note {
+  margin: 8px 2px 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .ritual-screen-workspace .toggle {
   appearance: none;
   padding: 0;
@@ -5017,7 +5055,7 @@
   font: inherit;
 }
 
-.ritual-screen-workspace :is(.upload-zone, .toggle, .orient-btn, .footer-link-button):focus-visible {
+.ritual-screen-workspace :is(.upload-zone, .upload-deck-option, .toggle, .orient-btn, .footer-link-button):focus-visible {
   outline: 2px solid var(--ritual-gold-bright);
   outline-offset: 3px;
 }
@@ -5103,6 +5141,10 @@
 
   .ritual-screen-focus .prepare-list p {
     padding: 14px 16px 14px 54px !important;
+  }
+
+  .ritual-screen-workspace .upload-deck-selector {
+    grid-template-columns: 1fr;
   }
 
   .save-reading-actions {

@@ -260,6 +260,63 @@ function seedSpread(context,{id,name,cardCount,layout}) {
 }
 
 {
+  const { context } = makeContext();
+  assert.equal(
+    context.cleanInfographicHeadline('The Present: The Empress','Present','The Empress'),
+    ''
+  );
+  assert.equal(
+    context.cleanInfographicHeadline('Recent Past — A deliberate turning point','Recent Past','Two of Wands'),
+    'A deliberate turning point'
+  );
+}
+
+{
+  const { context } = makeContext();
+  const makeModel = (layout,cardCount) => ({
+    layout,
+    cards:Array.from({ length:cardCount },(_,index)=>({ position:String(index+1) }))
+  });
+  const cases = [
+    ['row',1,'focus'],
+    ['row',3,'sequence'],
+    ['celtic-simple',6,'balanced'],
+    ['celtic',10,'position-grid'],
+    ['yearly',12,'timeline'],
+    ['two-pathways',14,'comparison'],
+    ['relationship',15,'relationship'],
+    ['romany',21,'matrix']
+  ];
+
+  cases.forEach(([layout,count,expected])=>{
+    assert.equal(context.getInfographicTemplate(makeModel(layout,count)).id,expected);
+  });
+
+  const pathways=context.getInfographicTemplate(makeModel('two-pathways',14));
+  assert.deepEqual(Array.from(pathways.rows[2]),[4,6]);
+  assert.deepEqual(Array.from(pathways.rows[4]),[8,10]);
+
+  const relationshipLayout=context.buildInfographicBodyLayout(makeModel('relationship',15),1200,552);
+  assert.equal(relationshipLayout.placements.at(-1).cardIndex,14);
+  assert.ok(relationshipLayout.placements.at(-1).width>relationshipLayout.placements[0].width);
+}
+
+{
+  const { context } = makeContext();
+  context.state.spreadId='one-card';
+  context.SPREADS=[{ id:'one-card',name:'One Card',layout:'row',positions:[] }];
+  const model=context.buildInfographicModel({
+    title:'One Card Reading',quickSummary:'Summary',keyThemes:[],guidance:[],closingMessage:'Close',
+    positions:[{
+      position:'1',displayLabel:'The Card',positionName:'The Card',cardName:'Ace of Hearts',
+      orientation:'upright',headline:'Opening',interpretation:'A sincere beginning.',
+      action:'Notice where this theme is already present and choose one small constructive response.'
+    }]
+  });
+  assert.equal(Object.hasOwn(model.cards[0],'action'),false);
+}
+
+{
   assert.doesNotMatch(uiSource, /## Position-by-Position/);
   assert.doesNotMatch(uiSource, /Generate a complete reading using/);
   assert.match(uiSource, /getReadingOutputInstructions\(quickPromptSpread,quickSystemInstructions\)/);

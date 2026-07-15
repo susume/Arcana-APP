@@ -416,6 +416,12 @@ The placement screen has three modes that converge on `state.cards`:
 3. **Manual Entry** uses searchable card pickers, orientation controls, and
    separate Tarot and Playing Cards tabs.
 
+Upload-first flows also expose an optional deck selector: Auto-detect, Tarot,
+or Playing cards. An explicit selection establishes the deck before the image
+request and constrains validation to that deck. Auto-detect remains available
+for users who are unsure. Playing-card prompts explicitly ignore spread-position
+numbers and reject tarot substitutions for unclear ranks or suits.
+
 Manual correction remains required product behavior. Orientation is stored as
 `upright` or `reversed`, including the optional dropped card.
 
@@ -573,6 +579,16 @@ Sharing is implemented in `js/ui.js` with a modal and canvas renderer.
 `getShareSlots()` maps known layouts—including Celtic, yearly, Romany,
 two-pathways, and relationship spreads—to visual card positions. Unknown layouts
 use a grid fallback.
+
+The structured reading pipeline also renders a downloadable infographic in
+`js/reading-engine.js`. It selects an adaptive template from the active spread:
+a featured card for one-card readings, a three-column sequence for Past / Present /
+Future, a balanced two-column grid for six-card and Celtic Cross readings, a
+quarter-by-quarter timeline for yearly readings, paired comparison rows for Two
+Pathways and Relationship spreads, and a Past / Present / Future matrix for the
+Romany spread. Position labels use bounded pills, repeated per-card reflection
+actions are omitted from the export, and the guidance/footer areas reserve enough
+height for wrapped text.
 
 ### Printing
 

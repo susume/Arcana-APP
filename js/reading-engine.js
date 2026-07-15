@@ -139,7 +139,8 @@ function getReadingSystemInstructions(){
 
 function getReadingLocale(){
   const htmlLang=document.documentElement&&document.documentElement.lang;
-  return htmlLang||navigator.language||'en';
+  const browserLanguage=typeof navigator!=='undefined'&&navigator.language?navigator.language:'';
+  return htmlLang||browserLanguage||'en';
 }
 
 function getLocalDateContext(){
@@ -589,8 +590,9 @@ function resolveInfographicCardArtUrl(cardName,orientation){
     'cardArtUrlFor',
     'buildCardArtUrl'
   ];
+  const runtime=typeof window!=='undefined'?window:globalThis;
   for(const name of helperNames){
-    const helper=window[name];
+    const helper=runtime[name];
     if(typeof helper!=='function')continue;
     try{
       const value=helper(card||cardName,orientation,state.cardSystem);

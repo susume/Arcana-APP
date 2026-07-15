@@ -4980,3 +4980,133 @@
     padding: 38px 16px !important;
   }
 }
+
+/* Audit fixes: preserve Ritual Stage styling while restoring mobile reflow and
+   native keyboard semantics to the reading workspace. */
+.ritual-screen-workspace button.upload-zone {
+  width: 100%;
+  appearance: none;
+  color: inherit;
+  font: inherit;
+}
+
+.ritual-screen-workspace .upload-zone-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.ritual-screen-workspace .toggle {
+  appearance: none;
+  padding: 0;
+}
+
+.ritual-screen-workspace .orient-btn {
+  appearance: none;
+  padding: 0;
+  font: inherit;
+}
+
+.footer-link-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.ritual-screen-workspace :is(.upload-zone, .toggle, .orient-btn, .footer-link-button):focus-visible {
+  outline: 2px solid var(--ritual-gold-bright);
+  outline-offset: 3px;
+}
+
+.save-reading-dialog {
+  max-width: 460px;
+}
+
+.save-reading-dialog h2 {
+  margin-bottom: 8px;
+  color: var(--ritual-ivory);
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.05;
+}
+
+.save-reading-dialog > p {
+  margin-bottom: 20px;
+  color: var(--ritual-silver);
+  line-height: 1.55;
+}
+
+.save-reading-dialog label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ritual-gold-bright);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.save-reading-error {
+  min-height: 20px;
+  margin-top: 7px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.save-reading-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .ritual-home .ritual-nav {
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+    gap: 10px 12px !important;
+  }
+
+  .ritual-home .ritual-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ritual-home .ritual-settings {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ritual-home .ritual-nav-links {
+    order: 3 !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 2;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    border-color: rgb(212 175 55 / 0.16) !important;
+    background: rgb(8 11 23 / 0.62) !important;
+    backdrop-filter: blur(16px) !important;
+  }
+
+  .ritual-home .ritual-nav-links button {
+    min-height: 44px;
+    padding: 7px 3px;
+    font-size: 11px !important;
+    line-height: 1.15;
+  }
+
+  .ritual-screen-focus .prepare-list p {
+    padding: 14px 16px 14px 54px !important;
+  }
+
+  .save-reading-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

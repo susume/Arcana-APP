@@ -995,7 +995,7 @@ function buildManualEntries(spread){
     row.innerHTML=`
       <span class="pos-name">${pos.name}</span><span class="pos-desc-hint">${pos.description}</span>
       <button class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?existing.name:'Choose card...'}</button>
-      <div class="orient-btn ${orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" title="Toggle orientation">${orientation==='reversed'?'R':'U'}</div>`;
+      <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" aria-pressed="${orientation==='reversed'}" aria-label="Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}." title="Card orientation: ${orientation}">${orientation==='reversed'?'R':'U'}</button>`;
     container.appendChild(row);
   });
 }
@@ -1030,6 +1030,12 @@ function toggleOrient(el){
     el.textContent='U';
     el.classList.remove('reversed');
   }
+  const orientation=el.dataset.orient;
+  if(typeof el.setAttribute==='function'){
+    el.setAttribute('aria-pressed',String(orientation==='reversed'));
+    el.setAttribute('aria-label',`Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}.`);
+  }
+  el.title=`Card orientation: ${orientation}`;
   syncOrientationState(el);
 }
 
@@ -1048,6 +1054,7 @@ function syncOrientationState(el){
   const tog=document.getElementById('drop-toggle');
   tog.classList.toggle('on');
   state.hasDroppedCard=tog.classList.contains('on');
+  if(typeof tog.setAttribute==='function')tog.setAttribute('aria-pressed',String(state.hasDroppedCard));
   document.getElementById('drop-card-entry').style.display=state.hasDroppedCard?'block':'none';
 }
 
@@ -1262,7 +1269,7 @@ function renderOverview(){
         <div class="suit-sym">${art}</div>
         <div class="c-name">${entry.name}</div>
         <div class="c-pos">${pos.name}</div>
-        <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'? Upright':'? Reversed'}</span>
+        <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'Upright':'Reversed'}</span>
         <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>`;
     }
     grid.appendChild(tile);
@@ -1277,7 +1284,7 @@ function renderOverview(){
       <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
       <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
       <div class="c-name">${state.droppedCard.name}</div>
-      <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'? Upright':'? Reversed'}</span>
+      <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'Upright':'Reversed'}</span>
       <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>
       <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling  - it may reveal an underlying theme influencing your reading.</p>
     </div>`;
@@ -1581,7 +1588,10 @@ function selectPickerCard(name){
     state.droppedCard={name:card.name,orientation:orient};
     state.hasDroppedCard=true;
     const dropToggle=document.getElementById('drop-toggle');
-    if(dropToggle)dropToggle.classList.add('on');
+    if(dropToggle){
+      dropToggle.classList.add('on');
+      if(typeof dropToggle.setAttribute==='function')dropToggle.setAttribute('aria-pressed','true');
+    }
     const dropEntry=document.getElementById('drop-card-entry');
     if(dropEntry)dropEntry.style.display='block';
   }

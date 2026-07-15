@@ -56,11 +56,18 @@ foreach ($semanticControl in @(
   '<button type="button" class="card-opt"',
   '<button type="button" class="reading-choice-card"',
   '<button type="button" class="tag-chip"',
-  '<button type="button" class="tab-btn'
+  '<button type="button" class="tab-btn',
+  '<button type="button" class="upload-zone"',
+  '<button type="button" class="orient-btn"',
+  '<button type="button" class="footer-link footer-link-button"'
 )) {
   if ($index -notlike "*$semanticControl*") {
     throw "Expected semantic control is missing: $semanticControl"
   }
+}
+
+if ($theme -notlike '*.ritual-home .ritual-nav-links*' -or $theme -notlike '*grid-row: 2*') {
+  throw "Mobile homepage navigation is missing its two-row reflow treatment."
 }
 
 if (

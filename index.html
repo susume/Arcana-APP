@@ -380,7 +380,7 @@
 
   <div class="dropped-card-section">
     <div class="toggle-row">
-      <div class="toggle" id="drop-toggle" onclick="toggleDrop()"></div>
+      <button type="button" class="toggle" id="drop-toggle" onclick="toggleDrop()" aria-pressed="false" aria-label="Add a dropped or jumper card"></button>
       <h4>Did a card fall out while you shuffled?</h4>
     </div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A dropped or jumper card can be recorded as an extra message. Many readers treat it as an underlying theme rather than part of the main spread.</p>
@@ -388,7 +388,7 @@
       <div class="card-entry-row">
         <span class="pos-name">Dropped Card</span>
         <button class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
-        <div class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" title="Click to toggle orientation">U</div>
+        <button type="button" class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" aria-pressed="false" aria-label="Card orientation: upright. Activate to mark reversed." title="Card orientation: upright">U</button>
       </div>
     </div>
   </div>
@@ -409,13 +409,13 @@
     <div id="guided-photo-section" style="display:none;margin-top:16px">
       <div class="divider" style="margin-bottom:16px"></div>
       <p style="text-align:center;color:var(--gold);font-family:var(--font-display);font-size:14px;margin-bottom:12px">All cards are placed. Take one clear photo from above.</p>
-      <div class="upload-zone" id="guided-upload-zone" onclick="document.getElementById('guided-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleGuidedDrop(event)">
-        <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
-      </div>
+      <button type="button" class="upload-zone" id="guided-upload-zone" onclick="document.getElementById('guided-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleGuidedDrop(event)">
+        <span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<span style="font-size:11px">JPG, PNG, WEBP</span></span>
+      </button>
       <input type="file" id="guided-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleGuidedUpload(this)">
       <button class="btn btn-primary" id="guided-identify-btn" style="display:none;width:100%;margin-top:8px" onclick="identifyGuidedCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Cards with AI</button>
       <div id="guided-identify-results"></div>
-      <p style="text-align:center;margin-top:12px"><span class="footer-link" onclick="switchTab('tab-manual',document.querySelectorAll('.tab-btn')[2])">Or enter cards manually</span></p>
+      <p style="text-align:center;margin-top:12px"><button type="button" class="footer-link footer-link-button" onclick="switchTab('tab-manual',document.querySelectorAll('.tab-btn')[2])">Or enter cards manually</button></p>
     </div>
   </div>
 
@@ -423,9 +423,9 @@
     <div class="onboard">
       Upload one clear photo from above. Make sure every card is visible, in focus, and not covered by glare.
     </div>
-    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
-      <p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a clear spread photo here<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>
-    </div>
+    <button type="button" class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
+      <span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a clear spread photo here<span style="font-size:11px">JPG, PNG, WEBP</span></span>
+    </button>
     <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleUpload(this)">
     <button class="btn btn-primary" id="identify-btn" style="display:none;width:100%" onclick="identifyCards()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Identify Tarot Cards with AI</button>
     <div id="upload-results"></div>

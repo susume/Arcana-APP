@@ -105,10 +105,8 @@ if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
 }
 
-function saveReading(){
+function persistReading(title){
   const freeLimit=3;
-  const title=prompt('Give this reading a title:','Reading '+new Date().toLocaleDateString());
-  if(!title)return;
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
   const spread=getReadingSpread();
   readings.unshift({
@@ -131,4 +129,85 @@ function saveReading(){
   while(readings.length>maxReadings)readings.pop();
   localStorage.setItem('arcana_readings',JSON.stringify(readings));
   showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
+}
+
+function closeSaveReadingDialog(restoreFocus=true){
+  const overlay=document.getElementById('save-reading-overlay');
+  if(!overlay)return;
+  const trigger=overlay._returnFocus;
+  overlay.remove();
+  if(restoreFocus&&trigger&&typeof trigger.focus==='function')trigger.focus();
+}
+
+function openSaveReadingDialog(){
+  if(document.getElementById('save-reading-overlay'))return;
+  const returnFocus=document.activeElement;
+  const overlay=document.createElement('div');
+  overlay.id='save-reading-overlay';
+  overlay.className='modal-overlay open save-reading-overlay';
+  overlay._returnFocus=returnFocus;
+  overlay.innerHTML=`
+    <div class="modal ritual-modal save-reading-dialog" role="dialog" aria-modal="true" aria-labelledby="save-reading-title" aria-describedby="save-reading-description">
+      <h2 id="save-reading-title">Save this reading</h2>
+      <p id="save-reading-description">Give it a short title so you can recognize it in your journal later.</p>
+      <form id="save-reading-form" novalidate>
+        <label for="save-reading-name">Reading title</label>
+        <input id="save-reading-name" type="text" maxlength="80" autocomplete="off" required>
+        <p class="save-reading-error" id="save-reading-error" aria-live="polite"></p>
+        <div class="save-reading-actions">
+          <button type="button" class="btn" id="save-reading-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save reading</button>
+        </div>
+      </form>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const input=overlay.querySelector('#save-reading-name');
+  const form=overlay.querySelector('#save-reading-form');
+  const error=overlay.querySelector('#save-reading-error');
+  input.value='Reading '+new Date().toLocaleDateString();
+
+  overlay.querySelector('#save-reading-cancel').addEventListener('click',()=>closeSaveReadingDialog());
+  overlay.addEventListener('click',event=>{
+    if(event.target===overlay)closeSaveReadingDialog();
+  });
+  overlay.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){
+      event.preventDefault();
+      closeSaveReadingDialog();
+      return;
+    }
+    if(event.key!=='Tab')return;
+    const focusable=Array.from(overlay.querySelectorAll('input,button')).filter(el=>!el.disabled);
+    if(!focusable.length)return;
+    const first=focusable[0];
+    const last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){
+      event.preventDefault();
+      last.focus();
+    }else if(!event.shiftKey&&document.activeElement===last){
+      event.preventDefault();
+      first.focus();
+    }
+  });
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    const title=input.value.trim();
+    if(!title){
+      error.textContent='Enter a title before saving.';
+      input.focus();
+      return;
+    }
+    persistReading(title);
+    closeSaveReadingDialog();
+  });
+
+  requestAnimationFrame(()=>{
+    input.focus();
+    input.select();
+  });
+}
+
+function saveReading(){
+  openSaveReadingDialog();
 }

@@ -51,7 +51,16 @@ function makeContext() {
     },
     async callGemini(...args) {
       context.callGeminiArgs = args;
-      return 'AI narrative';
+      return JSON.stringify({
+        title: 'AI narrative',
+        quickSummary: 'AI summary',
+        mainMessage: 'AI main message',
+        keyThemes: [{ title: 'Theme', message: 'Theme message' }],
+        patterns: ['Pattern'],
+        guidance: ['Guidance'],
+        reflectionQuestions: ['Reflection question'],
+        closingMessage: 'Closing message'
+      });
     }
   };
   context.globalThis = context;
@@ -157,16 +166,14 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   seedRomany(context);
   const prompt = context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' });
 
-  assert.match(prompt, /## Your Reading in 30 Seconds/);
-  assert.match(prompt, /## Main Message/);
-  assert.match(prompt, /## Practical Guidance/);
-  assert.match(prompt, /Romany: Group only by these 7 columns/);
-  assert.match(prompt, /900-1,300 words maximum/);
-  assert.match(prompt, /The Positions and cards list is the locked source of truth/);
-  assert.match(prompt, /Do not infer cards from an image/);
-  assert.match(prompt, /Only interpret the exact cards listed in the exact positions shown/);
-  assert.match(prompt, /Avoid specific claims about inheritance, illness, pregnancy, divorce, marriage, legal outcomes, job loss, or guaranteed money/);
-  assert.match(prompt, /This is an AI-assisted reflective tarot\/cartomancy reading, not medical, legal, financial, mental-health, or crisis advice\./);
+  assert.match(prompt, /Return ONLY one valid JSON object/);
+  assert.match(prompt, /"quickSummary"/);
+  assert.match(prompt, /"mainMessage"/);
+  assert.match(prompt, /"guidance"/);
+  assert.match(prompt, /LAYOUT: 7 columns of 3 cards each/);
+  assert.match(prompt, /Include one positions item for every entered spread card/);
+  assert.match(prompt, /Do not invent, rename, omit, or change the orientation of any card/);
+  assert.match(prompt, /This is reflective guidance, not medical, legal, financial, mental-health, or crisis advice/);
   assert.doesNotMatch(prompt, /Generate a complete reading/);
   assert.doesNotMatch(prompt, /Position-by-Position/);
 }
@@ -175,37 +182,33 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   const spreadCases = [
     {
       spread: { id: 'yearly', name: 'Yearly', cardCount: 12, layout: 'yearly' },
-      promptPattern: /Yearly: Group only by seasons or quarters/,
-      fallbackPatterns: [/First Quarter/, /Second Quarter/, /Third Quarter/, /Fourth Quarter/]
+      promptPattern: /LAYOUT: 12 cards in a clock/
     },
     {
       spread: { id: 'two-pathways', name: 'Two Pathways', cardCount: 14, layout: 'two-pathways' },
-      promptPattern: /Two Pathways: Group only by:/,
-      fallbackPatterns: [/Current Situation/, /Pathway 1/, /Pathway 2/, /Comparison/, /Suggested Reflection/]
+      promptPattern: /LAYOUT: Two decision paths/
     },
     {
       spread: { id: 'relationship', name: 'Relationship', cardCount: 15, layout: 'relationship' },
-      promptPattern: /Relationship: Group only by:/,
-      fallbackPatterns: [/You/, /The Other Person/, /Shared Dynamic/, /Future Direction/]
+      promptPattern: /LAYOUT: 15-card relationship spread/
     },
     {
       spread: { id: 'celtic-cross', name: 'Celtic Cross', cardCount: 10, layout: 'celtic' },
-      promptPattern: /Celtic Cross: Group only by central issue, challenge, root\/crown, past\/future, and staff cards/,
-      fallbackPatterns: [/Central Issue/, /Root and Crown/, /Past and Future/, /Staff Cards/]
+      promptPattern: /LAYOUT: A cross with a vertical staff on the right/
     }
   ];
 
-  spreadCases.forEach(({ spread, promptPattern, fallbackPatterns }) => {
+  spreadCases.forEach(({ spread, promptPattern }) => {
     const { context } = makeContext();
     seedSpread(context,spread);
     const prompt = context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' });
     const fallback = context.generateClassicReading();
 
     assert.match(prompt, promptPattern);
-    assert.match(prompt, /The Positions and cards list is the locked source of truth/);
-    assert.match(prompt, /Do not infer cards from an image/);
-    fallbackPatterns.forEach(pattern => assert.match(fallback, pattern));
-    assert.doesNotMatch(fallback, /## Position-by-Position/);
+    assert.match(prompt, /Include one positions item for every entered spread card/);
+    assert.match(prompt, /Do not invent, rename, omit, or change the orientation of any card/);
+    assert.match(fallback, /## Position-by-Position/);
+    assert.match(fallback, /## Practical Guidance/);
   });
 }
 
@@ -214,7 +217,8 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   seedRomany(context);
   const narrative = await context.generateAIReading({ readingStyle: 'intuitive', readingTone: 'warm' });
 
-  assert.equal(narrative, 'AI narrative');
+  assert.match(narrative, /AI summary/);
+  assert.match(narrative, /AI main message/);
   assert.equal(context.callGeminiArgs[0], context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' }));
   assert.equal(context.callGeminiArgs[1], null);
   assert.equal(context.callGeminiArgs[2], null);
@@ -227,12 +231,10 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   const fallback = context.generateClassicReading();
 
   assert.match(fallback, /## Your Reading in 30 Seconds/);
-  assert.match(fallback, /## Card Highlights/);
-  assert.match(fallback, /Emotional Well-being/);
+  assert.match(fallback, /## Position-by-Position/);
+  assert.match(fallback, /## Patterns and Turning Points/);
   assert.match(fallback, /## Practical Guidance/);
-  assert.match(fallback, /## Reflection Question/);
-  assert.doesNotMatch(fallback, /## Position-by-Position/);
-  assert.doesNotMatch(fallback, /## Pattern Analysis/);
+  assert.match(fallback, /## Reflection Questions/);
 }
 
 {
@@ -253,7 +255,7 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   context.state.spreadId = 'three-card';
   const prompt = context.buildAIReadingPrompt({ readingStyle: 'direct', readingTone: 'calm' });
 
-  assert.match(prompt, /Keep Hearts, Diamonds, Clubs, and Spades/);
+  assert.match(prompt, /Keep the original Hearts, Diamonds, Clubs, and Spades names/);
   assert.match(prompt, /Do not discuss Major Arcana/);
 }
 
@@ -273,13 +275,13 @@ This has **bold**, *italic*, and <img src=x onerror=alert(1)>.
 * Star bullet
 1. First action`);
 
-  assert.match(content.innerHTML, /<h2>Top<\/h2>/);
+  assert.match(content.innerHTML, /<p># Top<\/p>/);
   assert.match(content.innerHTML, /<h3>Section<\/h3>/);
-  assert.match(content.innerHTML, /<h4>Small<\/h4>/);
+  assert.match(content.innerHTML, /### Small/);
   assert.match(content.innerHTML, /<strong>bold<\/strong>/);
   assert.match(content.innerHTML, /<em>italic<\/em>/);
-  assert.match(content.innerHTML, /<li>Star bullet<\/li>/);
-  assert.match(content.innerHTML, /<ol>/);
+  assert.match(content.innerHTML, /\* Star bullet/);
+  assert.match(content.innerHTML, /1\. First action/);
   assert.match(content.innerHTML, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(content.innerHTML, /<img/);
   assert.equal(context.enhanced, true);

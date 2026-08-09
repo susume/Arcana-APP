@@ -103,6 +103,7 @@ Assert-Contains $cardArt "if (!match) return ''" 'Expected Joker and malformed p
 Assert-Contains $ui 'renderCardArt' 'Expected picker and overview UI to render real tarot card art with fallback.'
 Assert-Contains $css '.tarot-card-thumb' 'Expected card art thumbnails to be styled.'
 Assert-Contains $ui "Major Arcana</button>" 'Expected picker header filters to use text-only labels without decorative tarot glyphs.'
+<<<<<<< Updated upstream
 Assert-Contains $ui ">Major</span>" 'Expected manual suit filter to use text-only Major label.'
 Assert-Contains $ui 'type="button" class="orient-btn' 'Expected manual orientation controls to use native buttons.'
 Assert-Contains $ui 'data-pos="${pos.id}" aria-pressed="${orientation' 'Expected manual orientation controls to keep their spread position and expose reversal state.'
@@ -111,6 +112,10 @@ Assert-NotContains $ui "'? Upright'" 'Expected overview orientation labels to re
 Assert-NotContains $storage 'prompt(' 'Expected saved-reading naming to use an in-product dialog instead of a blocking browser prompt.'
 Assert-Contains $storage 'role="dialog" aria-modal="true"' 'Expected saved-reading naming to expose accessible dialog semantics.'
 Assert-Contains $storage "if(event.key==='Escape')" 'Expected the saved-reading dialog to support Escape dismissal.'
+=======
+Assert-Contains $ui ">Major</button>" 'Expected manual suit filter to use text-only Major label.'
+Assert-Contains $ui 'data-pos="${pos.id}" title="Toggle orientation"' 'Expected manual orientation controls to keep their spread position so reversals update the selected card.'
+>>>>>>> Stashed changes
 Assert-Contains $ui 'row.querySelector(''.card-pick-btn[data-pos]'')' 'Expected card confirmation to read picker button selections, not only legacy text inputs.'
 Assert-Contains $ui 'syncOrientationState(el)' 'Expected orientation toggles to update stored card state immediately.'
 Assert-Contains $ui 'onclick="shareReading()"' 'Expected quick upload readings to expose the same share action as guided readings.'

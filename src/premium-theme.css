@@ -2120,6 +2120,121 @@
   }
 }
 
+/* Accessibility and state treatments for generated card/journal controls. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ritual-gold-bright, var(--gold));
+  outline-offset: 3px;
+}
+
+.footer-link[role="button"] {
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.upload-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.upload-preview-actions .btn {
+  min-height: 40px;
+}
+
+.upload-error {
+  margin: -6px 0 14px;
+  color: var(--danger, #f28b8b);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.overview-missing-card {
+  width: 100%;
+  min-height: 44px;
+  color: var(--ritual-muted, var(--muted));
+  border: 1px dashed var(--ritual-line, var(--border));
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.orient.unknown,
+.orient-btn.unknown {
+  color: var(--ritual-gold-bright, var(--gold));
+  border-color: var(--ritual-gold, var(--gold));
+}
+
+.history-empty {
+  padding: 40px 16px;
+  color: var(--ritual-muted, var(--muted));
+  text-align: center;
+}
+
+.history-journal {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ritual-line, var(--border));
+}
+
+.history-journal h3 {
+  color: var(--ritual-gold-bright, var(--gold));
+  font-family: var(--font-display);
+  font-size: 28px;
+}
+
+.history-journal-intro,
+.journal-history-meta {
+  color: var(--ritual-muted, var(--muted));
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.journal-history-item {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--ritual-line, var(--border));
+  border-radius: 8px;
+  background: rgba(8, 13, 29, 0.58);
+}
+
+.journal-history-text {
+  margin: 8px 0 12px;
+  color: var(--ritual-ivory, var(--ink));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+.journal-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dialog-open {
+  overscroll-behavior: none;
+}
+
 @layer components {
   #app {
     position: relative;
@@ -4981,6 +5096,7 @@
   }
 }
 
+<<<<<<< Updated upstream
 /* Audit fixes: preserve Ritual Stage styling while restoring mobile reflow and
    native keyboard semantics to the reading workspace. */
 .ritual-screen-workspace button.upload-zone {
@@ -5111,12 +5227,27 @@
   .ritual-home .ritual-brand {
     grid-column: 1;
     grid-row: 1;
+=======
+@media (max-width: 720px) {
+  .ritual-home .ritual-nav {
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+    grid-template-rows: auto auto;
+    gap: 10px 12px !important;
+  }
+
+  .ritual-home .ritual-nav-links {
+    grid-column: 1 / -1 !important;
+    grid-row: 2;
+    width: 100% !important;
+    min-width: 0;
+>>>>>>> Stashed changes
   }
 
   .ritual-home .ritual-settings {
     grid-column: 2;
     grid-row: 1;
   }
+<<<<<<< Updated upstream
 
   .ritual-home .ritual-nav-links {
     order: 3 !important;
@@ -5151,4 +5282,6 @@
     display: grid;
     grid-template-columns: 1fr;
   }
+=======
+>>>>>>> Stashed changes
 }

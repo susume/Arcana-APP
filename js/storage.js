@@ -1,18 +1,68 @@
 // ===== AUTO-SAVE =====
+const AUTOSAVE_TTL_MS=60*60*1000;
+const AUTOSAVE_VERSION=2;
+const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal','arcana_settings','arcana_usage','arcana_subscription','arcana_temp_cache'];
+
+function readStoredJson(key,fallback){
+  try{
+    const raw=localStorage.getItem(key);
+    return raw?JSON.parse(raw):fallback;
+  }catch(e){return fallback;}
+}
+
+function writeStoredJson(key,value,message){
+  try{
+    localStorage.setItem(key,JSON.stringify(value));
+    return true;
+  }catch(e){
+    console.warn('Arcana storage write failed',key,e);
+    if(message)showToast(message);
+    return false;
+  }
+}
+
+function serializableState(){
+  return {
+    mode:state.mode,
+    concerns:Array.isArray(state.concerns)?state.concerns.slice(0,20):[],
+    cardSystem:state.cardSystem,
+    cardSystemEstablished:!!state.cardSystemEstablished,
+    spreadId:state.spreadId,
+    cards:state.cards&&typeof state.cards==='object'?{...state.cards}:{},
+    droppedCard:state.droppedCard?{...state.droppedCard}:null,
+    hasDroppedCard:!!state.hasDroppedCard,
+    narrative:'',
+    readingMode:state.readingMode,
+    readerLifeStage:state.readerLifeStage||'',
+    guidedStep:Number.isFinite(state.guidedStep)?state.guidedStep:0,
+    reversals:!!state.reversals,
+    quickSpreadId:state.quickSpreadId,
+    readingUsageRecorded:!!state.readingUsageRecorded,
+    currentReadingId:state.currentReadingId||''
+  };
+}
+
 function autoSaveState(){
-  try{localStorage.setItem('arcana_autosave',JSON.stringify({state:state,timestamp:Date.now()}));}catch(e){}
+  let route=typeof location!=='undefined'?String(location.hash||'#welcome').replace(/^#/,''):'welcome';
+  if(route==='reading')route=state.spreadId&&Object.keys(state.cards||{}).length?'overview':'card-entry';
+  writeStoredJson('arcana_autosave',{version:AUTOSAVE_VERSION,state:serializableState(),route,timestamp:Date.now()},'Arcana could not save this reading locally. Your current work will remain in memory.');
 }
 function restoreState(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('arcana_autosave'));
-    if(saved&&Date.now()-saved.timestamp<3600000){
-      return saved.state;
-    }
-  }catch(e){}
+  const saved=readStoredJson('arcana_autosave',null);
+  if(saved&&saved.timestamp&&Date.now()-saved.timestamp<AUTOSAVE_TTL_MS){
+    return {state:saved.state||saved.snapshot||saved,route:saved.route||'spread'};
+  }
+  if(saved)clearAutoSave();
   return null;
 }
 function clearAutoSave(){
-  localStorage.removeItem('arcana_autosave');
+  try{localStorage.removeItem('arcana_autosave');}catch(e){}
+}
+function clearArcanaData(){
+  ARCANA_STORAGE_KEYS.forEach(key=>{
+    try{localStorage.removeItem(key);}catch(e){console.warn('Arcana storage clear failed',key,e)}
+  });
+  showToast('Arcana data cleared from this browser.');
 }
 
 // ===== PERSISTENCE =====
@@ -39,12 +89,6 @@ function saveSettings(){
   renderEntitlementsUI();
   closeModal('modal-settings');
   showToast('Settings saved.');
-}
-function showToast(msg){
-  let t=document.querySelector('.toast');
-  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
 }
 function loadSettingsUI(){
   const s=loadSettings();
@@ -98,20 +142,38 @@ function populateNarratorVoiceOptions(selected){
   const voiceSelect=document.getElementById('narrator-voice');
   if(!voiceSelect)return;
   const voices=('speechSynthesis' in window && window.speechSynthesis.getVoices)?window.speechSynthesis.getVoices():[];
-  voiceSelect.innerHTML='<option value="">Browser default</option>'+voices.map(v=>`<option value="${v.name.replace(/"/g,'&quot;')}">${v.name} (${v.lang})</option>`).join('');
+  voiceSelect.innerHTML='<option value="">Browser default</option>'+voices.map(v=>`<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('');
   voiceSelect.value=selected||'';
 }
 if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
 }
 
+<<<<<<< Updated upstream
 function persistReading(title){
   const freeLimit=3;
   const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
+=======
+function saveReading(){
+  const defaultTitle='Reading '+new Date().toLocaleDateString();
+  if(typeof openTextPrompt==='function'){
+    openTextPrompt('Save Reading','Give this reading a title.',defaultTitle,title=>persistSavedReading(title));
+    return;
+  }
+  persistSavedReading(defaultTitle);
+}
+function persistSavedReading(title){
+  const freeLimit=3;
+  const cleanTitle=String(title||'').trim().slice(0,120);
+  if(!cleanTitle)return;
+  const readings=readStoredJson('arcana_readings',[]);
+  if(!Array.isArray(readings))return;
+>>>>>>> Stashed changes
   const spread=getReadingSpread();
+  const readingId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   readings.unshift({
-    id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-    title,
+    id:readingId,
+    title:cleanTitle,
     date:new Date().toISOString(),
     mode:state.mode,
     concerns:[...state.concerns],
@@ -127,7 +189,8 @@ function persistReading(title){
   });
   const maxReadings=isPremium()?50:freeLimit;
   while(readings.length>maxReadings)readings.pop();
-  localStorage.setItem('arcana_readings',JSON.stringify(readings));
+  writeStoredJson('arcana_readings',readings,'Arcana could not save this reading because browser storage is full.');
+  state.currentReadingId=readingId;
   showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
 }
 

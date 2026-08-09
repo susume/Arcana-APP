@@ -1,4 +1,4 @@
-type ArcanaOrientation = "upright" | "reversed";
+type ArcanaOrientation = "upright" | "reversed" | "unknown";
 
 interface ArcanaCardReference {
   name?: string;
@@ -40,7 +40,10 @@ function extractJsonArray(responseText: string): unknown[] {
 }
 
 function normalizeOrientation(value?: string | null): ArcanaOrientation {
-  return String(value || "").toLowerCase().includes("reversed") ? "reversed" : "upright";
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "upright") return "upright";
+  if (normalized === "reversed") return "reversed";
+  return "unknown";
 }
 
 function normalizeName(value: string): string {
@@ -95,19 +98,14 @@ function normalizePlayingCardName(value: string): string | null {
     nine: "Nine",
     ten: "Ten",
     jack: "Jack",
-    page: "Jack",
     queen: "Queen",
     king: "King"
   };
   const suitAliases: Record<string, string> = {
     hearts: "Hearts",
-    cups: "Hearts",
     diamonds: "Diamonds",
-    pentacles: "Diamonds",
     clubs: "Clubs",
-    wands: "Clubs",
-    spades: "Spades",
-    swords: "Spades"
+    spades: "Spades"
   };
 
   const rank = rankAliases[match[1].trim().toLowerCase()];

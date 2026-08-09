@@ -44,7 +44,12 @@ async function activatePremiumKey(key){
   });
   const data = await resp.json().catch(()=>({}));
   if(!resp.ok || !data.isPremium) throw new Error(data.error || 'That Gumroad license key was not recognized.');
-  saveSubscription({tier:'premium', key:clean, source:data.source||'gumroad', activatedAt:data.activatedAt||new Date().toISOString()});
+  saveSubscription({
+    tier:'premium',
+    entitlementToken:String(data.entitlementToken||''),
+    source:data.source||'gumroad',
+    activatedAt:data.activatedAt||new Date().toISOString()
+  });
   return true;
 }
 
@@ -124,6 +129,8 @@ function showUpgradeModal(reason){
     modal = document.createElement('div');
     modal.id = 'modal-upgrade';
     modal.className = 'modal-overlay';
+    modal.setAttribute('aria-hidden','true');
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-upgrade')});
     document.body.appendChild(modal);
   }
   const usage = getUsage();
@@ -132,7 +139,7 @@ function showUpgradeModal(reason){
     : '<p class="upgrade-note">People should experience the magic before we ask for money. Free includes one complete AI-assisted reading each day.</p>';
   modal.innerHTML = `
     <div class="modal upgrade-modal">
-      <button class="close-btn" onclick="closeModal('modal-upgrade')">&times;</button>
+      <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
       <div class="plan-pill">Premium - $29 lifetime unlock</div>
       <h2>${featureTitle(reason)}</h2>
       ${countLine}
@@ -143,17 +150,17 @@ function showUpgradeModal(reason){
         <span>Journal tools</span>
         <span>Advanced spreads</span>
         <span>Reading comparison</span>
-        <span>Priority AI processing</span>
       </div>
       ${getGumroadProductUrl()?`<p class="upgrade-note">One-time payment. Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Buy Premium - $29</button>`:''}
       <div class="activation-box">
-        <label>Gumroad License Key</label>
+        <label for="activation-key-input">Gumroad License Key</label>
         <input id="activation-key-input" type="text" placeholder="Paste your Gumroad license key">
         <button class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
         <p id="activation-status" class="activation-status"></p>
       </div>
     </div>`;
-  modal.classList.add('open');
+  if(typeof activateDialog==='function')activateDialog(modal,document.activeElement);
+  else modal.classList.add('open');
 }
 
 async function submitActivationKey(){
@@ -191,14 +198,12 @@ async function submitSettingsActivationKey(){
 }
 
 function thoughtfulLoadingHtml(statusId){
-  const priority = isPremium() ? '<li>Priority AI processing enabled...</li>' : '';
   return `<div class="loading thoughtful-loading">
     <p>Analyzing your reading...</p>
     <ul>
       <li>Examining card positions...</li>
       <li>Interpreting symbolism...</li>
       <li>Looking for recurring themes...</li>
-      ${priority}
       <li>Preparing guidance...</li>
     </ul>
     <p id="${statusId}" style="font-size:11px;color:var(--muted);margin-top:4px"></p>
@@ -217,8 +222,7 @@ function renderEntitlementsUI(){
 
   const settingsStatus = document.getElementById('premium-settings-status');
   if(settingsStatus){
-    const sub = getSubscription();
-    settingsStatus.textContent = premium ? `Premium active (${sub.key || 'activation key'})` : 'Free plan active';
+    settingsStatus.textContent = premium ? 'Premium active on this browser' : 'Free plan active';
   }
 
   document.querySelectorAll('[data-premium-feature]').forEach(el => {
@@ -270,14 +274,15 @@ function compareSelectedReadings(){
     showToast('Select two readings to compare.');
     return;
   }
-  const readings = JSON.parse(localStorage.getItem('arcana_readings') || '[]');
+  const readings = typeof readStoredJson === 'function' ? readStoredJson('arcana_readings', []) : JSON.parse(localStorage.getItem('arcana_readings') || '[]');
   const selected = checks.slice(0, 2).map(c => readings[Number(c.value)]).filter(Boolean);
   if(selected.length < 2) return;
   const output = document.getElementById('comparison-output');
-  output.innerHTML = `<div class="comparison-card">
-    <h3>${selected[0].title || 'First Reading'} / ${selected[1].title || 'Second Reading'}</h3>
-    <p><strong>Earlier focus:</strong> ${(selected[0].concerns || []).join(', ') || 'Open guidance'}</p>
-    <p><strong>Later focus:</strong> ${(selected[1].concerns || []).join(', ') || 'Open guidance'}</p>
-    <p>Notice what repeated, what softened, and what became more specific. Use the journal notes in each reading to track how your interpretation changed over time.</p>
-  </div>`;
+  output.replaceChildren();
+  const card=document.createElement('div');card.className='comparison-card';
+  const heading=document.createElement('h3');heading.textContent=(selected[0].title||'First Reading')+' / '+(selected[1].title||'Second Reading');
+  const earlier=document.createElement('p');earlier.innerHTML='<strong>Earlier focus:</strong> ';earlier.append(document.createTextNode((selected[0].concerns||[]).join(', ')||'Open guidance'));
+  const later=document.createElement('p');later.innerHTML='<strong>Later focus:</strong> ';later.append(document.createTextNode((selected[1].concerns||[]).join(', ')||'Open guidance'));
+  const note=document.createElement('p');note.textContent='Notice what repeated, what softened, and what became more specific. Use the journal notes in each reading to track how your interpretation changed over time.';
+  card.append(heading,earlier,later,note);output.appendChild(card);
 }

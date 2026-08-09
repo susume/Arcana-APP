@@ -15,12 +15,13 @@ async function initApp(){
   }
   currentCards=getCards();
   // Auto-restore
-  const savedState=restoreState();
-  if(savedState&&savedState.spreadId){
-    const resumeScreen=GUIDED_SCREENS[GUIDED_SCREENS.indexOf('screen-spread')];
+  const saved=restoreState();
+  const savedState=saved&&saved.state?saved.state:null;
+  if(savedState){
     state=Object.assign(state,savedState);
     migrateRestoredCardSystemState(savedState);
-    goScreen('screen-spread');
+    const savedRoute=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
+    goScreen(screenForRoute(savedRoute),true);
   }else{
     goScreen(screenForRoute(location.hash.slice(1)||'welcome'),true);
   }

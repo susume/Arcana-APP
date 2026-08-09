@@ -204,8 +204,10 @@ function getCardArtUrl(card, width = 180) {
   const fileName = getCardArtFile(card);
   if (!fileName) return '';
   const normalized = fileName.replace(/\s+/g, '_');
+  const requestedWidth = Math.max(64, Math.min(1200, Math.round(Number(width) || 180)));
   const hash = md5(normalized);
   const encoded = encodeURIComponent(normalized);
+  if (requestedWidth < 600) return `${CARD_ART_BASE_URL}${encoded}?width=${requestedWidth}`;
   return `${CARD_ART_UPLOAD_BASE_URL}${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
 }
 

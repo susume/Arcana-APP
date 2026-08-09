@@ -5,7 +5,7 @@ let state={
   uploadedImage:null,narrative:'',readingMode:'ai',
   readerLifeStage:'',
   guidedStep:0,reversals:false,quickSpreadId:null,
-  readingUsageRecorded:false
+  readingUsageRecorded:false,currentReadingId:''
 };
 let currentCards=[];
 

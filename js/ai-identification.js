@@ -12,7 +12,12 @@ function extractJsonArray(responseText) {
     }
 }
 function normalizeOrientation(value) {
-    return String(value || "").toLowerCase().includes("reversed") ? "reversed" : "upright";
+    const normalized = String(value || "").trim().toLowerCase();
+    if (normalized === "upright")
+        return "upright";
+    if (normalized === "reversed")
+        return "reversed";
+    return "unknown";
 }
 function normalizeName(value) {
     return value.trim().replace(/\s+/g, " ");
@@ -62,19 +67,14 @@ function normalizePlayingCardName(value) {
         nine: "Nine",
         ten: "Ten",
         jack: "Jack",
-        page: "Jack",
         queen: "Queen",
         king: "King"
     };
     const suitAliases = {
         hearts: "Hearts",
-        cups: "Hearts",
         diamonds: "Diamonds",
-        pentacles: "Diamonds",
         clubs: "Clubs",
-        wands: "Clubs",
-        spades: "Spades",
-        swords: "Spades"
+        spades: "Spades"
     };
     const rank = rankAliases[match[1].trim().toLowerCase()];
     const suit = suitAliases[match[2].trim().toLowerCase()];

@@ -1,5 +1,22 @@
 // ===== GEMINI API =====
-const GEMINI_MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-3.5-flash','gemini-3.1-flash-lite'];
+const GEMINI_MODELS=(typeof ARCANA_GEMINI_MODELS!=='undefined'&&Array.isArray(ARCANA_GEMINI_MODELS)&&ARCANA_GEMINI_MODELS.length)
+  ? ARCANA_GEMINI_MODELS
+  : ['gemini-3.6-flash','gemini-3.5-flash','gemini-3.1-flash-lite','gemini-2.5-flash'];
+let activeAIController=null;
+const AI_REQUEST_TIMEOUT_MS=30000;
+
+function cancelAIRequest(){
+  if(activeAIController)activeAIController.abort();
+  activeAIController=null;
+}
+
+async function fetchAIWithTimeout(resource,init,timeoutMs=AI_REQUEST_TIMEOUT_MS){
+  const controller=new AbortController();
+  activeAIController=controller;
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{return await fetch(resource,{...init,signal:controller.signal});}
+  finally{clearTimeout(timer);if(activeAIController===controller)activeAIController=null;}
+}
 
 function hasAIConfiguration(){
   return !!(getSavedGeminiKey() || getGoogleApiKey() || getAIProxyUrl());
@@ -37,7 +54,7 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
       const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
       for(let attempt=0;attempt<2;attempt++){
         if(statusEl)statusEl.textContent=`Trying ${model}${attempt>0?' (retry)':''}...`;
-        const resp=await fetch(url,{method:'POST',headers:directHeaders,body});
+        const resp=await fetchAIWithTimeout(url,{method:'POST',headers:directHeaders,body});
         if(resp.ok){
           const data=await resp.json();
           return data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
@@ -70,7 +87,7 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
         if(resp.status===400&&m<GEMINI_MODELS.length-1)break;
         if(resp.status===403)throw new Error('API key invalid or Generative Language API not enabled. Go to aistudio.google.com/apikey and create a new key in a new project.');
         if(m<GEMINI_MODELS.length-1)break;
-        throw new Error(`API error ${resp.status}: ${e.slice(0,120)}`);
+        throw new Error(`The AI service returned an error (${resp.status}). Please try again or use Classic Reading.`);
       }
     }
     throw new Error('All models failed. Please try again later.');
@@ -79,13 +96,13 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
   const proxyUrl=getAIProxyUrl();
   if(proxyUrl){
     if(statusEl)statusEl.textContent='Contacting Arcana AI...';
-    const resp=await fetch(proxyUrl,{
+    const resp=await fetchAIWithTimeout(proxyUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({prompt,imageData})
     });
     const data=await resp.json().catch(()=>({}));
-    if(!resp.ok)throw new Error(data.error||`AI proxy error ${resp.status}`);
+    if(!resp.ok)throw new Error(data.error||'The AI service is temporarily unavailable. Please try again.');
     return data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
   }
 

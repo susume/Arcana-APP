@@ -139,6 +139,7 @@ Arcana APP/
     subscription.js            premium, usage, upgrade, narration
     config.js                  public runtime endpoint configuration
     storage.js                 settings/autosave/history persistence
+    dom-helpers.js             shared escaping and safe reading renderer
     ai-identification.js       generated parser from TypeScript
     ui.js                      rendering, routing, interactions, sharing
     reading-engine.js          AI/classic readings and output rendering
@@ -155,6 +156,7 @@ Arcana APP/
     README.md                  Worker deployment notes
   scripts/
     serve-static.mjs           local static server
+    sync-embedded-content.mjs  canonical template/spread fallback sync
   tests/                       contract/regression checks
   docs/superpowers/
     specs/                     approved design specifications
@@ -169,8 +171,9 @@ Available scripts:
 |---|---|
 | `npm run build:css` | Compile `src/premium-theme.css` to minified `css/premium.css` |
 | `npm run build:ts` | Compile TypeScript sources into `js/` |
-| `npm run build` | Run CSS and TypeScript builds |
-| `npm test` | Compile TypeScript and run all repository regressions |
+| `npm run sync` | Regenerate embedded templates and spread fallback data |
+| `npm run build` | Sync embedded content, then run CSS and TypeScript builds |
+| `npm test` | Sync content, compile TypeScript, and run all repository regressions |
 | `npm run serve` | Serve the repository at `http://127.0.0.1:4173/` |
 
 The browser does not bundle modules. Generated assets are ordinary deployed
@@ -626,31 +629,34 @@ at activation time is the Worker/Gumroad response.
 
 ## 17. Cloudflare Worker services
 
-`server/cloudflare-worker.js` handles CORS, request parsing, JSON responses, and
-three service paths.
+`server/cloudflare-worker.js` handles exact-origin CORS, request parsing, JSON
+responses, rate limits, upstream timeouts, and three service paths.
 
 ### `POST /api/activate`
 
 - Normalizes and hashes the submitted license key
 - Calls Gumroad's license verification endpoint
 - Uses the configured product ID or the checked-in public fallback product ID
-- Rejects failed, refunded, or chargebacked purchases
-- Optionally stores activation metadata in `ARCANA_LICENSES`
-- Returns premium entitlement metadata to the browser
+- Requires an exact product and seller match and rejects failed, refunded, or chargebacked purchases
+- Stores only hashed license metadata in `ARCANA_LICENSES` when bound
+- Returns a signed entitlement token without returning or persisting the raw license key
 
 ### `POST /api/gumroad/webhook`
 
 - Accepts Gumroad form-encoded event data
-- Validates the seller ID against configuration/public fallback
-- Optionally validates a shared webhook secret
-- Stores sale/refund/event metadata in `ARCANA_LICENSES` when bound
+- Requires `GUMROAD_WEBHOOK_SECRET` and validates the seller and product IDs
+- Uses event-type-aware KV idempotency keys for repeated deliveries and refund events
+- Stores only minimal hashed sale/refund metadata in `ARCANA_LICENSES`
 - Does not store browser reading or journal data
 
 ### AI proxy route
 
 Other accepted POST traffic is handled by the Gemini proxy path. It requires the
-Worker secret `GOOGLE_API_KEY`, forwards a Gemini request, and applies model
-fallback/retry behavior.
+Worker secret `GOOGLE_API_KEY`, validates prompt and image size/type, applies
+route rate limits and upstream timeouts, forwards a Gemini request, and applies
+model fallback/retry behavior. Browser and Worker model order is centralized on
+`gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.1-flash-lite`, and
+`gemini-2.5-flash`.
 
 Expected Worker configuration:
 
@@ -659,8 +665,11 @@ Expected Worker configuration:
 | `GOOGLE_API_KEY` | private Gemini key for hosted proxy fallback |
 | `GUMROAD_PRODUCT_ID` | optional override for the Arcana product |
 | `GUMROAD_SELLER_ID` | optional seller override |
-| `GUMROAD_WEBHOOK_SECRET` | optional shared webhook verification |
-| `ARCANA_LICENSES` | optional KV namespace for activation/events |
+| `GUMROAD_WEBHOOK_SECRET` | required shared webhook verification secret |
+| `ARCANA_ENTITLEMENT_SECRET` | required HMAC secret used for entitlement tokens |
+| `ARCANA_ALLOWED_ORIGINS` | optional comma-separated exact browser origins |
+| `ARCANA_RATE_LIMITER` | recommended Cloudflare rate-limiting binding |
+| `ARCANA_LICENSES` | required for webhook idempotency and license status records |
 
 ## 18. Browser persistence
 
@@ -683,7 +692,9 @@ contain at least one spread or dropped card and every saved name is valid for
 the saved active deck. An explicit modern `false` value is preserved.
 
 There is no cloud sync. Clearing browser storage removes this local data.
-Uploaded photos are used in the active flow and should be treated as private.
+Autosave intentionally excludes uploaded photo data; processed images remain only
+in active memory until the reading request completes. Uploaded photos should be
+treated as private.
 
 ## 19. Homepage, metadata, and assets
 
@@ -744,20 +755,18 @@ Selection surfaces use semantic `<button type="button">` elements. Preserve:
 
 `npm test` runs:
 
-1. TypeScript compilation
+1. Template/data synchronization and TypeScript compilation
 2. `tests/card-art.mjs`
 3. `tests/ai-identification.mjs`
 4. `tests/deck-selection.mjs`
 5. `tests/worker-activation.mjs`
-6. `tests/monetization-config.ps1`
-7. `tests/journal-ui.ps1`
-8. `tests/reading-actions.ps1`
-9. `tests/homepage-ui.ps1`
-10. `tests/app-shell-ui.ps1`
+6. `tests/portable-regressions.mjs`
+7. Windows contract checks: `tests/*.ps1`
 
 Coverage is contract-oriented:
 
 - Worker activation success/failure/default configuration and webhook validation
+- Worker CORS, body/image limits, rate limits, timeout/error behavior, and webhook idempotency
 - No hardcoded browser activation keys
 - Current lifetime pricing and Gemini-key settings
 - Journal wiring and post-reading actions
@@ -766,6 +775,7 @@ Coverage is contract-oriented:
 - Homepage content, assets, handlers, and embedded-template sync
 - Ritual Shell classes, semantic controls, Journal utility, mobile navigation,
   reading-ready behavior, and modal/template sync
+- External/embedded template and canonical spread-data synchronization
 
 Recommended verification by change type:
 

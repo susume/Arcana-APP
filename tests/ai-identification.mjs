@@ -23,10 +23,24 @@ const playingResponse = JSON.stringify([
 ]);
 
 assert.deepEqual(parseIdentifiedCards(playingResponse, playingReferences), {
-  "1": { name: "Seven of Hearts", orientation: "upright" },
-  "2": { name: "Seven of Hearts", orientation: "reversed" },
-  "3": { name: "Jack of Clubs", orientation: "upright" }
+  "1": { name: "Seven of Hearts", orientation: "upright" }
 });
+
+assert.deepEqual(
+  parseIdentifiedCards(
+    JSON.stringify([{ position: 1, card: "Seven of Hearts", orientation: "sideways" }]),
+    playingReferences
+  ),
+  { "1": { name: "Seven of Hearts", orientation: "unknown" } }
+);
+
+assert.deepEqual(
+  parseIdentifiedCards(
+    JSON.stringify([{ position: 1, card: "Seven of Cups" }, { position: 2, card: "Page of Wands" }]),
+    playingReferences
+  ),
+  {}
+);
 
 const tarotReferences = [
   { name: "Seven of Cups" },

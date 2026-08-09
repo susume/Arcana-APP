@@ -3,6 +3,7 @@
 const ARCANA_AI_PROXY_URL = 'https://ancient-smoke-2917.susume1982.workers.dev/';
 const ARCANA_ACTIVATION_API_URL = '';
 const ARCANA_GUMROAD_PRODUCT_URL = 'https://thelayersapp.gumroad.com/l/vjptlg';
+const ARCANA_GEMINI_MODELS = ['gemini-3.6-flash','gemini-3.5-flash','gemini-3.1-flash-lite','gemini-2.5-flash'];
 
 // Development-only fallback. Do not commit a real Google Gemini API key here.
 const ARCANA_GOOGLE_API_KEY = '';

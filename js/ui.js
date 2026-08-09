@@ -33,15 +33,57 @@ function ensureRitualUtilities(){
 
 // ===== NAVIGATION =====
 function routeForScreen(id){return String(id||'').replace(/^screen-/,'');}
-function screenForRoute(route){return route&&route.startsWith('screen-')?route:'screen-'+(route||'welcome');}
+const SCREEN_ROUTE_MAP={
+  welcome:'screen-welcome',
+  concerns:'screen-concerns',
+  'card-system':'screen-card-system',
+  spread:'screen-spread',
+  reflection:'screen-reflection',
+  'card-entry':'screen-card-entry',
+  overview:'screen-overview',
+  reading:'screen-reading',
+  history:'screen-history',
+  quick:'screen-quick',
+  settings:'screen-settings',
+  help:'screen-help'
+};
+const VALID_SCREEN_IDS=new Set(Object.values(SCREEN_ROUTE_MAP));
+function screenForRoute(route){
+  const normalized=String(route||'').replace(/^#/,'');
+  if(VALID_SCREEN_IDS.has(normalized))return normalized;
+  return SCREEN_ROUTE_MAP[normalized]||'screen-welcome';
+}
 function navigate(route){goScreen(screenForRoute(route),true);}
+function resolveScreenPrerequisite(id){
+  if(!VALID_SCREEN_IDS.has(id))return 'screen-welcome';
+  if(id==='screen-welcome')return id;
+  if(id==='screen-history')return id;
+  if(id==='screen-quick')return state.mode==='quick'?id:'screen-welcome';
+  if(id==='screen-concerns')return state.mode==='guided'?id:'screen-welcome';
+  if(id==='screen-card-system')return state.mode==='guided'?id:'screen-welcome';
+  if(state.mode!=='guided')return 'screen-welcome';
+  if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
+  if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
+  if(['screen-overview','screen-reading'].includes(id)&&!Object.keys(state.cards||{}).length)return 'screen-card-entry';
+  return id;
+}
 function goScreen(id, fromRouter){
   if(id==='screen-history' && !requestPremiumFeature('history')){
     id='screen-welcome';
   }
-  if(!fromRouter && location.hash !== '#'+routeForScreen(id)) location.hash = '#'+routeForScreen(id);
+  id=resolveScreenPrerequisite(screenForRoute(id));
+  if(!document.getElementById(id))id='screen-welcome';
+  const nextHash='#'+routeForScreen(id);
+  if(!fromRouter && location.hash !== nextHash) location.hash = nextHash;
+  else if(fromRouter && location.hash !== nextHash) history.replaceState(null,'',nextHash);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const screen=document.getElementById(id);
+  screen.classList.add('active');
+  const heading=screen.querySelector('h1,h2,[data-screen-heading]');
+  if(heading){
+    heading.tabIndex=-1;
+    requestAnimationFrame(()=>heading.focus({preventScroll:true}));
+  }
   window.scrollTo(0,0);
   document.documentElement.scrollTop=0;
   document.body.scrollTop=0;
@@ -51,15 +93,21 @@ function goScreen(id, fromRouter){
   renderEntitlementsUI();
   autoSaveState();
 }
-const GUIDED_SCREENS=['screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
+const GUIDED_SCREENS=['screen-concerns','screen-card-system','screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
 function updateDots(screenId){
   const idx=GUIDED_SCREENS.indexOf(screenId);
   if(idx<0)return;
   document.querySelectorAll('.step-dots').forEach(container=>{
     container.innerHTML='';
+    container.setAttribute('role','progressbar');
+    container.setAttribute('aria-label','Guided reading progress');
+    container.setAttribute('aria-valuemin','1');
+    container.setAttribute('aria-valuemax',String(GUIDED_SCREENS.length));
+    container.setAttribute('aria-valuenow',String(idx+1));
     GUIDED_SCREENS.forEach((_,i)=>{
       const d=document.createElement('div');
       d.className='dot'+(i===idx?' active':'')+(i<idx?' done':'');
+      d.setAttribute('aria-hidden','true');
       container.appendChild(d);
     });
   });
@@ -74,9 +122,11 @@ function startGuided(){
   state.hasDroppedCard=false;
   state.uploadedImage=null;
   state.spreadId=null;
+  state.quickSpreadId=null;
   state.readerLifeStage='';
   state.guidedStep=0;
   state.readingUsageRecorded=false;
+  state.currentReadingId='';
   state.concerns=[];
   // Reset drop toggle UI
   const tog=document.getElementById('drop-toggle');
@@ -84,26 +134,37 @@ function startGuided(){
   document.getElementById('drop-card-entry').style.display='none';
   // Reset concern inputs
   const cl=document.getElementById('concern-list');
-  cl.innerHTML='<div class="concern-row"><input type="text" placeholder="What\'s on your mind?" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button></div>';
+  cl.innerHTML='<div class="concern-row"><label class="sr-only" for="concern-input-1">Question or focus</label><input id="concern-input-1" type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button></div>';
   document.querySelectorAll('.tag-chip').forEach(t=>t.classList.remove('active'));
   const lifeStage=document.getElementById('reader-life-stage');
   if(lifeStage)lifeStage.value='';
   state.cardSystem='tarot';
   state.cardSystemEstablished=false;
   currentCards=getCards();
+<<<<<<< Updated upstream
   syncUploadDeckSelectors();
   goScreen('screen-spread');
+=======
+  document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
+  goScreen('screen-concerns');
+>>>>>>> Stashed changes
 }
 function startQuick(){
   state.mode='quick';
   state.uploadedImage=null;
   state.quickSpreadId=null;
+  state.spreadId=null;
   state.narrative='';
   state.readingUsageRecorded=false;
+  state.currentReadingId='';
   state.cards={};
   state.droppedCard=null;
   state.hasDroppedCard=false;
+<<<<<<< Updated upstream
   state.cardSystem='tarot';
+=======
+  state.concerns=[];
+>>>>>>> Stashed changes
   state.cardSystemEstablished=false;
   currentCards=getCards();
   state.readerLifeStage='';
@@ -125,7 +186,8 @@ function addConcern(){
   const list=document.getElementById('concern-list');
   const row=document.createElement('div');
   row.className='concern-row';
-  row.innerHTML='<input type="text" placeholder="Another concern…" class="concern-input"><button class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove">&times;</button>';
+  const inputId='concern-input-'+(document.querySelectorAll('.concern-input').length+1);
+  row.innerHTML='<label class="sr-only" for="'+inputId+'">Question or focus</label><input id="'+inputId+'" type="text" placeholder="Another question or focus" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button>';
   list.appendChild(row);
 }
 function removeConcern(btn){
@@ -155,12 +217,13 @@ function selectSystem(sys,el){
   state.cardSystem=sys;
   state.cardSystemEstablished=true;
   document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
+  if(el)el.classList.add('selected');
+  document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.setAttribute('aria-pressed',String(c===el)));
   currentCards=getCards();
   syncUploadDeckSelectors();
 }
 function confirmSystem(){
-  if(!state.cardSystem){alert('Please select a card system.');return;}
+  if(!state.cardSystem){showToast('Choose a deck before continuing.');return;}
   state.cardSystemEstablished=true;
   currentCards=getCards();
   syncUploadDeckSelectors();
@@ -185,16 +248,18 @@ function renderSpreads(){
       const card=document.createElement('button');
       card.type='button';
       card.className='spread-card'+(state.spreadId===sp.id?' selected':'');
+      card.setAttribute('aria-pressed',String(state.spreadId===sp.id));
       card.onclick=()=>{selectSpread(sp.id,card)};
-      card.innerHTML=`<h4>${sp.name}</h4><div class="count">${sp.id==='custom'?'Custom positions':(sp.cardCount===1?'1 card':sp.cardCount+' cards')}</div>`;
+      card.innerHTML=`<h4>${escapeHtml(sp.name)}</h4><div class="count">${sp.id==='custom'?'Custom positions':(sp.cardCount===1?'1 card':sp.cardCount+' cards')}</div>`;
       grid.appendChild(card);
     });
   });
 }
 function selectSpread(id,el){
   state.spreadId=id;
-  document.querySelectorAll('.spread-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.spread-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
   el.classList.add('selected');
+  el.setAttribute('aria-pressed','true');
   document.getElementById('custom-spread-form').style.display=id==='custom'?'block':'none';
 }
 function buildCustomPositions(){
@@ -213,7 +278,7 @@ function buildCustomPositions(){
   }
 }
 function confirmSpread(){
-  if(!state.spreadId){alert('Please select a reading type.');return;}
+  if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
   saveReaderContext('reader-life-stage');
   goScreen('screen-reflection');
 }
@@ -227,7 +292,9 @@ function saveReaderContext(lifeStageId){
 function selectReadingType(id, el){
   if(PREMIUM_SPREAD_IDS.includes(id) && !requestPremiumFeature('advanced-spreads')) return;
   document.querySelectorAll('.reading-choice-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.reading-choice-card').forEach(c=>c.setAttribute('aria-pressed','false'));
   el.classList.add('selected');
+  el.setAttribute('aria-pressed','true');
   const spread=SPREADS.find(s=>s.id===id);
   if(spread){state.spreadId=id;}
 }
@@ -242,10 +309,11 @@ function toggleAdvancedReadings(){
     panel.style.display='none';
     arrow.textContent='▼';
   }
+  document.querySelector('.advanced-readings-toggle')?.setAttribute('aria-expanded',String(panel.style.display!=='none'));
 }
 
 function confirmReflection(){
-  state.cards={};
+  if(!state.cards||typeof state.cards!=='object')state.cards={};
   state.guidedStep=0;
   buildCardEntry();
   goScreen('screen-card-entry');
@@ -498,6 +566,7 @@ function showShareModal(data){
     modal=document.createElement('div');
     modal.id='share-modal';
     modal.className='share-modal-overlay';
+    modal.setAttribute('aria-hidden','true');
     modal.addEventListener('click',e=>{if(e.target===modal)closeShareModal();});
     document.body.appendChild(modal);
   }
@@ -505,7 +574,7 @@ function showShareModal(data){
     <button class="close-btn" onclick="closeShareModal()" aria-label="Close share options">&times;</button>
     <h3 id="share-title">Share Your Spread</h3>
     <label class="share-label" for="share-comment">Comment</label>
-    <textarea id="share-comment" maxlength="180" placeholder="${escapeHtml(defaultShareComment())}" oninput="updateSharePreview()">${escapeHtml(defaultShareComment())}</textarea>
+    <textarea id="share-comment" maxlength="180" placeholder="The cards found me at the right moment." oninput="updateSharePreview()"></textarea>
     <canvas id="share-canvas" width="600" height="800"></canvas>
     <div class="share-platforms">
       <button class="btn btn-sm" onclick="openSocialShare('facebook')">Facebook</button>
@@ -515,17 +584,15 @@ function showShareModal(data){
       <button class="btn btn-sm" onclick="openSocialShare('threads')">Threads</button>
     </div>
   </div>`;
-  modal.classList.add('open');
+  modal.querySelector('#share-comment').value=defaultShareComment();
+  activateDialog(modal,document.activeElement);
   modal.dataset.sharePayload=JSON.stringify(data);
   updateSharePreview();
 }
 function closeShareModal(){
   const modal=document.getElementById('share-modal');
-  if(modal)modal.classList.remove('open');
+  if(modal)deactivateDialog(modal);
 }
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closeShareModal();
-});
 function currentShareData(){
   const modal=document.getElementById('share-modal');
   if(!modal || !modal.dataset.sharePayload)return getSharePayload();
@@ -560,10 +627,6 @@ function openSocialShare(platform){
   };
   const url=urls[platform];
   if(url)window.open(url,'_blank','noopener,noreferrer');
-}
-
-function escapeHtml(value){
-  return String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
 function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
@@ -790,7 +853,7 @@ async function renderShareCanvas(data){
   ctx.fillStyle='#f3eadb';ctx.font='700 34px Georgia, serif';ctx.textAlign='left';
   ctx.fillText('Arcana',42,58);
   ctx.font='15px Arial, sans-serif';ctx.fillStyle='#9dc7c9';
-  ctx.fillText(data.spreadName||data.spread||'Tarot Spread',42,84);
+  ctx.fillText(data.spreadName||data.spread||'Card Spread',42,84);
   await drawShareSpread(ctx,data);
   drawShareFooter(ctx,data,comment);
 }
@@ -831,15 +894,15 @@ function enhanceReadingOutput(){
   if(dominantSuit)themes.push(dominantSuit[0].charAt(0).toUpperCase()+dominantSuit[0].slice(1)+' Focus');
   let h='<div class="reading-summary-card">';
   h+='<h3 class="summary-title">Summary</h3>';
-  h+='<p class="summary-copy">'+(spread?spread.name:'Your reading')+' with '+cardNames.length+' card'+(cardNames.length===1?'':'s')+' drawn. Review the key themes first, then continue into the full reading.</p>';
+  h+='<p class="summary-copy">'+escapeHtml(spread?spread.name:'Your reading')+' with '+cardNames.length+' card'+(cardNames.length===1?'':'s')+' drawn. Review the key themes first, then continue into the full reading.</p>';
   h+='<div class="summary-meta">';
-  h+='<span class="summary-cards">'+(spread?spread.name:'Reading')+'</span>';
-  if(state.readerLifeStage)h+='<span class="major-badge">'+state.readerLifeStage+'</span>';
+  h+='<span class="summary-cards">'+escapeHtml(spread?spread.name:'Reading')+'</span>';
+  if(state.readerLifeStage)h+='<span class="major-badge">'+escapeHtml(state.readerLifeStage)+'</span>';
   if(hasMajor)h+='<span class="major-badge">Major Arcana Present</span>';
   if(reversedCount)h+='<span class="major-badge">'+reversedCount+' Reversed</span>';
   h+='</div>';
   h+='<h4 class="summary-subtitle">Key Themes</h4>';
-  h+='<div class="summary-themes">'+themes.slice(0,5).map(t=>'<span class="theme-tag">'+t+'</span>').join('')+'</div>';
+  h+='<div class="summary-themes">'+themes.slice(0,5).map(t=>'<span class="theme-tag">'+escapeHtml(t)+'</span>').join('')+'</div>';
   h+='<p class="ai-disclaimer">AI-assisted readings are for reflection and personal insight only. They are not professional medical, legal, financial, mental-health, or crisis advice.</p>';
   h+='<h4 class="summary-subtitle">Full Reading</h4>';
   h+='</div>';
@@ -848,11 +911,27 @@ function enhanceReadingOutput(){
 
 // ===== CARD ENTRY =====
 function switchTab(tabId,btn){
-  ['tab-guided','tab-upload','tab-manual'].forEach(t=>document.getElementById(t).style.display='none');
-  document.getElementById(tabId).style.display='block';
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  ['tab-guided','tab-upload','tab-manual'].forEach(t=>{
+    const panel=document.getElementById(t);
+    if(panel){panel.style.display='none';panel.hidden=true;}
+  });
+  const panel=document.getElementById(tabId);
+  if(panel){panel.style.display='block';panel.hidden=false;}
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false');});
   btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
 }
+document.addEventListener('keydown',e=>{
+  if(!e.target.matches('.tab-btn')||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  const tabs=[...document.querySelectorAll('.tab-btn')];
+  const current=tabs.indexOf(e.target);
+  if(current<0)return;
+  e.preventDefault();
+  const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  const tab=tabs[next];
+  tab.focus();
+  switchTab(tab.getAttribute('aria-controls'),tab);
+});
 
 function buildCardEntry(){
   const spread=getSpread();
@@ -887,23 +966,23 @@ function renderSpreadDiagram(spread,activeIdx){
   if(spread.layout==='row'||n<=3){
     rows=[spread.positions.map((_,i)=>i)];
   }else if(spread.layout==='celtic'){
-    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     return`<div class="spread-diagram celtic-layout"><div class="celtic-cross"><div class="spread-row">${ms(4)}</div><div class="spread-row">${ms(3)}${ms(0)}${ms(1)}${ms(5)}</div><div class="spread-row">${ms(2)}</div></div><div class="celtic-staff">${ms(9)}${ms(8)}${ms(7)}${ms(6)}</div></div>`;
   }else if(spread.layout==='celtic-simple'){
-    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     return`<div class="spread-diagram celtic-simple-layout"><div class="spread-row">${ms(3)}</div><div class="spread-row">${ms(4)}${ms(0)}${ms(5)}</div><div class="spread-row">${ms(1,true)}</div><div class="spread-row">${ms(2)}</div></div>`;
   }else if(spread.layout==='yearly'){
-    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot clock-slot clock-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot clock-slot clock-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     return`<div class="spread-diagram yearly-clock-layout">${spread.positions.map((_,i)=>ms(i)).join('')}</div>`;
   }else if(spread.layout==='romany'){
-    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     const mkCol=(label,...idxs)=>`<div class="romany-col"><div class="romany-col-label">${label}</div>${idxs.map(ms).join('')}</div>`;
     return`<div class="spread-diagram romany-layout">${mkCol('Emotion',0,1,2)}${mkCol('Relationships',3,4,5)}${mkCol('Hopes & Career',6,7,8)}${mkCol('Finances',9,10,11)}${mkCol('Spiritual',12,13,14)}${mkCol('Obstacles',15,16,17)}${mkCol('Health & Future',18,19,20)}</div>`;
   }else if(spread.layout==='two-pathways'){
-    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot two-path-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot two-path-${pos.id} ${cls}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     return`<div class="spread-diagram two-pathways-layout">${spread.positions.map((_,i)=>ms(i)).join('')}</div>`;
   }else if(spread.layout==='relationship'){
-    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${pos.name}</div></div>`;};
+    const ms=(idx,wide)=>{const pos=spread.positions[idx];if(!pos)return'';const cls=idx<activeIdx?'done':idx===activeIdx?'active':'';return`<div class="slot ${cls}${wide?' slot-wide':''}"><div class="slot-num">${pos.id}</div><div class="slot-label">${escapeHtml(pos.name)}</div></div>`;};
     return`<div class="spread-diagram relationship-layout">
       <div class="relationship-side">${ms(6)}<div class="spread-row">${ms(0)}${ms(1)}${ms(2)}</div>${ms(8)}${ms(10)}${ms(12,true)}</div>
       <div class="relationship-center">${ms(14)}</div>
@@ -931,7 +1010,7 @@ function renderSpreadDiagram(spread,activeIdx){
       const check=idx<activeIdx?'?':'';
       html+=`<div class="slot ${cls}">
         <div class="slot-num">${check||pos.id}</div>
-        <div class="slot-label">${pos.name}</div>
+        <div class="slot-label">${escapeHtml(pos.name)}</div>
       </div>`;
     });
     html+='</div>';
@@ -971,8 +1050,8 @@ function renderGuidedRitual(spread){
     ${shuffleHtml}
     <div class="ritual-counter">Card ${stepNum} of ${total}</div>
     <div class="ritual-text">${promptText}</div>
-    <div class="ritual-pos">${pos.name}</div>
-    <div class="ritual-desc">${pos.description}</div>
+    <div class="ritual-pos">${escapeHtml(pos.name)}</div>
+    <div class="ritual-desc">${escapeHtml(pos.description)}</div>
     <p style="font-size:11px;color:var(--muted)">Draw a card from your deck and place it face-up in position <strong style="color:var(--gold)">${pos.id}</strong> (highlighted above).</p>
   </div>`;
 
@@ -996,9 +1075,21 @@ function prevGuidedPosition(){
 // Guided photo upload handlers
 function handleGuidedDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processUpload(f,'guided-upload-zone','guided-identify-btn')}
 function handleGuidedUpload(inp){if(inp.files[0])processUpload(inp.files[0],'guided-upload-zone','guided-identify-btn')}
+function setInlineMessage(id,message,type='error'){
+  const target=document.getElementById(id);
+  if(!target)return;
+  target.replaceChildren();
+  const p=document.createElement('p');
+  p.style.color=type==='success'?'var(--success)':'var(--danger)';
+  p.style.fontSize='12px';
+  p.style.marginTop='8px';
+  p.setAttribute('role',type==='error'?'alert':'status');
+  p.textContent=message;
+  target.appendChild(p);
+}
 
 async function identifyGuidedCards(){
-  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
+  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('guided-identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -1027,9 +1118,9 @@ Return ONLY a valid JSON array with no other text:
     if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
     replaceIdentifiedSpreadCards(spread,parsedByArcana);
     buildManualEntries(spread);
-    document.getElementById('guided-identify-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified! Click "Review Cards" below to verify and continue.</p>';
+    setInlineMessage('guided-identify-results','Cards identified. Review each card before continuing.','success');
   }catch(err){
-    document.getElementById('guided-identify-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try switching to Manual Entry tab.</p>`;
+    setInlineMessage('guided-identify-results',`Identification failed. ${err.message||'Try Manual Entry instead.'} Review the cards manually.`);
   }
   btn.disabled=false;btn.innerHTML=GLYPH.star4+' Identify Cards with AI';
 }
@@ -1042,33 +1133,41 @@ function buildManualEntries(spread){
     const row=document.createElement('div');
     row.className='card-entry-row';
     const existing=state.cards[pos.id];
-    const orientation=existing&&existing.orientation==='reversed'?'reversed':'upright';
+    const orientation=existing&&['upright','reversed','unknown'].includes(existing.orientation)?existing.orientation:'upright';
+    const orientationLabel=orientation==='reversed'?'R':orientation==='unknown'?'?':'U';
     row.innerHTML=`
+<<<<<<< Updated upstream
       <span class="pos-name">${pos.name}</span><span class="pos-desc-hint">${pos.description}</span>
       <button class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?existing.name:'Choose card...'}</button>
       <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" aria-pressed="${orientation==='reversed'}" aria-label="Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}." title="Card orientation: ${orientation}">${orientation==='reversed'?'R':'U'}</button>`;
+=======
+      <span class="pos-name">${escapeHtml(pos.name)}</span><span class="pos-desc-hint">${escapeHtml(pos.description)}</span>
+      <button type="button" class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?escapeHtml(existing.name):'Choose card...'}</button>
+      <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':orientation==='unknown'?'unknown':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" title="Toggle orientation" aria-label="Toggle ${escapeHtml(pos.name)} orientation">${orientationLabel}</button>`;
+>>>>>>> Stashed changes
     container.appendChild(row);
   });
 }
 function buildSuitFilter(){
   const container=document.getElementById('suit-filter');
-  container.innerHTML='<span class="suit-btn active" onclick="filterSuit(null,this)">All</span>';
+  container.innerHTML='<button type="button" class="suit-btn active" aria-pressed="true" onclick="filterSuit(null,this)">All</button>';
   if(state.cardSystem==='tarot'){
-    container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('major',this)">Major</span>`;
+    container.innerHTML+=`<button type="button" class="suit-btn" aria-pressed="false" onclick="filterSuit('major',this)">Major</button>`;
     TAROT_SUITS.forEach(s=>{
-      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</span>`;
+      container.innerHTML+=`<button type="button" class="suit-btn" aria-pressed="false" onclick="filterSuit('${s}',this)">${escapeHtml(TAROT_SUIT_NAMES[s])}</button>`;
     });
   }else{
     PLAYING_SUITS.forEach(s=>{
-      container.innerHTML+=`<span class="suit-btn" onclick="filterSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+      container.innerHTML+=`<button type="button" class="suit-btn" aria-pressed="false" onclick="filterSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
     });
   }
 }
 let activeSuitFilter=null;
 function filterSuit(suit,el){
   activeSuitFilter=suit;
-  document.querySelectorAll('.suit-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.suit-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});
   el.classList.add('active');
+  el.setAttribute('aria-pressed','true');
 }
 
 function toggleOrient(el){
@@ -1081,12 +1180,16 @@ function toggleOrient(el){
     el.textContent='U';
     el.classList.remove('reversed');
   }
+<<<<<<< Updated upstream
   const orientation=el.dataset.orient;
   if(typeof el.setAttribute==='function'){
     el.setAttribute('aria-pressed',String(orientation==='reversed'));
     el.setAttribute('aria-label',`Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}.`);
   }
   el.title=`Card orientation: ${orientation}`;
+=======
+  el.setAttribute('aria-label',el.dataset.orient==='reversed'?'Orientation reversed. Activate to set upright.':'Orientation upright. Activate to set reversed.');
+>>>>>>> Stashed changes
   syncOrientationState(el);
 }
 
@@ -1127,7 +1230,7 @@ function searchCard(input,posId){
   results.forEach(card=>{
     const item=document.createElement('div');
     item.className='dd-item';
-    item.innerHTML=`${renderCardArt(card,'tarot-card-thumb dropdown-card-art',72)}<span>${card.name}</span>`;
+    item.innerHTML=`${renderCardArt(card,'tarot-card-thumb dropdown-card-art',72)}<span>${escapeHtml(card.name)}</span>`;
     item.onclick=()=>{
       input.value=card.name;
       if(posId.startsWith('guided-')){
@@ -1174,16 +1277,118 @@ function handleUpload(inp){if(inp.files[0])processUpload(inp.files[0],'upload-zo
 function handleQuickDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processQuickUpload(f)}
 function handleQuickUpload(inp){if(inp.files[0])processQuickUpload(inp.files[0])}
 
-function processQuickUpload(file){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    state.uploadedImage=e.target.result;
-    const zone=document.getElementById('quick-upload-zone');
-    zone.classList.add('has-image');
-    zone.innerHTML=`<img src="${e.target.result}" alt="Uploaded spread">`;
+const ACCEPTED_IMAGE_TYPES=new Set(['image/jpeg','image/png','image/webp']);
+const MAX_UPLOAD_BYTES=10*1024*1024;
+const MAX_UPLOAD_EDGE=1920;
+const MAX_PROCESSED_IMAGE_BYTES=4*1024*1024;
+
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('The image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function decodeImage(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error('The image is corrupt or could not be decoded.'));
+    img.src=dataUrl;
+  });
+}
+
+async function preprocessImage(file){
+  if(!file||!ACCEPTED_IMAGE_TYPES.has(String(file.type||'').toLowerCase())){
+    throw new Error('Please choose a JPEG, PNG, or WebP image.');
+  }
+  if(file.size>MAX_UPLOAD_BYTES)throw new Error('That image is too large. Choose a photo under 10 MB.');
+  const sourceDataUrl=await readFileAsDataUrl(file);
+  const img=await decodeImage(sourceDataUrl);
+  const sourceWidth=img.naturalWidth||img.width;
+  const sourceHeight=img.naturalHeight||img.height;
+  if(!sourceWidth||!sourceHeight)throw new Error('The image has no readable dimensions.');
+  const scale=Math.min(1,MAX_UPLOAD_EDGE/Math.max(sourceWidth,sourceHeight));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(sourceWidth*scale));
+  canvas.height=Math.max(1,Math.round(sourceHeight*scale));
+  const ctx=canvas.getContext('2d',{alpha:false});
+  if(!ctx)throw new Error('Image processing is unavailable in this browser.');
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  let quality=.88;
+  let output=canvas.toDataURL('image/jpeg',quality);
+  while(output.length>MAX_PROCESSED_IMAGE_BYTES*1.37&&quality>.62){
+    quality-=.06;
+    output=canvas.toDataURL('image/jpeg',quality);
+  }
+  if(output.length>MAX_PROCESSED_IMAGE_BYTES*1.37)throw new Error('This image could not be compressed small enough. Try a smaller photo.');
+  return output;
+}
+
+function resetUploadZone(zoneId,btnId,inputId){
+  const zone=document.getElementById(zoneId);
+  if(!zone)return;
+  zone.classList.remove('has-image');
+  zone.innerHTML='<p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>';
+  const btn=document.getElementById(btnId);
+  if(btn)btn.style.display='none';
+  const input=document.getElementById(inputId);
+  if(input)input.value='';
+}
+
+function setUploadError(zoneId,message){
+  const zone=document.getElementById(zoneId);
+  if(!zone)return;
+  let status=zone.parentElement&&zone.parentElement.querySelector('.upload-error');
+  if(!status){
+    status=document.createElement('p');
+    status.className='upload-error';
+    status.setAttribute('role','alert');
+    zone.insertAdjacentElement('afterend',status);
+  }
+  status.textContent=message;
+}
+
+function renderUploadPreview(zoneId,dataUrl,btnId,inputId){
+  const zone=document.getElementById(zoneId);
+  if(!zone)return;
+  zone.classList.add('has-image');
+  zone.replaceChildren();
+  const image=document.createElement('img');
+  image.src=dataUrl;
+  image.alt='Preview of uploaded spread';
+  image.loading='eager';
+  image.decoding='async';
+  const actions=document.createElement('div');
+  actions.className='upload-preview-actions';
+  const replace=document.createElement('button');
+  replace.type='button';replace.className='btn btn-sm';replace.textContent='Replace photo';
+  replace.onclick=e=>{e.stopPropagation();document.getElementById(inputId)?.click();};
+  const remove=document.createElement('button');
+  remove.type='button';remove.className='btn btn-sm';remove.textContent='Remove';
+  remove.onclick=e=>{e.stopPropagation();state.uploadedImage=null;resetUploadZone(zoneId,btnId,inputId);if(zoneId==='quick-upload-zone')updateQuickGoBtn();};
+  actions.append(replace,remove);
+  zone.append(image,actions);
+  const btn=document.getElementById(btnId);
+  if(btn)btn.style.display='block';
+  const error=zone.parentElement&&zone.parentElement.querySelector('.upload-error');
+  if(error)error.remove();
+}
+
+async function processQuickUpload(file){
+  try{
+    state.uploadedImage=await preprocessImage(file);
+    renderUploadPreview('quick-upload-zone',state.uploadedImage,'quick-go','quick-file');
     updateQuickGoBtn();
-  };
-  reader.readAsDataURL(file);
+  }catch(error){
+    state.uploadedImage=null;
+    setUploadError('quick-upload-zone',error.message||'This image could not be used.');
+    updateQuickGoBtn();
+  }
 }
 function updateQuickGoBtn(){
   const btn=document.getElementById('quick-go');
@@ -1207,31 +1412,34 @@ function renderQuickSpreads(){
     lbl.textContent=cat;
     grid.appendChild(lbl);
     catSpreads.forEach(sp=>{
-      const card=document.createElement('div');
+      const card=document.createElement('button');
+      card.type='button';
       const locked=PREMIUM_SPREAD_IDS.includes(sp.id)&&!isPremium();
       card.className='spread-card qs-card'+(state.quickSpreadId===sp.id?' selected':'')+(locked?' premium-locked':'');
+      card.setAttribute('aria-pressed',String(state.quickSpreadId===sp.id));
       card.dataset.premiumFeature=PREMIUM_SPREAD_IDS.includes(sp.id)?'advanced-spreads':'';
       card.onclick=()=>locked?showUpgradeModal('advanced-spreads'):selectQuickSpread(sp.id);
-      card.innerHTML=`<h4>${sp.name}</h4><div class="count">${sp.cardCount} cards${locked?' - Premium':''}</div>`;
+      card.innerHTML=`<h4>${escapeHtml(sp.name)}</h4><div class="count">${sp.cardCount} cards${locked?' - Premium':''}</div>`;
       grid.appendChild(card);
     });
   });
   renderEntitlementsUI();
 }
-function processUpload(file,zoneId,btnId){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    state.uploadedImage=e.target.result;
-    const zone=document.getElementById(zoneId);
-    zone.classList.add('has-image');
-    zone.innerHTML=`<img src="${e.target.result}" alt="Uploaded spread">`;
-    document.getElementById(btnId).style.display='block';
-  };
-  reader.readAsDataURL(file);
+async function processUpload(file,zoneId,btnId){
+  const inputId=zoneId==='guided-upload-zone'?'guided-file-input':'file-input';
+  try{
+    state.uploadedImage=await preprocessImage(file);
+    renderUploadPreview(zoneId,state.uploadedImage,btnId,inputId);
+  }catch(error){
+    state.uploadedImage=null;
+    setUploadError(zoneId,error.message||'This image could not be used.');
+    const btn=document.getElementById(btnId);
+    if(btn)btn.style.display='none';
+  }
 }
 
 async function identifyCards(){
-  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
+  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
   const spread=getSpread();
   const btn=document.getElementById('identify-btn');
   btn.disabled=true;btn.textContent='Identifying…';
@@ -1260,9 +1468,9 @@ Return ONLY a valid JSON array with no other text:
     if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
     replaceIdentifiedSpreadCards(spread,parsedByArcana);
     buildManualEntries(spread);
-    document.getElementById('upload-results').innerHTML='<p style="color:var(--success);font-size:12px;margin-top:8px">Cards identified. Switch to Manual Entry tab to review and correct.</p>';
+    setInlineMessage('upload-results','Cards identified. Switch to Manual Entry to review and correct.','success');
   }catch(err){
-    document.getElementById('upload-results').innerHTML=`<p style="color:var(--danger);font-size:12px;margin-top:8px">Error: ${err.message}. Try manual entry instead.</p>`;
+    setInlineMessage('upload-results',`Identification failed. ${err.message||'Try Manual Entry instead.'} Review the cards manually.`);
   }
   btn.disabled=false;btn.innerHTML=GLYPH.star4+' Identify Cards with AI';
 }
@@ -1295,11 +1503,21 @@ function confirmCards(){
   // Validate - check both numeric and string keys since positions use numeric ids
   let filled=0;
   spread.positions.forEach(p=>{if(state.cards[p.id]||state.cards[String(p.id)])filled++});
+  const continueToOverview=()=>{
+    if(Object.values(state.cards||{}).some(entry=>entry&&entry.orientation==='unknown')||
+      (state.hasDroppedCard&&state.droppedCard&&state.droppedCard.orientation==='unknown')){
+      showToast('Confirm each card orientation before generating the reading.');
+      return;
+    }
+    renderOverview();
+    goScreen('screen-overview');
+  };
   if(filled<spread.cardCount){
-    if(!confirm(`You have ${filled} of ${spread.cardCount} cards entered. Continue anyway?`))return;
+    const message=`You have ${filled} of ${spread.cardCount} cards entered. You can return to Card Entry to finish, or continue to review what is present.`;
+    if(typeof openConfirmDialog==='function'&&openConfirmDialog('Continue with an incomplete spread?',message,continueToOverview,'Review anyway'))return;
+    if(!confirm(message))return;
   }
-  renderOverview();
-  goScreen('screen-overview');
+  continueToOverview();
 }
 // ===== OVERVIEW =====
 function renderOverview(){
@@ -1312,16 +1530,23 @@ function renderOverview(){
     const tile=document.createElement('div');
     tile.className='overview-tile';
     if(!entry){
-      tile.innerHTML=`<div class="c-pos">${pos.name}</div><div style="color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer" onclick="goScreen('screen-card-entry')">Unknown  - tap to set</div>`;
+      tile.innerHTML=`<div class="c-pos">${escapeHtml(pos.name)}</div><button type="button" class="overview-missing-card" onclick="goScreen('screen-card-entry')">Unknown - tap to set</button>`;
     }else{
       const art=card?renderCardArt(card,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>';
       const kws=card?card.keywords.slice(0,3):[];
       tile.innerHTML=`
         <div class="suit-sym">${art}</div>
+<<<<<<< Updated upstream
         <div class="c-name">${entry.name}</div>
         <div class="c-pos">${pos.name}</div>
         <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'Upright':'Reversed'}</span>
         <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>`;
+=======
+        <div class="c-name">${escapeHtml(entry.name)}</div>
+        <div class="c-pos">${escapeHtml(pos.name)}</div>
+        <span class="orient ${entry.orientation==='reversed'?'reversed':entry.orientation==='upright'?'upright':'unknown'}">${entry.orientation==='upright'?'↑ Upright':entry.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
+        <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>`;
+>>>>>>> Stashed changes
     }
     grid.appendChild(tile);
   });
@@ -1334,9 +1559,15 @@ function renderOverview(){
     dropDiv.innerHTML=`<div class="overview-tile" style="border-color:var(--au-violet)">
       <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
       <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
+<<<<<<< Updated upstream
       <div class="c-name">${state.droppedCard.name}</div>
       <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'Upright':'Reversed'}</span>
       <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>
+=======
+      <div class="c-name">${escapeHtml(state.droppedCard.name)}</div>
+      <span class="orient ${state.droppedCard.orientation==='reversed'?'reversed':state.droppedCard.orientation==='upright'?'upright':'unknown'}">${state.droppedCard.orientation==='upright'?'↑ Upright':state.droppedCard.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
+      <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>
+>>>>>>> Stashed changes
       <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling  - it may reveal an underlying theme influencing your reading.</p>
     </div>`;
   }else{
@@ -1378,8 +1609,8 @@ async function quickRead(){
     return;
   }
   const settings=loadSettings();
-  try{requireAIConfiguration();}catch(e){alert(e.message);return;}
-  if(!state.uploadedImage){alert('Please upload a photo first.');return;}
+  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
+  if(!state.uploadedImage){showToast('Upload a spread photo first.');return;}
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
   saveReaderContext('quick-reader-life-stage');
@@ -1477,20 +1708,29 @@ Address both card meaning and positional context, but avoid exhaustive card-by-c
     wireJournalSection(results.querySelector('.journal-section'));
     renderEntitlementsUI();
   }catch(e){
-    results.innerHTML=`<p style="color:var(--danger)">Error: ${e.message}</p>`;
+    results.replaceChildren();
+    const error=document.createElement('p');
+    error.style.color='var(--danger)';
+    error.setAttribute('role','alert');
+    error.textContent=`Reading failed. ${e.message||'Try again or use Classic Reading.'}`;
+    results.appendChild(error);
   }
 }
 
 function renderReadingInto(container,text){
+<<<<<<< Updated upstream
   container.innerHTML=typeof renderReadingMarkdown==='function'
     ? renderReadingMarkdown(text)
     : String(text||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+=======
+  container.innerHTML=renderSafeMarkdown(text);
+>>>>>>> Stashed changes
 }
 
 // ===== TOAST NOTIFICATION =====
 function showToast(msg){
   let t=document.getElementById('app-toast');
-  if(!t){t=document.createElement('div');t.id='app-toast';t.className='toast';document.body.appendChild(t)}
+  if(!t){t=document.createElement('div');t.id='app-toast';t.className='toast';t.setAttribute('role','status');t.setAttribute('aria-live','polite');t.setAttribute('aria-atomic','true');document.body.appendChild(t)}
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2400);
 }
@@ -1498,54 +1738,283 @@ function showToast(msg){
 // ===== HISTORY =====
 function renderHistory(){
   const list=document.getElementById('history-list');
-  const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
-  if(!readings.length){list.innerHTML='<p style="text-align:center;color:var(--muted);padding:40px">No saved readings yet. Complete a reading and save it to see it here.</p>';return;}
+  if(!list)return;
+  const readings=readStoredJson('arcana_readings',[]);
+  const journal=readStoredJson('arcana-journal',[]);
+  list.replaceChildren();
+  if(!Array.isArray(readings))return;
   const visibleReadings=isPremium()?readings:readings.slice(0,3);
-  const freeNote=!isPremium()&&readings.length>3?'<p class="history-limit-note">Showing your latest 3 readings. Premium unlocks the full saved history.</p>':'';
-  list.innerHTML=freeNote+'<div class="history-tools"><button class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button></div><div id="comparison-output"></div>';
+  if(!readings.length){
+    const empty=document.createElement('p');
+    empty.className='history-empty';
+    empty.textContent='No saved readings yet. Complete a reading and save it to see it here.';
+    list.appendChild(empty);
+  }else{
+    if(!isPremium()&&readings.length>3){
+      const note=document.createElement('p');
+      note.className='history-limit-note';
+      note.textContent='Showing your latest 3 readings. Premium unlocks the full saved history.';
+      list.appendChild(note);
+    }
+    const tools=document.createElement('div');
+    tools.className='history-tools';
+    tools.innerHTML='<button type="button" class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button>';
+    list.appendChild(tools);
+    const comparison=document.createElement('div');
+    comparison.id='comparison-output';
+    list.appendChild(comparison);
+  }
   visibleReadings.forEach((r,i)=>{
     const d=new Date(r.date);
     const readerContext=[r.readerLifeStage||''].filter(Boolean).join(' / ');
     const item=document.createElement('div');
     item.className='history-item';
-    item.innerHTML=`
-      <div class="history-header" onclick="this.nextElementSibling.classList.toggle('open')">
-        <input class="compare-reading-check" type="checkbox" value="${i}" onclick="event.stopPropagation()" title="Select for comparison">
-        <div><h4 style="font-size:13px">${r.title||'Untitled Reading'}</h4><span style="font-size:11px;color:var(--muted)">${r.spreadName||r.spread} / ${r.cardSystem}</span></div>
-        <span class="h-date">${d.toLocaleDateString()}</span>
-      </div>
-      <div class="history-body">
-        ${r.concerns&&r.concerns.length?`<p style="font-size:12px;color:var(--muted);margin-bottom:8px"><strong>Concerns:</strong> ${r.concerns.join(', ')}</p>`:''}
-        ${readerContext?`<p style="font-size:12px;color:var(--muted);margin-bottom:8px"><strong>Reader context:</strong> ${readerContext}</p>`:''}
-        <div id="history-reading-${i}" style="margin-bottom:12px"></div>
-        <label style="font-size:11px;color:var(--gold)">Journal Notes</label>
-        <textarea style="margin-top:4px" placeholder="Add your reflections..." oninput="updateNote(${i},this.value)">${r.notes||''}</textarea>
-        <div style="margin-top:8px;text-align:right">
-          <button class="btn btn-sm btn-danger" onclick="deleteReading(${i})">Delete</button>
-        </div>
-      </div>`;
+    const header=document.createElement('div');
+    header.className='history-header';
+    header.setAttribute('role','button');
+    header.tabIndex=0;
+    header.setAttribute('aria-expanded','false');
+    const check=document.createElement('input');
+    check.className='compare-reading-check';
+    check.type='checkbox';
+    check.value=String(i);
+    check.title='Select for comparison';
+    check.setAttribute('aria-label','Select reading for comparison');
+    check.addEventListener('click',e=>e.stopPropagation());
+    const summary=document.createElement('div');
+    const title=document.createElement('h4');
+    title.style.fontSize='13px';
+    title.textContent=r.title||'Untitled Reading';
+    const detail=document.createElement('span');
+    detail.style.cssText='font-size:11px;color:var(--muted)';
+    detail.textContent=(r.spreadName||r.spread||'Reading')+' / '+(r.cardSystem||'cards');
+    summary.append(title,detail);
+    const date=document.createElement('span');
+    date.className='h-date';
+    date.textContent=Number.isNaN(d.getTime())?'Saved reading':d.toLocaleDateString();
+    header.append(check,summary,date);
+    const body=document.createElement('div');
+    body.className='history-body';
+    body.hidden=true;
+    const toggle=()=>{
+      const isOpen=body.classList.toggle('open');
+      body.hidden=!isOpen;
+      header.setAttribute('aria-expanded',String(isOpen));
+    };
+    header.addEventListener('click',toggle);
+    header.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+    if(r.concerns&&r.concerns.length){
+      const p=document.createElement('p');
+      p.style.cssText='font-size:12px;color:var(--muted);margin-bottom:8px';
+      const strong=document.createElement('strong');strong.textContent='Concerns: ';
+      p.append(strong,document.createTextNode(r.concerns.join(', ')));body.appendChild(p);
+    }
+    if(readerContext){
+      const p=document.createElement('p');
+      p.style.cssText='font-size:12px;color:var(--muted);margin-bottom:8px';
+      const strong=document.createElement('strong');strong.textContent='Reader context: ';
+      p.append(strong,document.createTextNode(readerContext));body.appendChild(p);
+    }
+    const readingDiv=document.createElement('div');
+    readingDiv.id='history-reading-'+i;
+    readingDiv.style.marginBottom='12px';
+    body.appendChild(readingDiv);
+    const label=document.createElement('label');
+    label.style.cssText='font-size:11px;color:var(--gold)';
+    label.textContent='Journal Notes';
+    const notes=document.createElement('textarea');
+    notes.style.marginTop='4px';
+    notes.placeholder='Add your reflections...';
+    notes.value=String(r.notes||'');
+    notes.addEventListener('input',()=>updateNote(i,notes.value));
+    body.append(label,notes);
+    const actions=document.createElement('div');
+    actions.style.cssText='margin-top:8px;text-align:right';
+    const del=document.createElement('button');
+    del.type='button';del.className='btn btn-sm btn-danger';del.textContent='Delete';
+    del.addEventListener('click',()=>deleteReading(i));
+    actions.appendChild(del);body.appendChild(actions);
+    item.append(header,body);
     list.appendChild(item);
-    // Render reading content
-    const readingDiv=document.getElementById(`history-reading-${i}`);
     renderReadingInto(readingDiv,r.narrative||'No reading content saved.');
   });
+  renderJournalArchive(list,Array.isArray(journal)?journal:[]);
   renderEntitlementsUI();
 }
 function updateNote(idx,val){
-  const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
-  if(readings[idx]){readings[idx].notes=val;localStorage.setItem('arcana_readings',JSON.stringify(readings))}
+  const readings=readStoredJson('arcana_readings',[]);
+  if(readings[idx]){readings[idx].notes=String(val||'').slice(0,10000);writeStoredJson('arcana_readings',readings)}
 }
 function deleteReading(idx){
+  const remove=()=>{
+    const readings=readStoredJson('arcana_readings',[]);
+    readings.splice(idx,1);
+    writeStoredJson('arcana_readings',readings);
+    renderHistory();
+  };
+  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Delete this saved reading?','This removes the saved reading from this browser.',remove))return;
   if(!confirm('Delete this reading?'))return;
-  const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
-  readings.splice(idx,1);
-  localStorage.setItem('arcana_readings',JSON.stringify(readings));
-  renderHistory();
+  remove();
+}
+
+function renderJournalArchive(list,entries){
+  const section=document.createElement('section');
+  section.className='history-journal';
+  const heading=document.createElement('h3');heading.textContent='Journal';section.appendChild(heading);
+  const intro=document.createElement('p');intro.className='history-journal-intro';intro.textContent='Saved reflections live here so you can return to the words that mattered.';section.appendChild(intro);
+  if(!entries.length){
+    const empty=document.createElement('p');empty.className='history-empty';empty.textContent='No saved reflections yet. Add one after a reading.';section.appendChild(empty);
+  }else{
+    entries.slice(0,50).forEach((entry,index)=>{
+      const card=document.createElement('article');card.className='journal-history-item';
+      const meta=document.createElement('p');meta.className='journal-history-meta';
+      const when=new Date(entry.updatedAt||entry.createdAt||entry.date);
+      meta.textContent=(entry.spreadName||entry.spread||'Reading')+' · '+(Number.isNaN(when.getTime())?'Saved':when.toLocaleDateString());
+      const text=document.createElement('p');text.className='journal-history-text';text.textContent=entry.text||'';
+      const actions=document.createElement('div');actions.className='journal-history-actions';
+      const edit=document.createElement('button');edit.type='button';edit.className='btn btn-sm';edit.textContent='Edit';edit.onclick=()=>editJournalEntry(index);
+      const remove=document.createElement('button');remove.type='button';remove.className='btn btn-sm btn-danger';remove.textContent='Delete';remove.onclick=()=>deleteJournalEntry(index);
+      actions.append(edit,remove);
+      if(entry.readingId){
+        const open=document.createElement('button');open.type='button';open.className='btn btn-sm';open.textContent='Open reading';open.onclick=()=>openSavedReading(entry.readingId);actions.appendChild(open);
+      }
+      card.append(meta,text,actions);section.appendChild(card);
+    });
+  }
+  list.appendChild(section);
+}
+function editJournalEntry(index){
+  const entries=readStoredJson('arcana-journal',[]);const entry=entries[index];
+  if(!entry)return;
+  openTextPrompt('Edit reflection','Update this journal entry.',entry.text||'',value=>{
+    const clean=String(value||'').trim().slice(0,10000);if(!clean)return;
+    entries[index]={...entry,text:clean,updatedAt:new Date().toISOString()};
+    writeStoredJson('arcana-journal',entries);renderHistory();
+  });
+}
+function deleteJournalEntry(index){
+  const remove=()=>{const entries=readStoredJson('arcana-journal',[]);entries.splice(index,1);writeStoredJson('arcana-journal',entries);renderHistory();};
+  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Delete this reflection?','This removes the journal entry from this browser.',remove))return;
+  if(confirm('Delete this reflection?'))remove();
+}
+function openSavedReading(readingId){
+  const reading=readStoredJson('arcana_readings',[]).find(item=>item.id===readingId);
+  if(!reading||!reading.narrative){showToast('The saved reading is no longer available.');return;}
+  if(!Object.keys(reading.cards||{}).length){showToast('This journal entry is not linked to a card layout.');return;}
+  state.mode='guided';state.spreadId=reading.spread;state.cards={...reading.cards};state.droppedCard=reading.droppedCard||null;state.hasDroppedCard=!!reading.hasDroppedCard;state.cardSystem=reading.cardSystem||'tarot';state.cardSystemEstablished=true;state.concerns=[...(reading.concerns||[])];state.readerLifeStage=reading.readerLifeStage||'';state.currentReadingId=reading.id||'';state.narrative=reading.narrative;currentCards=getCards();
+  goScreen('screen-reading');renderReading(reading.narrative);
 }
 
 // ===== MODALS =====
-function openModal(id){document.getElementById(id).classList.add('open');if(id==='modal-settings')loadSettingsUI()}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
+let activeDialog=null;
+let lastDialogTrigger=null;
+function dialogFocusable(root){
+  return Array.from(root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null);
+}
+function dialogPanel(root){
+  return root.querySelector('.modal,[role="dialog"],.card-picker-panel,.share-modal')||root;
+}
+function activateDialog(root,trigger){
+  if(!root)return;
+  if(activeDialog&&activeDialog!==root)deactivateDialog(activeDialog);
+  activeDialog=root;
+  lastDialogTrigger=trigger&&typeof trigger.focus==='function'?trigger:document.activeElement;
+  root.classList.add('open');
+  root.setAttribute('aria-hidden','false');
+  const panel=dialogPanel(root);
+  panel.setAttribute('role','dialog');
+  panel.setAttribute('aria-modal','true');
+  const heading=panel.querySelector('h1,h2,h3');
+  if(heading){
+    if(!heading.id)heading.id=root.id+'-title';
+    panel.setAttribute('aria-labelledby',heading.id);
+  }
+  document.body.classList.add('dialog-open');
+  document.body.style.overflow='hidden';
+  const first=dialogFocusable(panel)[0];
+  setTimeout(()=>{if(first&&typeof first.focus==='function')first.focus();},0);
+}
+function deactivateDialog(root){
+  if(!root)return;
+  root.classList.remove('open');
+  root.setAttribute('aria-hidden','true');
+  if(activeDialog===root){
+    activeDialog=null;
+    document.body.classList.remove('dialog-open');
+    document.body.style.overflow='';
+    if(lastDialogTrigger&&typeof lastDialogTrigger.focus==='function')setTimeout(()=>lastDialogTrigger.focus(),0);
+    lastDialogTrigger=null;
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(!activeDialog)return;
+  if(e.key==='Escape'){
+    if(activeDialog.id==='card-picker-modal')pickerPosId=null;
+    deactivateDialog(activeDialog);
+    return;
+  }
+  if(e.key!=='Tab')return;
+  const focusables=dialogFocusable(dialogPanel(activeDialog));
+  if(!focusables.length){e.preventDefault();return;}
+  const first=focusables[0];
+  const last=focusables[focusables.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
+function openTextPrompt(title,description,value,onSave){
+  let modal=document.getElementById('modal-text-prompt');
+  if(!modal){
+    modal=document.createElement('div');modal.id='modal-text-prompt';modal.className='modal-overlay';
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal(modal.id)});document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div class="modal ritual-modal text-prompt-modal">
+    <button type="button" class="close-btn" onclick="closeModal('modal-text-prompt')" aria-label="Close dialog">&times;</button>
+    <h2>${escapeHtml(title)}</h2><p class="settings-note">${escapeHtml(description)}</p>
+    <form class="text-prompt-form"><label for="text-prompt-input">Title or reflection</label><textarea id="text-prompt-input" maxlength="10000"></textarea>
+      <div class="settings-actions"><button type="button" class="btn" onclick="closeModal('modal-text-prompt')">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+    </form></div>`;
+  const form=modal.querySelector('form');
+  const textInput=modal.querySelector('#text-prompt-input');
+  if(textInput)textInput.value=String(value||'');
+  form.onsubmit=e=>{e.preventDefault();const input=modal.querySelector('#text-prompt-input');const callback=modal._onSave;closeModal('modal-text-prompt');if(callback)callback(input.value);};
+  modal._onSave=typeof onSave==='function'?onSave:null;
+  activateDialog(modal,document.activeElement);
+}
+function openConfirmDialog(title,description,onConfirm,actionLabel='Delete'){
+  let modal=document.getElementById('modal-confirm');
+  if(!modal){
+    modal=document.createElement('div');modal.id='modal-confirm';modal.className='modal-overlay';
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal(modal.id)});document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div class="modal ritual-modal text-prompt-modal">
+    <button type="button" class="close-btn" onclick="closeModal('modal-confirm')" aria-label="Close dialog">&times;</button>
+    <h2>${escapeHtml(title)}</h2><p class="settings-note">${escapeHtml(description)}</p>
+    <div class="settings-actions"><button type="button" class="btn" onclick="closeModal('modal-confirm')">Cancel</button><button type="button" class="btn btn-danger" id="confirm-dialog-action"></button></div>
+  </div>`;
+  const action=modal.querySelector('#confirm-dialog-action');
+  if(!action)return false;
+  action.textContent=String(actionLabel||'Confirm');
+  action.onclick=()=>{const callback=modal._onConfirm;closeModal('modal-confirm');if(callback)callback();};
+  modal._onConfirm=typeof onConfirm==='function'?onConfirm:null;
+  activateDialog(modal,document.activeElement);
+  return true;
+}
+function clearSavedData(){
+  const clear=()=>{
+    clearArcanaData();
+    closeModal('modal-settings');
+    setTimeout(()=>location.reload(),300);
+  };
+  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Clear Arcana data?','This removes saved readings, reflections, settings, usage, and this browser\'s premium activation.',clear,'Clear data'))return;
+  if(confirm('Delete saved readings and settings?'))clear();
+}
+function openModal(id){
+  const modal=document.getElementById(id);
+  if(!modal)return;
+  if(id==='modal-settings')loadSettingsUI();
+  activateDialog(modal,document.activeElement);
+}
+function closeModal(id){deactivateDialog(document.getElementById(id))}
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)})});
 
 // ===== CARD PICKER =====
@@ -1553,18 +2022,22 @@ let pickerPosId=null;
 function hasSelectedReadingCards(){
   return Object.keys(state.cards||{}).length>0 || !!state.droppedCard;
 }
+function clearSelectedReadingCards(){
+  state.cards={};
+  state.droppedCard=null;
+  state.hasDroppedCard=false;
+  const dropToggle=document.getElementById('drop-toggle');
+  if(dropToggle)dropToggle.classList.remove('on');
+  const dropEntry=document.getElementById('drop-card-entry');
+  if(dropEntry)dropEntry.style.display='none';
+}
 function switchPickerCardSystem(nextSystem){
   if(nextSystem===state.cardSystem)return true;
   if(hasSelectedReadingCards()){
-    const ok=confirm('Switching deck types will clear the cards already selected for this reading. Continue?');
-    if(!ok)return false;
-    state.cards={};
-    state.droppedCard=null;
-    state.hasDroppedCard=false;
-    const dropToggle=document.getElementById('drop-toggle');
-    if(dropToggle)dropToggle.classList.remove('on');
-    const dropEntry=document.getElementById('drop-card-entry');
-    if(dropEntry)dropEntry.style.display='none';
+    const clearAndSwitch=()=>{const position=pickerPosId;clearSelectedReadingCards();switchPickerCardSystem(nextSystem);if(position)openCardPicker(position);};
+    if(typeof openConfirmDialog==='function'&&openConfirmDialog('Switch card system?','This clears the cards already selected for this reading.',clearAndSwitch,'Switch deck'))return false;
+    if(!confirm('Switching deck types will clear the cards already selected for this reading. Continue?'))return false;
+    clearSelectedReadingCards();
   }
   state.cardSystem=nextSystem;
   state.cardSystemEstablished=false;
@@ -1583,18 +2056,18 @@ function renderPickerFilters(){
   if(!filterEl)return;
   const tarotActive=state.cardSystem==='tarot';
   filterEl.innerHTML=`<div class="picker-system-tabs" style="display:flex;gap:6px;width:100%">
-    <button type="button" class="picker-suit-btn${tarotActive?' active':''}" onclick="switchPickerCardSystem('tarot')">Tarot</button>
-    <button type="button" class="picker-suit-btn${tarotActive?'':' active'}" onclick="switchPickerCardSystem('playing')">Playing Cards</button>
+    <button type="button" class="picker-suit-btn${tarotActive?' active':''}" aria-pressed="${tarotActive?'true':'false'}" onclick="switchPickerCardSystem('tarot')">Tarot</button>
+    <button type="button" class="picker-suit-btn${tarotActive?'':' active'}" aria-pressed="${tarotActive?'false':'true'}" onclick="switchPickerCardSystem('playing')">Playing Cards</button>
   </div>
-  <button class="picker-suit-btn active" onclick="filterPickerSuit(null,this)">All</button>`;
+  <button type="button" class="picker-suit-btn active" aria-pressed="true" onclick="filterPickerSuit(null,this)">All</button>`;
   if(tarotActive){
-    filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('major',this)">Major Arcana</button>`;
+    filterEl.innerHTML+=`<button type="button" class="picker-suit-btn" aria-pressed="false" onclick="filterPickerSuit('major',this)">Major Arcana</button>`;
     TAROT_SUITS.forEach(s=>{
-      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</button>`;
+      filterEl.innerHTML+=`<button type="button" class="picker-suit-btn" aria-pressed="false" onclick="filterPickerSuit('${s}',this)">${TAROT_SUIT_NAMES[s]}</button>`;
     });
   }else{
     PLAYING_SUITS.forEach(s=>{
-      filterEl.innerHTML+=`<button class="picker-suit-btn" onclick="filterPickerSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
+      filterEl.innerHTML+=`<button type="button" class="picker-suit-btn" aria-pressed="false" onclick="filterPickerSuit('${s}',this)">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`;
     });
   }
 }
@@ -1602,18 +2075,17 @@ function openCardPicker(posId){
   pickerPosId=posId;
   currentCards=getCards();
   renderPickerFilters();
-  document.getElementById('card-picker-modal').classList.add('open');
-  document.body.style.overflow='hidden';
+  activateDialog(document.getElementById('card-picker-modal'),document.activeElement);
   renderPickerCards(null);
 }
 function closeCardPicker(){
-  document.getElementById('card-picker-modal').classList.remove('open');
-  document.body.style.overflow='';
+  deactivateDialog(document.getElementById('card-picker-modal'));
   pickerPosId=null;
 }
 function filterPickerSuit(suit,el){
-  document.querySelectorAll('#picker-filter > .picker-suit-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#picker-filter > .picker-suit-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});
   el.classList.add('active');
+  el.setAttribute('aria-pressed','true');
   renderPickerCards(suit);
 }
 function renderPickerCards(filter){
@@ -1622,8 +2094,8 @@ function renderPickerCards(filter){
   else if(filter)cards=cards.filter(c=>c.suit===filter);
   const list=document.getElementById('card-picker-list');
   list.innerHTML=cards.map(card=>{
-    const esc=card.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    return`<button type="button" class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${card.name}</span></button>`;
+    const esc=escapeHtml(card.name);
+    return`<button type="button" class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${escapeHtml(card.name)}</span></button>`;
   }).join('');
 }
 function selectPickerCard(name){
@@ -1673,7 +2145,7 @@ function renderJournalSection(container){
     </div>
     <textarea class="journal-textarea" placeholder="I want to remember..."></textarea>
     <div class="journal-actions">
-      <button class="btn btn-primary journal-save-btn" onclick="saveJournal()" disabled>Save Reflection</button>
+    <button type="button" class="btn btn-primary journal-save-btn" onclick="saveJournal(this)" disabled>Save Reflection</button>
       <span class="journal-save-status" aria-live="polite"></span>
     </div>`;
   container.appendChild(section);
@@ -1716,19 +2188,19 @@ function useReflectionPrompt(btn){
   textarea.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
-function saveJournal(){
+function saveJournal(trigger){
   if(!requestPremiumFeature('journal')) return;
-  const journalRoot=event&&event.currentTarget&&event.currentTarget.closest ? event.currentTarget.closest('.journal-section') : document.getElementById('journal-section');
+  const journalRoot=trigger&&trigger.closest ? trigger.closest('.journal-section') : (typeof event!=='undefined'&&event&&event.currentTarget&&event.currentTarget.closest ? event.currentTarget.closest('.journal-section') : document.getElementById('journal-section'));
   const textarea=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-textarea') : document.getElementById('journal-entry');
   const txt=textarea?textarea.value.trim():'';
   if(!txt)return;
-  const date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   const spread=getReadingSpread();
-  const entry={date,spread:spread?spread.name:'Custom',text:txt};
-  const history=JSON.parse(localStorage.getItem('arcana-journal')||'[]');
+  const now=new Date().toISOString();
+  const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),createdAt:now,updatedAt:now,date:now,spreadId:spread?spread.id:(state.spreadId||state.quickSpreadId||''),spreadName:spread?spread.name:'Custom',readingId:state.currentReadingId||'',text:txt.slice(0,10000)};
+  const history=readStoredJson('arcana-journal',[]);
   history.unshift(entry);
-  localStorage.setItem('arcana-journal',JSON.stringify(history.slice(0,50)));
-  const btn=event&&event.currentTarget;
+  writeStoredJson('arcana-journal',history.slice(0,50));
+  const btn=trigger||(typeof event!=='undefined'&&event?event.currentTarget:null);
   const status=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-save-status') : null;
   if(status)status.textContent='Saved to your journal';
   if(btn){const orig=btn.textContent;btn.textContent='Saved';setTimeout(()=>{btn.textContent=orig;if(status)status.textContent=''},2200);}

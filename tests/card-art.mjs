@@ -62,15 +62,15 @@ assert.equal(
 );
 
 const url = run("getCardArtUrl({system:'playing',name:'Five of Clubs'},96)");
-assert.match(url, /^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\//);
-assert.match(url, /English_pattern_5_of_clubs\.svg$/);
+assert.match(url, /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//);
+assert.match(url, /English_pattern_5_of_clubs\.svg\?width=96$/);
 
 const rendered = run(
   "renderCardArt({system:'playing',name:'Queen of Hearts',suit:'hearts'},'picker-card-art',96)"
 );
 assert.match(rendered, /<img /);
 assert.match(rendered, /alt="Queen of Hearts"/);
-assert.match(rendered, /English_pattern_queen_of_hearts\.svg/);
+assert.match(rendered, /English_pattern_queen_of_hearts\.svg\?width=96/);
 
 const joker = run(
   "renderCardArt({system:'playing',name:'The Joker',suit:null},'picker-card-art',96)"

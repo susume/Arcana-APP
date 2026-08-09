@@ -53,6 +53,11 @@ if (-not $match.Success) {
 $embedded = $match.Groups[1].Value.Trim()
 $external = $template.Trim()
 
+# Git working trees may materialize HTML with different newline conventions.
+# Compare content, not the platform-specific line ending representation.
+$embedded = $embedded -replace "`r`n", "`n"
+$external = $external -replace "`r`n", "`n"
+
 if ($embedded -ne $external) {
   throw "Embedded template-welcome in index.html is not synced with templates/welcome.html."
 }

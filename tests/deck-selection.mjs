@@ -11,6 +11,11 @@ function makeElement() {
     style: {},
     dataset: {},
     className: "",
+    disabled: false,
+    offsetParent: {},
+    setAttribute() {},
+    getAttribute() { return null; },
+    focus() {},
     classList: {
       add(...names) { names.forEach((name) => classes.add(name)); },
       remove(...names) { names.forEach((name) => classes.delete(name)); },
@@ -21,7 +26,9 @@ function makeElement() {
       },
       contains(name) { return classes.has(name); }
     },
-    appendChild() {},
+    appendChild(child) { if (child && child.textContent) this.textContent += child.textContent; },
+    append() {},
+    replaceChildren() {},
     addEventListener() {},
     querySelector() { return null; },
     querySelectorAll() { return []; },
@@ -67,6 +74,7 @@ context.window.removeEventListener = () => {};
 
 vm.runInContext(fs.readFileSync(new URL("../js/tarot.js", import.meta.url), "utf8"), context);
 vm.runInContext(fs.readFileSync(new URL("../js/state.js", import.meta.url), "utf8"), context);
+vm.runInContext(fs.readFileSync(new URL("../js/dom-helpers.js", import.meta.url), "utf8"), context);
 vm.runInContext(fs.readFileSync(new URL("../js/ui.js", import.meta.url), "utf8"), context);
 vm.runInContext(fs.readFileSync(new URL("../js/ai-identification.js", import.meta.url), "utf8"), context);
 
@@ -293,8 +301,8 @@ await run("identifyCards()");
 await run("identifyGuidedCards()");
 assert.equal(JSON.stringify(context.allowedPositionCalls), JSON.stringify([[1, "2"], [1, "2"]]));
 assert.equal(context.replacementCalls, 0);
-assert.match(document.getElementById("upload-results").innerHTML, /No valid cards/);
-assert.match(document.getElementById("guided-identify-results").innerHTML, /No valid cards/);
+assert.match(document.getElementById("upload-results").textContent, /No valid cards/);
+assert.match(document.getElementById("guided-identify-results").textContent, /No valid cards/);
 
 run("state={...state,cardSystem:'playing',cardSystemEstablished:false,cards:{'1':{name:'Ace of Hearts',orientation:'upright'}},droppedCard:null}; migrateRestoredCardSystemState({cardSystem:'playing',cards:{'1':{name:'Ace of Hearts',orientation:'upright'}},droppedCard:null})");
 assert.equal(run("state.cardSystemEstablished"), true);

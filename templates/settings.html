@@ -1,13 +1,13 @@
-<div class="modal-overlay" id="modal-settings">
-  <div class="modal ritual-modal ritual-settings-modal">
-    <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
-    <h2>Reading Settings</h2>
+<div class="modal-overlay" id="modal-settings" aria-hidden="true">
+  <div class="modal ritual-modal ritual-settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <button type="button" class="close-btn" onclick="closeModal('modal-settings')" aria-label="Close settings">&times;</button>
+    <h2 id="settings-title">Reading Settings</h2>
 
     <div class="settings-section">
       <h3>Premium Access</h3>
       <p id="premium-settings-status" class="settings-status">Free plan active</p>
       <p class="settings-note">Premium is a one-time $29 lifetime unlock for unlimited readings, advanced spreads, journal history, narration, and comparison tools.</p>
-      <label>Gumroad license key</label>
+      <label for="premium-key-input">Gumroad license key</label>
       <input type="text" id="premium-key-input" placeholder="Paste your Gumroad license key">
       <p id="premium-key-status" class="activation-status"></p>
       <div class="settings-actions">
@@ -19,8 +19,8 @@
 
     <div class="settings-section">
       <h3>AI Configuration</h3>
-      <p class="settings-note">Use your own Google Gemini API key for AI readings and photo identification. Arcana saves it only in this browser.</p>
-      <label>Gemini API key</label>
+      <p class="settings-note">Arcana uses its hosted AI service when available. An optional advanced BYO Gemini key sends requests directly to Google and is saved only in this browser. Uploaded card photos are sent to the selected AI path for identification.</p>
+      <label for="gemini-key-input">Gemini API key</label>
       <input type="password" id="gemini-key-input" placeholder="Paste your Gemini API key">
       <p id="gemini-key-status" class="activation-status"></p>
       <div class="settings-actions">
@@ -30,20 +30,20 @@
       </div>
     </div>
 
-    <label>AI tarot reading style</label>
+    <label for="reading-style">AI reading style</label>
     <select id="reading-style">
       <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
     </select>
-    <label>AI reading tone</label>
+    <label for="reading-tone">AI reading tone</label>
     <select id="reading-tone">
       <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
     </select>
-    <label>Narrator voice</label>
+    <label for="narrator-voice">Narrator voice</label>
     <select id="narrator-voice">
       <option value="">Browser default</option>
     </select>
     <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
-      <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete saved readings and settings?')){localStorage.removeItem('arcana_readings');localStorage.removeItem('arcana_settings');location.reload()}">Clear Saved Data</button>
+      <button type="button" class="btn btn-sm btn-danger" onclick="clearSavedData()">Clear Saved Data</button>
     </div>
     <div style="margin-top:12px;text-align:right">
       <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Settings</button>

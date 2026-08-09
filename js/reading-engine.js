@@ -7,6 +7,12 @@ async function generateReading(){
     showUpgradeModal('daily-limit');
     return;
   }
+  if(Object.values(state.cards||{}).some(entry=>entry&&entry.orientation==='unknown')||
+    (state.hasDroppedCard&&state.droppedCard&&state.droppedCard.orientation==='unknown')){
+    showToast('Confirm each card orientation before generating the reading.');
+    goScreen('screen-card-entry');
+    return;
+  }
   goScreen('screen-reading');
   setReadingReadyState(false);
   clearAutoSave();
@@ -35,10 +41,17 @@ async function generateReading(){
         state.readingUsageRecorded=true;
       }
       highlightReadingBtn('classic');
+<<<<<<< Updated upstream
       content.insertAdjacentHTML(
         'afterbegin',
         `<p style="color:var(--danger);font-size:11px;margin-bottom:12px">AI reading failed (${escapeReadingHtml(e.message)}). Showing the private, on-device classic reading instead.</p>`
       );
+=======
+      const notice=document.createElement('p');
+      notice.style.cssText='color:var(--danger);font-size:11px;margin-bottom:12px';
+      notice.textContent='AI reading failed. Showing the built-in reading instead.';
+      content.insertAdjacentElement('afterbegin',notice);
+>>>>>>> Stashed changes
     }
   }else{
     state.readingMode='classic';
@@ -54,17 +67,24 @@ async function generateReading(){
 }
 
 function highlightReadingBtn(mode){
+<<<<<<< Updated upstream
   const aiButton=document.getElementById('btn-ai-read');
   const classicButton=document.getElementById('btn-classic-read');
   if(aiButton)aiButton.classList.toggle('btn-primary',mode==='ai');
   if(classicButton)classicButton.classList.toggle('btn-primary',mode==='classic');
+=======
+  const ai=document.getElementById('btn-ai-read');
+  const classic=document.getElementById('btn-classic-read');
+  if(ai){ai.classList.toggle('btn-primary',mode==='ai');ai.setAttribute('aria-pressed',String(mode==='ai'));}
+  if(classic){classic.classList.toggle('btn-primary',mode==='classic');classic.setAttribute('aria-pressed',String(mode==='classic'));}
+>>>>>>> Stashed changes
 }
 
 async function switchReadingMode(mode){
   const content=document.getElementById('reading-content');
   if(mode==='ai'){
     const settings=loadSettings();
-    try{requireAIConfiguration();}catch(e){alert(e.message);return;}
+    try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
     setReadingReadyState(false);
     content.innerHTML=thoughtfulLoadingHtml('ai-status');
     try{
@@ -72,7 +92,15 @@ async function switchReadingMode(mode){
       state.narrative=narrative;
       renderReading(narrative);
     }catch(e){
+<<<<<<< Updated upstream
       content.innerHTML=`<p style="color:var(--danger)">Error: ${escapeReadingHtml(e.message)}</p>`;
+=======
+      const error=document.createElement('p');
+      error.style.color='var(--danger)';
+      error.setAttribute('role','alert');
+      error.textContent='Unable to switch reading mode. Please try again.';
+      content.replaceChildren(error);
+>>>>>>> Stashed changes
     }
   }else{
     setReadingReadyState(false);
@@ -618,7 +646,12 @@ function resolveInfographicCardArtUrl(cardName,orientation){
 
 function renderReading(text){
   const content=document.getElementById('reading-content');
+<<<<<<< Updated upstream
   content.innerHTML=readingMarkdownToHtml(text);
+=======
+  // Markdown rendering — process lists properly
+  content.innerHTML=renderSafeMarkdown(text);
+>>>>>>> Stashed changes
   enhanceReadingOutput();
   renderReadingInfographicPanel(content);
 

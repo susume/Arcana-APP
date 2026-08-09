@@ -1,6 +1,6 @@
 <div class="screen ritual-screen ritual-screen-reading" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your tarot reading</h2>
+  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your card reading</h2>
   <div class="reading-toggle no-print">
     <button class="btn btn-sm" id="btn-ai-read" onclick="switchReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
     <button class="btn btn-sm" id="btn-classic-read" onclick="switchReadingMode('classic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> Classic Reading</button>
@@ -23,7 +23,7 @@
     </div>
     <textarea id="journal-entry" class="journal-textarea" placeholder="I want to remember..."></textarea>
     <div class="journal-actions">
-      <button class="btn btn-primary journal-save-btn" onclick="saveJournal()" disabled>Save Reflection</button>
+      <button type="button" class="btn btn-primary journal-save-btn" onclick="saveJournal(this)" disabled>Save Reflection</button>
       <span class="journal-save-status" aria-live="polite"></span>
     </div>
   </div>

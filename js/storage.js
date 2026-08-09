@@ -149,26 +149,12 @@ if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
 }
 
-<<<<<<< Updated upstream
 function persistReading(title){
-  const freeLimit=3;
-  const readings=JSON.parse(localStorage.getItem('arcana_readings')||'[]');
-=======
-function saveReading(){
-  const defaultTitle='Reading '+new Date().toLocaleDateString();
-  if(typeof openTextPrompt==='function'){
-    openTextPrompt('Save Reading','Give this reading a title.',defaultTitle,title=>persistSavedReading(title));
-    return;
-  }
-  persistSavedReading(defaultTitle);
-}
-function persistSavedReading(title){
   const freeLimit=3;
   const cleanTitle=String(title||'').trim().slice(0,120);
   if(!cleanTitle)return;
   const readings=readStoredJson('arcana_readings',[]);
   if(!Array.isArray(readings))return;
->>>>>>> Stashed changes
   const spread=getReadingSpread();
   const readingId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   readings.unshift({

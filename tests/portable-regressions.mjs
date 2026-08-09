@@ -10,6 +10,10 @@ const normalize = (value) => value.replace(/\r\n/g, '\n').trim();
 
 const index = await read('index.html');
 const templateNames = ['welcome', 'concerns', 'card-system', 'choose-reading', 'reflection', 'placement', 'overview', 'results', 'history', 'quick', 'settings', 'help'];
+const conflictFiles = ['package.json', 'index.html', 'src/premium-theme.css', 'css/premium.css', 'js/storage.js', 'js/ui.js', 'js/reading-engine.js', ...templateNames.map(name => `templates/${name}.html`)];
+for (const relative of conflictFiles) {
+  assert.doesNotMatch(await read(relative), /^(<<<<<<<|=======|>>>>>>>)/m, `${relative} contains unresolved merge markers`);
+}
 for (const name of templateNames) {
   const external = normalize(await read(`templates/${name}.html`));
   const match = index.match(new RegExp(`<template id="template-${name}">[\\s\\S]*?</template>`));

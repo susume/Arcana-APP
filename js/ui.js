@@ -141,13 +141,9 @@ function startGuided(){
   state.cardSystem='tarot';
   state.cardSystemEstablished=false;
   currentCards=getCards();
-<<<<<<< Updated upstream
   syncUploadDeckSelectors();
-  goScreen('screen-spread');
-=======
   document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
   goScreen('screen-concerns');
->>>>>>> Stashed changes
 }
 function startQuick(){
   state.mode='quick';
@@ -160,11 +156,8 @@ function startQuick(){
   state.cards={};
   state.droppedCard=null;
   state.hasDroppedCard=false;
-<<<<<<< Updated upstream
   state.cardSystem='tarot';
-=======
   state.concerns=[];
->>>>>>> Stashed changes
   state.cardSystemEstablished=false;
   currentCards=getCards();
   state.readerLifeStage='';
@@ -1136,15 +1129,9 @@ function buildManualEntries(spread){
     const orientation=existing&&['upright','reversed','unknown'].includes(existing.orientation)?existing.orientation:'upright';
     const orientationLabel=orientation==='reversed'?'R':orientation==='unknown'?'?':'U';
     row.innerHTML=`
-<<<<<<< Updated upstream
-      <span class="pos-name">${pos.name}</span><span class="pos-desc-hint">${pos.description}</span>
-      <button class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?existing.name:'Choose card...'}</button>
-      <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" aria-pressed="${orientation==='reversed'}" aria-label="Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}." title="Card orientation: ${orientation}">${orientation==='reversed'?'R':'U'}</button>`;
-=======
       <span class="pos-name">${escapeHtml(pos.name)}</span><span class="pos-desc-hint">${escapeHtml(pos.description)}</span>
       <button type="button" class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?escapeHtml(existing.name):'Choose card...'}</button>
-      <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':orientation==='unknown'?'unknown':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" title="Toggle orientation" aria-label="Toggle ${escapeHtml(pos.name)} orientation">${orientationLabel}</button>`;
->>>>>>> Stashed changes
+      <button type="button" class="orient-btn ${orientation==='reversed'?'reversed':orientation==='unknown'?'unknown':''}" onclick="toggleOrient(this)" data-orient="${orientation}" data-pos="${pos.id}" aria-pressed="${orientation==='reversed'}" aria-label="Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}." title="Card orientation: ${orientation}">${orientationLabel}</button>`;
     container.appendChild(row);
   });
 }
@@ -1180,16 +1167,13 @@ function toggleOrient(el){
     el.textContent='U';
     el.classList.remove('reversed');
   }
-<<<<<<< Updated upstream
+  el.classList.remove('unknown');
   const orientation=el.dataset.orient;
   if(typeof el.setAttribute==='function'){
     el.setAttribute('aria-pressed',String(orientation==='reversed'));
     el.setAttribute('aria-label',`Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}.`);
   }
   el.title=`Card orientation: ${orientation}`;
-=======
-  el.setAttribute('aria-label',el.dataset.orient==='reversed'?'Orientation reversed. Activate to set upright.':'Orientation upright. Activate to set reversed.');
->>>>>>> Stashed changes
   syncOrientationState(el);
 }
 
@@ -1536,17 +1520,10 @@ function renderOverview(){
       const kws=card?card.keywords.slice(0,3):[];
       tile.innerHTML=`
         <div class="suit-sym">${art}</div>
-<<<<<<< Updated upstream
-        <div class="c-name">${entry.name}</div>
-        <div class="c-pos">${pos.name}</div>
-        <span class="orient ${entry.orientation}">${entry.orientation==='upright'?'Upright':'Reversed'}</span>
-        <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>`;
-=======
         <div class="c-name">${escapeHtml(entry.name)}</div>
         <div class="c-pos">${escapeHtml(pos.name)}</div>
         <span class="orient ${entry.orientation==='reversed'?'reversed':entry.orientation==='upright'?'upright':'unknown'}">${entry.orientation==='upright'?'↑ Upright':entry.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
         <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>`;
->>>>>>> Stashed changes
     }
     grid.appendChild(tile);
   });
@@ -1559,15 +1536,9 @@ function renderOverview(){
     dropDiv.innerHTML=`<div class="overview-tile" style="border-color:var(--au-violet)">
       <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
       <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
-<<<<<<< Updated upstream
-      <div class="c-name">${state.droppedCard.name}</div>
-      <span class="orient ${state.droppedCard.orientation}">${state.droppedCard.orientation==='upright'?'Upright':'Reversed'}</span>
-      <div class="kw">${kws.map(k=>`<span>${k}</span>`).join('')}</div>
-=======
       <div class="c-name">${escapeHtml(state.droppedCard.name)}</div>
       <span class="orient ${state.droppedCard.orientation==='reversed'?'reversed':state.droppedCard.orientation==='upright'?'upright':'unknown'}">${state.droppedCard.orientation==='upright'?'↑ Upright':state.droppedCard.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
       <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>
->>>>>>> Stashed changes
       <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling  - it may reveal an underlying theme influencing your reading.</p>
     </div>`;
   }else{
@@ -1718,13 +1689,7 @@ Address both card meaning and positional context, but avoid exhaustive card-by-c
 }
 
 function renderReadingInto(container,text){
-<<<<<<< Updated upstream
-  container.innerHTML=typeof renderReadingMarkdown==='function'
-    ? renderReadingMarkdown(text)
-    : String(text||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-=======
   container.innerHTML=renderSafeMarkdown(text);
->>>>>>> Stashed changes
 }
 
 // ===== TOAST NOTIFICATION =====

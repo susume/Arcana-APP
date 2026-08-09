@@ -6,14 +6,9 @@
   "scripts": {
     "build:css": "tailwindcss -i ./src/premium-theme.css -o ./css/premium.css --minify",
     "build:ts": "tsc -p tsconfig.json",
-<<<<<<< Updated upstream
-    "build": "npm run build:css && npm run build:ts",
-    "test": "npm run build:ts && node tests\\card-art.mjs && node tests\\ai-identification.mjs && node tests\\deck-selection.mjs && node tests\\worker-activation.mjs && node tests\\reading-concise.mjs && powershell -ExecutionPolicy Bypass -File tests\\monetization-config.ps1 && powershell -ExecutionPolicy Bypass -File tests\\journal-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\reading-actions.ps1 && powershell -ExecutionPolicy Bypass -File tests\\homepage-ui.ps1 && powershell -ExecutionPolicy Bypass -File tests\\app-shell-ui.ps1",
-=======
     "sync": "node scripts/sync-embedded-content.mjs",
     "build": "npm run sync && npm run build:css && npm run build:ts",
     "test": "npm run sync && npm run build:ts && node tests/run-tests.mjs",
->>>>>>> Stashed changes
     "serve": "node scripts/serve-static.mjs"
   },
   "dependencies": {

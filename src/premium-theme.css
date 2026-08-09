@@ -5096,7 +5096,6 @@ textarea:focus-visible {
   }
 }
 
-<<<<<<< Updated upstream
 /* Audit fixes: preserve Ritual Stage styling while restoring mobile reflow and
    native keyboard semantics to the reading workspace. */
 .ritual-screen-workspace button.upload-zone {
@@ -5221,16 +5220,6 @@ textarea:focus-visible {
 @media (max-width: 720px) {
   .ritual-home .ritual-nav {
     grid-template-columns: minmax(0, 1fr) 44px !important;
-    gap: 10px 12px !important;
-  }
-
-  .ritual-home .ritual-brand {
-    grid-column: 1;
-    grid-row: 1;
-=======
-@media (max-width: 720px) {
-  .ritual-home .ritual-nav {
-    grid-template-columns: minmax(0, 1fr) 44px !important;
     grid-template-rows: auto auto;
     gap: 10px 12px !important;
   }
@@ -5240,15 +5229,12 @@ textarea:focus-visible {
     grid-row: 2;
     width: 100% !important;
     min-width: 0;
->>>>>>> Stashed changes
   }
 
   .ritual-home .ritual-settings {
     grid-column: 2;
     grid-row: 1;
   }
-<<<<<<< Updated upstream
-
   .ritual-home .ritual-nav-links {
     order: 3 !important;
     grid-column: 1 / -1 !important;
@@ -5282,6 +5268,4 @@ textarea:focus-visible {
     display: grid;
     grid-template-columns: 1fr;
   }
-=======
->>>>>>> Stashed changes
 }

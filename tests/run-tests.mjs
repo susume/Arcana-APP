@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const nodeTests = ['card-art.mjs', 'ai-identification.mjs', 'deck-selection.mjs', 'worker-activation.mjs', 'portable-regressions.mjs', 'reading-concise.mjs'];
+const nodeTests = ['card-art.mjs', 'ai-identification.mjs', 'deck-selection.mjs', 'worker-activation.mjs', 'portable-regressions.mjs', 'reading-concise.mjs', 'reader-life-stage-safety.mjs'];
 for (const test of nodeTests) {
   execFileSync(process.execPath, [path.join(root, 'tests', test)], { cwd: root, stdio: 'inherit' });
 }

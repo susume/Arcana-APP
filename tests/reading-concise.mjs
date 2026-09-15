@@ -37,6 +37,9 @@ function makeContext() {
     getSpread() {
       return context.SPREADS.find(spread => spread.id === context.state.spreadId);
     },
+    renderSafeMarkdown(text) {
+      return context.readingMarkdownToHtml(text);
+    },
     enhanceReadingOutput() {
       context.enhanced = true;
     },

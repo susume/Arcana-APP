@@ -148,7 +148,7 @@ function showUpgradeModal(reason){
   modal.innerHTML = `
     <div class="modal upgrade-modal">
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
-      <div class="plan-pill">Premium - $29 lifetime unlock</div>
+      <div class="plan-pill">Premium lifetime unlock from $5</div>
       <h2>${featureTitle(reason)}</h2>
       ${countLine}
       <div class="upgrade-grid">
@@ -159,7 +159,9 @@ function showUpgradeModal(reason){
         <span>Advanced spreads</span>
         <span>Reading comparison</span>
       </div>
-      ${getGumroadProductUrl()?`<p class="upgrade-note">One-time payment. Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Buy Premium - $29</button>`:''}
+      <p class="upgrade-note">Pay what you want. $5 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+      <p class="upgrade-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+      ${getGumroadProductUrl()?`<p class="upgrade-note">Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button>`:''}
       <div class="activation-box">
         <label for="activation-key-input">Activation key</label>
         <input id="activation-key-input" type="text" placeholder="Paste your founder or Gumroad key">

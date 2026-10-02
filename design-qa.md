@@ -253,3 +253,39 @@ final result: passed within the documented verification scope
   `57-benefit-pitch-hero-mobile.jpg`. Browser warning/error logs are empty.
 - Fresh build, full regressions, JavaScript syntax checks, and diff whitespace
   checks pass. External and embedded templates remain synced. Changes are local.
+
+## Pay-what-you-want pricing — 2026-10-03
+
+- Updated the homepage, Settings, and upgrade modal from the fixed $29 price to
+  a one-time Premium lifetime unlock starting at $5, with a $20 suggested
+  contribution. Every contribution amount unlocks the same Premium features.
+- Added the try-before-buy invitation and all-sales-final/no-refunds policy,
+  qualified by applicable law and Gumroad's policies, on each purchase surface.
+- Kept Gumroad purchase links, activation, free daily usage, and Premium gates.
+  Actual checkout pricing and refund settings remain configured on Gumroad.
+- Fixed inherited dark backgrounds behind the upgrade feature list so its forest
+  text is readable on sage surfaces in Quiet Atelier.
+- Desktop 1280px and mobile 390px previews show readable pricing and no document
+  horizontal overflow. Settings and the upgrade dialog remain scrollable.
+  Escape closes the upgrade dialog and restores focus to its opening button.
+  Browser warning/error logs are empty.
+- Screenshots in `docs/qa/2026-10-03/`: `pricing-desktop.jpg`,
+  `pricing-mobile.jpg`, `upgrade-desktop.jpg`, `upgrade-mobile.jpg`, and
+  `settings-mobile.jpg`.
+- Fresh build, full regressions, JavaScript syntax checks, and diff whitespace
+  checks pass. External and embedded templates are synchronized. Changes are local.
+
+## Live founder activation deployment — 2026-10-03
+
+- The production Worker was running an older version without founder activation.
+  Added the private `ARCANA_ENTITLEMENT_SECRET` binding with user approval and
+  deployed the existing tested `server/cloudflare-worker.js` to
+  `ancient-smoke-2917`; active version is `df2fb356`.
+- The approved founder key returns HTTP 200 with a signed Premium entitlement.
+  An invalid founder key returns HTTP 403. Hosted AI returned HTTP 200 in a
+  smoke check. No raw keys, signing secret, or entitlement tokens are recorded.
+- Activation through Settings on `https://www.arcanaguide.com/` confirms
+  "Premium activated on this browser." Evidence:
+  `docs/qa/2026-10-03/founder-activation-live.jpg`.
+- Full regressions and Worker syntax checks passed. This deployment updates
+  the backend; the pay-what-you-want frontend copy remains local.

@@ -5607,7 +5607,7 @@ html[data-theme="atelier"] body .ritual-screen .reading-section :is(p,li) {
   line-height: 1.75 !important; }
 html[data-theme="atelier"] body .ritual-screen .reading-section strong {
   color: var(--ink) !important; }
-html[data-theme="atelier"] body :is(.journal-section,.history-journal,.activation-box,.settings-section,.infographic-panel,.reading-infographic-panel) {
+html[data-theme="atelier"] body :is(.journal-section,.history-journal,.activation-box,.settings-section,.infographic-panel,.reading-infographic-panel,.upgrade-grid span) {
   background: #edf0e3 !important;
   border-color: #ced4bf !important;
   color: var(--ink) !important;

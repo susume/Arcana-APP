@@ -25,7 +25,7 @@ Assert-Contains $settings 'Activation key' 'Expected Settings to accept founder 
 Assert-Contains $subscription 'Verifying activation key...' 'Expected source-neutral verification copy.'
 Assert-NotContains $subscription 'ARCANA_FOUNDER_LICENSE_HASH' 'Founder verification must remain server-side.'
 Assert-Contains $subscription 'getActivationApiUrl()' 'Expected premium activation to call the configured backend endpoint.'
-Assert-Contains $subscription '$29 lifetime unlock' 'Expected premium copy to advertise a one-time $29 lifetime unlock.'
+Assert-Contains $subscription 'Premium lifetime unlock from $5' 'Expected premium copy to advertise lifetime access starting at $5.'
 Assert-NotContains $subscription '$4.99/month' 'Expected subscription pricing copy to be removed.'
 
 Assert-Contains $config 'ARCANA_ACTIVATION_API_URL' 'Expected activation endpoint configuration.'
@@ -52,7 +52,7 @@ Assert-Contains $help 'Create API key in a new project' 'Expected non-technical 
 Assert-Contains $index 'How to get a free Gemini API key' 'Expected embedded help fallback to include Gemini key guide.'
 
 Assert-Contains $welcome 'Premium lifetime unlock' 'Expected homepage Premium copy to use lifetime language.'
-Assert-Contains $welcome '$29' 'Expected homepage to show the one-time price.'
+Assert-Contains $welcome 'starting at $5' 'Expected homepage to show the minimum contribution.'
 Assert-NotContains $welcome '$4.99/month' 'Expected homepage subscription pricing to be removed.'
 Assert-Contains $index 'Premium lifetime unlock' 'Expected embedded welcome fallback to use lifetime language.'
 

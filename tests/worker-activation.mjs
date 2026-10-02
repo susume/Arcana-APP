@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import worker from '../server/cloudflare-worker.js';
 
 function createKv() {
@@ -30,6 +31,48 @@ async function request(path, { body, headers = {}, method = 'POST' } = {}, env =
 
 const originalFetch = globalThis.fetch;
 try {
+  {
+    // Synthetic founder fixture; the real activation credential stays out of tests.
+    const key = 'ARCANA-FOUNDER-TEST-KEY';
+    const hash = createHash('sha256').update(key).digest('hex');
+    const kv = createKv();
+    let upstreamCalls = 0;
+    globalThis.fetch = async () => { upstreamCalls++; throw new Error('Founder keys must not reach Gumroad'); };
+    const env = { ...baseEnv(), ARCANA_FOUNDER_LICENSE_HASH: hash, ARCANA_LICENSES: kv };
+    const response = await request('/api/activate', {
+      body: { licenseKey: ' arcana-founder-test- key ' }, headers: { 'CF-Connecting-IP': '192.0.2.10' }
+    }, env);
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.isPremium, true);
+    assert.equal(data.source, 'founder');
+    assert.equal(upstreamCalls, 0);
+    assert.match(data.entitlementToken, /^v1\./);
+    const payload = JSON.parse(Buffer.from(data.entitlementToken.split('.')[1], 'base64url').toString());
+    assert.equal(payload.licenseHash, hash);
+    assert.equal(payload.source, 'founder');
+    const records = [...kv.data.values()].join('\n');
+    assert.doesNotMatch(records, /ARCANA-FOUNDER-TEST-KEY/i);
+    assert.equal(JSON.parse(records).active, true);
+
+    const invalid = await request('/api/activate', {
+      body: { licenseKey: 'ARCANA-FOUNDER-INVALID' }, headers: { 'CF-Connecting-IP': '192.0.2.11' }
+    }, env);
+    assert.equal(invalid.status, 403);
+    assert.equal((await invalid.json()).isPremium, false);
+    assert.equal(upstreamCalls, 0);
+
+    const missingSecret = await request('/api/activate', {
+      body: { licenseKey: key }, headers: { 'CF-Connecting-IP': '192.0.2.12' }
+    }, { ...env, ARCANA_ENTITLEMENT_SECRET: '' });
+    assert.equal(missingSecret.status, 503);
+
+    const disabled = await request('/api/activate', {
+      body: { licenseKey: key }, headers: { 'CF-Connecting-IP': '192.0.2.13' }
+    }, { ...env, ARCANA_FOUNDER_LICENSE_HASH: '' });
+    assert.equal(disabled.status, 403);
+    assert.equal(upstreamCalls, 0);
+  }
   {
     const response = await request('/api/unknown', { method: 'GET' }, baseEnv());
     assert.equal(response.status, 404);

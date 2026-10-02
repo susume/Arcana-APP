@@ -26,3 +26,20 @@ The Worker enforces exact-origin CORS, body and prompt limits, JPEG/PNG/WebP ima
 validation, upstream timeouts, and route-specific rate limits. It stores only
 hashed license identifiers and minimal event metadata in KV; raw license keys,
 emails, and webhook payloads are never persisted.
+
+## Founder activation
+
+`POST /api/activate` verifies the approved founder key by its SHA-256 digest
+before the Gumroad path. It issues the same signed entitlement token, records
+only hashed metadata, and never forwards founder credentials to Gumroad. Invalid
+keys remain rejected. `ARCANA_ENTITLEMENT_SECRET` is required for both paths.
+
+The server-side `ARCANA_FOUNDER_LICENSE_HASH` variable can override the approved
+digest for rotation. Setting it to an empty value disables founder activation.
+Never put an activation key or digest allow-list in browser JavaScript.
+
+For dashboard deployments, replace the existing Worker's code with
+`server/cloudflare-worker.js` and publish it to the configured Worker URL.
+Retain its existing secret and KV bindings. A local frontend rebuild does not
+publish the Worker; until it is updated, the live service continues using the
+old Gumroad-only activation path.

@@ -638,6 +638,8 @@ responses, rate limits, upstream timeouts, and three service paths.
 ### `POST /api/activate`
 
 - Normalizes and hashes the submitted license key
+- Verifies the approved founder-key digest on the server before the Gumroad path;
+  founder credentials are never sent to Gumroad and receive signed entitlements
 - Calls Gumroad's license verification endpoint
 - Uses the configured product ID or the checked-in public fallback product ID
 - Requires an exact product and seller match and rejects failed, refunded, or chargebacked purchases

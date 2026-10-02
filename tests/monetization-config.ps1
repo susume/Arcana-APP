@@ -21,6 +21,9 @@ function Assert-NotContains($Haystack, $Needle, $Message) {
 
 Assert-NotContains $subscription 'ARCANA_ACTIVATION_KEYS' 'Activation keys must not be hardcoded in browser JavaScript.'
 Assert-Contains $subscription 'activatePremiumKey' 'Expected activation helper to remain available.'
+Assert-Contains $settings 'Activation key' 'Expected Settings to accept founder and Gumroad activation keys.'
+Assert-Contains $subscription 'Verifying activation key...' 'Expected source-neutral verification copy.'
+Assert-NotContains $subscription 'ARCANA_FOUNDER_LICENSE_HASH' 'Founder verification must remain server-side.'
 Assert-Contains $subscription 'getActivationApiUrl()' 'Expected premium activation to call the configured backend endpoint.'
 Assert-Contains $subscription '$29 lifetime unlock' 'Expected premium copy to advertise a one-time $29 lifetime unlock.'
 Assert-NotContains $subscription '$4.99/month' 'Expected subscription pricing copy to be removed.'

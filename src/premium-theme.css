@@ -5309,6 +5309,11 @@ html[data-theme="atelier"], html[data-theme="atelier"] .ritual-home, html[data-t
 html[data-theme="atelier"], html[data-theme="atelier"] body {
   background: var(--paper) !important;
   color: var(--ink) !important; }
+/* Native menus need their own palette; older options used the dark theme. */
+html[data-theme="atelier"] body select { color-scheme: light !important; }
+html[data-theme="atelier"] body select :is(option,optgroup) {
+  background-color: #fffcf6 !important;
+  color: #203b33 !important; }
 html[data-theme="atelier"] body::before, html[data-theme="atelier"] body::after, #stars, .bg-glow, .moon, .cosmic-bg,
 html[data-theme="atelier"] body .ritual-ambient, html[data-theme="atelier"] body .ritual-home::before, html[data-theme="atelier"] body .ritual-home::after,
 html[data-theme="atelier"] body .ritual-screen::before, html[data-theme="atelier"] body .ritual-screen::after {

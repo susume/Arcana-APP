@@ -36,7 +36,7 @@ function isPremium(){
 
 async function activatePremiumKey(key){
   const clean = normalizeActivationKey(key);
-  if(!clean) throw new Error('Enter your Gumroad license key.');
+  if(!clean) throw new Error('Enter your activation key.');
   const url = getActivationApiUrl();
   if(!url) throw new Error('Activation service is not configured yet.');
   const resp = await fetch(url, {
@@ -45,7 +45,7 @@ async function activatePremiumKey(key){
     body:JSON.stringify({licenseKey:clean})
   });
   const data = await resp.json().catch(()=>({}));
-  if(!resp.ok || !data.isPremium) throw new Error(data.error || 'That Gumroad license key was not recognized.');
+  if(!resp.ok || !data.isPremium) throw new Error(data.error || 'That activation key was not recognized.');
   saveSubscription({
     tier:'premium',
     entitlementToken:String(data.entitlementToken||''),
@@ -161,8 +161,8 @@ function showUpgradeModal(reason){
       </div>
       ${getGumroadProductUrl()?`<p class="upgrade-note">One-time payment. Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Buy Premium - $29</button>`:''}
       <div class="activation-box">
-        <label for="activation-key-input">Gumroad License Key</label>
-        <input id="activation-key-input" type="text" placeholder="Paste your Gumroad license key">
+        <label for="activation-key-input">Activation key</label>
+        <input id="activation-key-input" type="text" placeholder="Paste your founder or Gumroad key">
         <button class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
         <p id="activation-status" class="activation-status"></p>
       </div>
@@ -175,14 +175,14 @@ async function submitActivationKey(){
   const input = document.getElementById('activation-key-input');
   const status = document.getElementById('activation-status');
   try{
-    status.textContent = 'Verifying Gumroad license key...';
+    status.textContent = 'Verifying activation key...';
     await activatePremiumKey(input.value);
     status.textContent = 'Premium activated on this browser.';
     status.style.color = 'var(--success)';
     renderEntitlementsUI();
     setTimeout(() => closeModal('modal-upgrade'), 650);
   }catch(e){
-    status.textContent = e.message || 'That Gumroad license key was not recognized.';
+    status.textContent = e.message || 'That activation key was not recognized.';
     status.style.color = 'var(--danger)';
   }
 }
@@ -191,11 +191,11 @@ async function submitSettingsActivationKey(){
   const input=document.getElementById('premium-key-input');
   const status=document.getElementById('premium-key-status');
   if(!input||!input.value.trim()){
-    if(status)status.textContent='Paste your Gumroad license key first.';
+    if(status)status.textContent='Paste your founder or Gumroad key first.';
     return;
   }
   try{
-    if(status){status.textContent='Verifying license key...';status.style.color='var(--muted)';}
+    if(status){status.textContent='Verifying activation key...';status.style.color='var(--muted)';}
     await activatePremiumKey(input.value);
     if(status){status.textContent='Premium activated on this browser.';status.style.color='var(--success)';}
     input.value='';

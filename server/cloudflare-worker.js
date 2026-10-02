@@ -11,6 +11,8 @@ const GUMROAD_UPSTREAM_TIMEOUT_MS = 12_000;
 const GUMROAD_LICENSE_VERIFY_URL = 'https://api.gumroad.com/v2/licenses/verify';
 const ARCANA_GUMROAD_PRODUCT_ID = 'HOp54WHc-rZtK8nTrqtFcg==';
 const ARCANA_GUMROAD_SELLER_ID = 'dNW90VHgyFlXSIHD7Xr6Sw==';
+// Approved founder entitlement; only the digest belongs in server code.
+const ARCANA_FOUNDER_LICENSE_HASH = '64fe0c8a6456a665f33b31bb1df11a29b244a4c3d9dc4875590fa1dcb90c81ee';
 const DEFAULT_ALLOWED_ORIGINS = ['https://www.arcanaguide.com', 'https://arcanaguide.com'];
 const localRateBuckets = new Map();
 
@@ -187,7 +189,26 @@ async function handleActivate(request, env, origin) {
   }
 
   const licenseKey = normalizeLicenseKey(body && (body.licenseKey || body.license_key));
-  if (!licenseKey || licenseKey.length > 256) return json({ error: 'Enter a valid Gumroad license key.' }, 400, origin);
+  if (!licenseKey || licenseKey.length > 256) return json({ error: 'Enter a valid activation key.' }, 400, origin);
+
+  const licenseIdentifier = await licenseHash(licenseKey);
+  const founderHash = String(env.ARCANA_FOUNDER_LICENSE_HASH ?? ARCANA_FOUNDER_LICENSE_HASH).trim().toLowerCase();
+  if (/^[a-f0-9]{64}$/.test(founderHash) && constantTimeEqual(licenseIdentifier, founderHash)) {
+    const activatedAt = new Date().toISOString();
+    const record = { source: 'founder', activatedAt, licenseHash: licenseIdentifier, active: true };
+    if (env.ARCANA_LICENSES) {
+      await env.ARCANA_LICENSES.put(`license:${licenseIdentifier}`, JSON.stringify(record));
+    }
+    const entitlementToken = await signEntitlement({
+      tier: 'premium', source: 'founder', productId: String(productId),
+      licenseHash: licenseIdentifier, issuedAt: activatedAt
+    }, env.ARCANA_ENTITLEMENT_SECRET);
+    return json({ isPremium: true, source: 'founder', activatedAt, entitlementToken }, 200, origin);
+  }
+  // Founder credentials are verified here and must never be sent to Gumroad.
+  if (licenseKey.startsWith('ARCANA-FOUNDER-')) {
+    return json({ isPremium: false, error: 'That activation key was not recognized.' }, 403, origin);
+  }
 
   const form = new URLSearchParams();
   form.set('product_id', productId);
@@ -210,11 +231,10 @@ async function handleActivate(request, env, origin) {
   const productMatches = String(purchase.product_id || '') === String(productId);
   const sellerMatches = !!purchase.seller_id && String(purchase.seller_id) === String(sellerId);
   if (!gumroad.success || !productMatches || !sellerMatches || !purchaseIsValid(purchase)) {
-    return json({ isPremium: false, error: 'That Gumroad license key was not recognized.' }, 403, origin);
+    return json({ isPremium: false, error: 'That activation key was not recognized.' }, 403, origin);
   }
 
   const activatedAt = new Date().toISOString();
-  const licenseIdentifier = await licenseHash(licenseKey);
   const record = {
     source: 'gumroad',
     activatedAt,

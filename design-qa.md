@@ -159,3 +159,97 @@ final result: passed
 - No new animation runtime was added; motion remains CSS-only to preserve the current architecture and performance.
 
 final result: passed
+
+## Quiet Atelier audit — 2026-10-02
+
+The user authorized a redesign across all Arcana pages. Quiet Atelier replaces
+indigo/celestial surfaces with parchment, forest ink, sage panels, brass accents,
+and a shared utility header. Existing routes, physical-card behavior, premium
+pricing, and static architecture remain intact.
+
+Accepted screenshots and findings: [full audit](docs/qa/2026-10-02/audit.md).
+Implementation intent: [theme specification](docs/superpowers/specs/2026-10-02-quiet-atelier-design.md).
+
+- Verified desktop 1280px and mobile 390px layouts across the main routes; zero
+  document horizontal overflow in recorded measurements.
+- Exercised guided selection, physical/manual card entry, picker, overview edits,
+  AI text generation, Classic mode, save/reopen, journal, share comment preview,
+  settings, and help.
+- Fixed storage failure feedback, resumed control state, late AI/photo responses,
+  single-completion usage, dialog focus, nested picker semantics, and canvas
+  helper collision / asynchronous rendering.
+- Final share canvas displays card fallback names and the current comment.
+- Settings/picker Escape returns focus to the opening control. Final clean
+  browser warning/error logs are empty.
+- Fresh build, full regression suite, edited JavaScript syntax checks, and diff
+  whitespace checks pass. External and embedded templates are synchronized.
+- Live payment/activation, personal photo recognition, screen-reader compliance,
+  OS printing, and voice playback were not exercised. Parser and Worker behavior
+  are covered by the existing automated regressions. Changes remain local.
+
+final result: passed within the documented verification scope
+
+## Quiet Atelier imagery and supplied logo — 2026-10-02
+
+- Replaced all eight decorative homepage images: two generated daylight photos
+  plus six original sage/brass SVG illustrations. Physical-card reference art in
+  reading flows remains recognizable and unchanged.
+- Integrated the supplied horizontal Arcana Guide logo into the homepage and
+  shared app headers, preserving alpha and original gold/navy artwork. Added the
+  stacked logo as a small favicon export.
+- Optimized web photos/header logo as WebP, retained source assets and exact
+  generation prompts, and added lazy loading below the fold.
+- Fixed the legacy hero image minimum height so all three cards fit the arch.
+  Comparison illustrations use contained proportions instead of clipping.
+- Desktop 1280px and mobile 390px checks: images load, no document horizontal
+  overflow, product utility buttons remain reachable, and console logs are clean.
+- Accepted screenshots: `44-imagery-home-desktop.jpg`,
+  `45-imagery-journey-desktop.jpg`, `46-imagery-home-mobile.jpg`, and
+  `47-imagery-app-mobile.jpg` in
+  `docs/qa/2026-10-02/`. Asset notes: `assets/homepage/atelier/README.md`.
+- Fresh build, regression suite, JavaScript syntax checks, and diff whitespace
+  checks passed after the imagery and logo changes. Changes remain local.
+
+## Reading-engine homepage copy — 2026-10-02
+
+- Replaced the real-card/random-generator comparison with an explanation of the
+  ArcanaGuide reading engine: question, spread position, orientation, cross-card
+  patterns, central message, practical guidance, and reflection questions.
+- Claims were checked against `buildAIReadingPrompt()` and its output schema in
+  `js/reading-engine.js`. The copy does not promise prediction or superior accuracy.
+- Removed plus/minus badges and comparison illustrations. Two readable panels
+  now give equal emphasis to contextual interpretation and useful reflection.
+- Desktop 1280px and mobile 390px show readable copy, correctly stacked panels,
+  and zero document horizontal overflow. Browser warning/error logs are empty.
+- Screenshots: `49-reading-engine-desktop.jpg`,
+  `50-reading-engine-mobile-context.jpg`, and
+  `51-reading-engine-mobile-reflection.jpg` in `docs/qa/2026-10-02/`.
+- Fresh build, full regression suite, JavaScript syntax checks, and diff whitespace
+  checks passed. Embedded and external templates are synchronized. Changes are local.
+
+## Three-benefit sales pitch — 2026-10-02
+
+- Simplified the homepage into personal readings, a remembered journey, and a
+  printable infographic keepsake. The three-image benefit gallery now comes
+  directly after the hero. Hero, workflow, Premium offer, and closing copy were
+  shortened and aligned with the same benefits.
+- New generated reading/keepsake images use the existing daylight, sage, brass,
+  and paper palette. Originals and exact prompts are preserved; 1000px WebP
+  exports are approximately 182KB and 167KB. Journal art is reused.
+- Cards have arched image tops and short benefit statements. A compact offer
+  replaces the duplicate journal-photo promotion; existing pricing and gates
+  remain in place. Journal's Premium status is visible in the gallery.
+- Fixed inherited pale description text and clipped pricing in the offer. Both
+  now render visibly in forest ink, including the $29 lifetime price.
+- At 1280px the three cards share one row; at 390px they stack. Images load,
+  page IDs are unique, and measured document horizontal overflow is zero.
+- Keyboard Enter on Why Arcana reaches the benefit section with visible focus.
+  Start a Free Reading opens the guided flow. Explore Premium opens the existing
+  upgrade dialog; Escape closes it and restores the opening button's focus.
+- Screenshots are saved as `52-benefit-pitch-hero-desktop.jpg`,
+  `53-benefit-pitch-desktop.jpg`, `54-benefit-pitch-mobile-reading.jpg`, and
+  `55-benefit-pitch-mobile-keepsake.jpg` in `docs/qa/2026-10-02/`.
+- Offer and hero mobile evidence: `56-benefit-pitch-offer-mobile.jpg` and
+  `57-benefit-pitch-hero-mobile.jpg`. Browser warning/error logs are empty.
+- Fresh build, full regressions, JavaScript syntax checks, and diff whitespace
+  checks pass. External and embedded templates remain synced. Changes are local.

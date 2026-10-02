@@ -14,6 +14,7 @@ async function generateReading(){
     return;
   }
   goScreen('screen-reading');
+  const requestVersion=++readingRequestVersion;
   setReadingReadyState(false);
   clearAutoSave();
   const content=document.getElementById('reading-content');
@@ -25,6 +26,7 @@ async function generateReading(){
     state.readingMode='ai';
     try{
       const narrative=await generateAIReading(settings);
+      if(requestVersion!==readingRequestVersion)return;
       state.narrative=narrative;
       renderReading(narrative);
       if(!state.readingUsageRecorded){
@@ -33,6 +35,8 @@ async function generateReading(){
       }
       highlightReadingBtn('ai');
     }catch(e){
+      if(requestVersion!==readingRequestVersion)return;
+      state.readingMode='classic';
       const fallback=generateClassicReading();
       state.narrative=fallback;
       renderReading(fallback);
@@ -67,28 +71,55 @@ function highlightReadingBtn(mode){
 }
 
 async function switchReadingMode(mode){
+  if(!state.readingUsageRecorded&&!canGenerateReading()){
+    showUpgradeModal('daily-limit');
+    return;
+  }
   const content=document.getElementById('reading-content');
+  const previousNarrative=state.narrative;
+  const previousMode=state.readingMode;
+  const previousPackage=state.readingPackage;
   if(mode==='ai'){
     const settings=loadSettings();
     try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
+    const requestVersion=++readingRequestVersion;
     setReadingReadyState(false);
     content.innerHTML=thoughtfulLoadingHtml('ai-status');
     try{
       const narrative=await generateAIReading(settings);
+      if(requestVersion!==readingRequestVersion)return;
       state.narrative=narrative;
+      state.readingMode='ai';
       renderReading(narrative);
     }catch(e){
+      if(requestVersion!==readingRequestVersion)return;
+      state.narrative=previousNarrative;
+      state.readingMode=previousMode;
+      state.readingPackage=previousPackage;
+      if(previousNarrative)renderReading(previousNarrative);
+      else{
+        content.innerHTML='';
+        setReadingReadyState(false);
+      }
       const error=document.createElement('p');
       error.style.color='var(--danger)';
       error.setAttribute('role','alert');
       error.textContent='Unable to switch reading mode. Please try again.';
-      content.replaceChildren(error);
+      content.prepend(error);
+      highlightReadingBtn(previousMode==='ai'?'ai':'classic');
+      return;
     }
   }else{
+    readingRequestVersion++;
+    state.readingMode='classic';
     setReadingReadyState(false);
     const classic=generateClassicReading();
     state.narrative=classic;
     renderReading(classic);
+  }
+  if(!state.readingUsageRecorded){
+    recordCompletedReading();
+    state.readingUsageRecorded=true;
   }
   highlightReadingBtn(mode);
 }
@@ -274,12 +305,14 @@ ${cardLines}${droppedLine}`;
 }
 
 async function generateAIReading(settings,statusElement){
+  const requestVersion=readingRequestVersion;
   const raw=await callGemini(
     buildAIReadingPrompt(settings),
     null,
     null,
     statusElement||document.getElementById('ai-status')
   );
+  if(requestVersion!==readingRequestVersion)return '';
   const readingPackage=parseAIReadingPackage(raw);
   state.readingPackage=readingPackage;
   state.readingInfographic=buildInfographicModel(readingPackage);
@@ -487,10 +520,10 @@ function buildClassicReadingPackage(){
     themes.push({title:`${capitalizeReadingText(dominantSuit[0])} emphasis`,message:`Several cards return to ${suitThemes[dominantSuit[0]]||dominantSuit[0]}, so this area deserves steady attention.`});
   }
   if(reversedCount){
-    themes.push({title:'Inner work',message:`${reversedCount} reversed card${reversedCount===1?'':'s'} point to energy that may be delayed, internalized, or ready for review.`});
+    themes.push({title:'Inner work',message:`${reversedCount} reversed card${reversedCount===1?'':'s'} ${reversedCount===1?'points':'point'} to energy that may be delayed, internalized, or ready for review.`});
   }
   if(majorCount){
-    themes.push({title:'Bigger lesson',message:`${majorCount} Major Arcana card${majorCount===1?'':'s'} add weight to the choices and lessons represented in the spread.`});
+    themes.push({title:'Bigger lesson',message:`${majorCount} Major Arcana card${majorCount===1?'':'s'} ${majorCount===1?'adds':'add'} weight to the choices and lessons represented in the spread.`});
   }
   normalizeThemeItems(themes).slice(0,3);
 
@@ -511,7 +544,7 @@ function buildClassicReadingPackage(){
   });
 
   const patterns=[];
-  if(majorCount)patterns.push(`${majorCount} Major Arcana card${majorCount===1?'':'s'} suggest that some parts of this reading concern longer-term lessons rather than a passing mood.`);
+  if(majorCount)patterns.push(`${majorCount} Major Arcana card${majorCount===1?'':'s'} ${majorCount===1?'suggests':'suggest'} that some parts of this reading concern longer-term lessons rather than a passing mood.`);
   if(dominantSuit)patterns.push(`${capitalizeReadingText(dominantSuit[0])} appears most often, emphasizing ${suitThemes[dominantSuit[0]]||dominantSuit[0]}.`);
   if(reversedCount)patterns.push(`${reversedCount} reversal${reversedCount===1?'':'s'} ask for review, patience, or an internal adjustment before outward progress.`);
 
@@ -637,7 +670,6 @@ function renderReading(text){
   if(jSec){
     jSec.style.display='block';
     const journalEntry=document.getElementById('journal-entry');
-    if(journalEntry)journalEntry.value='';
     if(typeof wireJournalSection==='function')wireJournalSection(jSec);
   }
   setReadingReadyState(true);
@@ -1415,6 +1447,7 @@ async function quickRead(){
 
   const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
   if(!spread){alert('Please choose the spread used in the photo.');return;}
+  const requestVersion=++readingRequestVersion;
 
   const concernElement=document.getElementById('quick-concern');
   const concern=concernElement?concernElement.value.trim():'';
@@ -1460,6 +1493,7 @@ Use the supplied position IDs exactly. If a card cannot be identified, use null 
       state.uploadedImage,
       statusElement
     );
+    if(requestVersion!==readingRequestVersion)return;
 
     if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
       throw new Error('Validated card identification is unavailable. Please reload the page and try again.');
@@ -1478,7 +1512,9 @@ Use the supplied position IDs exactly. If a card cannot be identified, use null 
 
     if(statusElement)statusElement.textContent='Creating the reading and infographic…';
     const narrative=await generateAIReading(settings,statusElement);
+    if(requestVersion!==readingRequestVersion)return;
     state.narrative=narrative;
+    state.readingMode='ai';
 
     if(!state.readingUsageRecorded){
       recordCompletedReading();
@@ -1507,6 +1543,7 @@ Use the supplied position IDs exactly. If a card cannot be identified, use null 
     if(journal)wireJournalSection(journal);
     renderEntitlementsUI();
   }catch(error){
+    if(requestVersion!==readingRequestVersion)return;
     results.innerHTML=`<p style="color:var(--danger)">Error: ${escapeReadingHtml(error.message)}</p>`;
   }
 }

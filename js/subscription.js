@@ -1,6 +1,8 @@
 // ===== PREMIUM / ENTITLEMENTS =====
 const FREE_DAILY_READING_LIMIT = 1;
 const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship'];
+let sessionUsage={};
+let usagePersisted=true;
 
 function todayKey(){
   const d = new Date();
@@ -25,7 +27,7 @@ function getSubscription(){
 }
 
 function saveSubscription(sub){
-  localStorage.setItem('arcana_subscription', JSON.stringify(sub));
+  if(!writeStoredJson('arcana_subscription',sub))throw new Error('Premium was verified, but browser storage could not save the activation. Enable storage and try again.');
 }
 
 function isPremium(){
@@ -54,12 +56,16 @@ async function activatePremiumKey(key){
 }
 
 function deactivatePremium(){
-  localStorage.setItem('arcana_subscription', JSON.stringify({tier:'free'}));
+  if(!writeStoredJson('arcana_subscription',{tier:'free'},'Premium activation could not be removed. Browser storage is unavailable.'))return false;
+  renderEntitlementsUI();
+  showToast('Premium deactivated on this browser.');
+  return true;
 }
 
 function getUsage(){
   let usage;
-  try{usage = JSON.parse(localStorage.getItem('arcana_usage')) || {};}catch(e){usage = {};}
+  try{usage = usagePersisted?(JSON.parse(localStorage.getItem('arcana_usage')) || sessionUsage):sessionUsage;}catch(e){usage = sessionUsage;}
+  if(typeof usage!=='object'||Array.isArray(usage))usage={};
   const today = todayKey();
   const month = monthKey();
   if(usage.dailyDate !== today){
@@ -71,7 +77,8 @@ function getUsage(){
     usage.monthlyCount = 0;
     usage.monthlyUpgradePrompted = false;
   }
-  localStorage.setItem('arcana_usage', JSON.stringify(usage));
+  sessionUsage=usage;
+  usagePersisted=writeStoredJson('arcana_usage',usage);
   return usage;
 }
 
@@ -89,12 +96,13 @@ function recordCompletedReading(){
   const usage = getUsage();
   usage.monthlyCount = (usage.monthlyCount || 0) + 1;
   if(!isPremium()) usage.dailyCount = (usage.dailyCount || 0) + 1;
-  localStorage.setItem('arcana_usage', JSON.stringify(usage));
+  sessionUsage=usage;
+  usagePersisted=writeStoredJson('arcana_usage',usage);
   renderEntitlementsUI();
 
   if(!isPremium() && usage.monthlyCount >= 3 && !usage.monthlyUpgradePrompted){
     usage.monthlyUpgradePrompted = true;
-    localStorage.setItem('arcana_usage', JSON.stringify(usage));
+    usagePersisted=writeStoredJson('arcana_usage',usage);
     setTimeout(() => showUpgradeModal('value'), 900);
   }
 }

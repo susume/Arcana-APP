@@ -14,6 +14,7 @@ function makeContext() {
   };
   const context = {
     console,
+    readingRequestVersion: 0,
     state: {
       concerns: ['relationship clarity'],
       cardSystem: 'tarot',

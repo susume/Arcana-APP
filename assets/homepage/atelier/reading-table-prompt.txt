@@ -1,0 +1,8 @@
+Use case: photorealistic-natural
+Asset type: Arcana homepage hero photograph, Quiet Atelier theme
+Primary request: Create one premium photorealistic editorial still-life photograph of real physical tarot cards laid face-up in a three-card spread on a pale warm oak reading table with a softly draped natural linen cloth in a sunlit room.
+Subject: Three tactile cream paper tarot cards with sage and forest-green illustrated faces and delicate restrained brass celestial motifs. Include one small simple brass candle holder and a subtle olive branch at the edge of the scene.
+Composition/framing: Square composition, suitable for cropping into an upright arched 540 by 480 hero frame. View from a gently elevated angle, cards clearly visible in the central lower two-thirds, balanced breathing room around them, quiet table texture and soft out-of-focus room behind. Keep all important subjects within the central 80 percent of the frame so an arch crop preserves them. This is a single cohesive photograph, no montage.
+Lighting/mood: Natural soft warm daylight from a nearby window, gentle organic shadows, peaceful grounded reflection. Authentic photography with believable optics and exquisite tactile paper, linen, and wood texture.
+Color palette: Parchment #f4f0e7, forest green #203b33, sage, pale oak, restrained warm brass.
+Constraints: No people, no readable text, no words, no logo, no watermarks, no UI. No night sky, neon, saturated purple, black backdrop, smoke, glitter, fantasy glow, or overly mystical styling. The card illustrations may show abstract sun, moon, botanical, and celestial linework but must not contain readable titles or numerals.

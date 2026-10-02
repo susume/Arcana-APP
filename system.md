@@ -49,7 +49,7 @@ enough.
 - `js/ai.js`: direct Gemini calls and Worker proxy fallback
 - `js/config.js`: public runtime endpoints and local configuration
 - `server/cloudflare-worker.js`: activation, webhook, and AI proxy endpoints
-- `src/premium-theme.css`: authoritative Ritual Stage/Ritual Shell styles
+- `src/premium-theme.css`: authoritative Quiet Atelier theme and Ritual structure
 - `tests/`: architecture-sensitive regression contracts
 - `docs/superpowers/specs/`: approved design intent
 - `design-qa.md`: browser and visual QA evidence

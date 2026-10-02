@@ -18,6 +18,12 @@ async function renderScreen(){
 }
 
 function ensureRitualUtilities(){
+  document.querySelectorAll('.ritual-screen').forEach(screen=>{
+    const header=document.createElement('header');
+    header.className='atelier-header no-print';
+    header.innerHTML='<button type="button" class="atelier-brand brand-logo" onclick="goScreen(\'screen-welcome\')" aria-label="Arcana home"><img src="assets/brand/arcana-guide-horizontal.webp" alt="" width="836" height="471"></button><div class="atelier-tools"><button type="button" onclick="openModal(\'modal-help\')">Guide</button><button type="button" onclick="openModal(\'modal-settings\')">Settings</button></div>';
+    screen.prepend(header);
+  });
   document.querySelectorAll('.ritual-screen:not(#screen-history)').forEach(screen=>{
     if(screen.querySelector('.ritual-journal-shortcut'))return;
     const button=document.createElement('button');
@@ -27,7 +33,7 @@ function ensureRitualUtilities(){
     button.setAttribute('aria-label','Open Tarot Journal');
     button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg><span>Journal</span>';
     button.onclick=()=>goScreen('screen-history');
-    screen.appendChild(button);
+    screen.querySelector('.atelier-tools').appendChild(button);
   });
 }
 
@@ -79,10 +85,12 @@ function goScreen(id, fromRouter){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const screen=document.getElementById(id);
   screen.classList.add('active');
+  if(id==='screen-card-entry')buildCardEntry();
+  if(id==='screen-overview')renderOverview();
   const heading=screen.querySelector('h1,h2,[data-screen-heading]');
   if(heading){
     heading.tabIndex=-1;
-    requestAnimationFrame(()=>heading.focus({preventScroll:true}));
+    requestAnimationFrame(()=>{if(!activeDialog&&screen.classList.contains('active'))heading.focus({preventScroll:true});});
   }
   window.scrollTo(0,0);
   document.documentElement.scrollTop=0;
@@ -115,6 +123,10 @@ function updateDots(screenId){
 
 // ===== WELCOME =====
 function startGuided(){
+  readingRequestVersion++;
+  state.readingPackage=null;
+  state.readingInfographic=null;
+  const journalEntry=document.getElementById('journal-entry');if(journalEntry)journalEntry.value='';
   state.mode='guided';
   state.narrative='';
   state.cards={};
@@ -135,17 +147,20 @@ function startGuided(){
   // Reset concern inputs
   const cl=document.getElementById('concern-list');
   cl.innerHTML='<div class="concern-row"><label class="sr-only" for="concern-input-1">Question or focus</label><input id="concern-input-1" type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button></div>';
-  document.querySelectorAll('.tag-chip').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tag-chip').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-pressed','false');});
   const lifeStage=document.getElementById('reader-life-stage');
   if(lifeStage)lifeStage.value='';
   state.cardSystem='tarot';
   state.cardSystemEstablished=false;
   currentCards=getCards();
   syncUploadDeckSelectors();
-  document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('#screen-card-system .card-opt,.reading-choice-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
   goScreen('screen-concerns');
 }
 function startQuick(){
+  readingRequestVersion++;
+  state.readingPackage=null;
+  state.readingInfographic=null;
   state.mode='quick';
   state.uploadedImage=null;
   state.quickSpreadId=null;
@@ -179,7 +194,7 @@ function addConcern(){
   const list=document.getElementById('concern-list');
   const row=document.createElement('div');
   row.className='concern-row';
-  const inputId='concern-input-'+(document.querySelectorAll('.concern-input').length+1);
+  const inputId='concern-input-'+(Math.max(0,...Array.from(list.querySelectorAll('.concern-input'),input=>Number(input.id.replace('concern-input-',''))||0))+1);
   row.innerHTML='<label class="sr-only" for="'+inputId+'">Question or focus</label><input id="'+inputId+'" type="text" placeholder="Another question or focus" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button>';
   list.appendChild(row);
 }
@@ -188,14 +203,21 @@ function removeConcern(btn){
   if(rows.length>1)btn.parentElement.remove();
 }
 function tagConcern(el){
-  el.classList.toggle('active');
+  const selected=el.classList.toggle('active');
+  el.setAttribute('aria-pressed',String(selected));
+  const topic=el.textContent.trim();
   const inputs=document.querySelectorAll('.concern-input');
+  if(!selected){
+    inputs.forEach(inp=>{if(inp.value.trim()===topic)inp.value='';});
+    return;
+  }
+  if(Array.from(inputs).some(inp=>inp.value.trim()===topic))return;
   for(const inp of inputs){
-    if(!inp.value){inp.value=el.textContent;return;}
+    if(!inp.value.trim()){inp.value=topic;return;}
   }
   addConcern();
   const last=document.querySelectorAll('.concern-input');
-  last[last.length-1].value=el.textContent;
+  last[last.length-1].value=topic;
 }
 function saveConcerns(){
   state.concerns=[];
@@ -290,6 +312,7 @@ function selectReadingType(id, el){
   el.setAttribute('aria-pressed','true');
   const spread=SPREADS.find(s=>s.id===id);
   if(spread){state.spreadId=id;}
+  autoSaveState();
 }
 
 function toggleAdvancedReadings(){
@@ -622,7 +645,7 @@ function openSocialShare(platform){
   if(url)window.open(url,'_blank','noopener,noreferrer');
 }
 
-function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
+function drawShareWrappedText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
   const words=String(text||'').split(/\s+/).filter(Boolean);
   let line='',lines=0;
   for(const word of words){
@@ -744,8 +767,8 @@ function drawShareCardFallback(ctx,card,x,y,w,h){
   ctx.strokeStyle='#c8aa70';ctx.lineWidth=2;ctx.stroke();
   ctx.fillStyle='#1f2b33';ctx.font='700 14px Arial, sans-serif';ctx.textAlign='center';
   ctx.fillText(card.pos,x+w/2,y+22);
-  ctx.font='12px Arial, sans-serif';
-  wrapCanvasText(ctx,card.name,x+8,y+h*.45,w-16,15,3);
+  ctx.font='12px Arial, sans-serif';ctx.textAlign='left';
+  drawShareWrappedText(ctx,card.name,x+8,y+h*.45,w-16,15,3);
 }
 
 function getPlayingRankLabel(card){
@@ -789,7 +812,7 @@ function drawSharePlayingCard(ctx,card,x,y,w,h){
 
   if(rank==='JOKER'){
     ctx.font=`700 ${Math.max(13,Math.round(w*.22))}px Georgia, serif`;
-    wrapCanvasText(ctx,'JOKER',x+w*.12,y+h*.46,w*.76,Math.max(14,h*.13),2);
+    drawShareWrappedText(ctx,'JOKER',x+w*.12,y+h*.46,w*.76,Math.max(14,h*.13),2);
     return;
   }
 
@@ -804,7 +827,8 @@ async function drawShareSpread(ctx,data){
   ctx.fillStyle='rgba(255,255,255,.055)';ctx.fill();
   ctx.strokeStyle='rgba(198,170,115,.38)';ctx.lineWidth=1.5;ctx.stroke();
   const slots=getShareSlots(data);
-  await Promise.all(slots.map(async slot=>{
+  const images=await Promise.all(slots.map(slot=>loadShareImage(data.cards[slot.pos]?.artUrl)));
+  slots.forEach((slot,index)=>{
     const card=data.cards[slot.pos];
     if(!card)return;
     ctx.save();
@@ -813,7 +837,7 @@ async function drawShareSpread(ctx,data){
       ctx.rotate(Math.PI);
       ctx.translate(-(slot.x+slot.w/2),-(slot.y+slot.h/2));
     }
-    const img=await loadShareImage(card.artUrl);
+    const img=images[index];
     if(img){
       drawRoundedRect(ctx,slot.x,slot.y,slot.w,slot.h,9);
       ctx.fillStyle='#f7f0e4';ctx.fill();
@@ -831,12 +855,15 @@ async function drawShareSpread(ctx,data){
     ctx.restore();
     ctx.fillStyle='#f3eadb';ctx.font='700 12px Arial, sans-serif';ctx.textAlign='center';
     ctx.fillText(card.pos,slot.x+slot.w/2,slot.y-5);
-  }));
+  });
 }
 
+let sharePreviewVersion=0;
 async function renderShareCanvas(data){
-  const canvas=document.getElementById('share-canvas');
-  if(!canvas)return;
+  const target=document.getElementById('share-canvas');
+  if(!target)return;
+  const requestVersion=++sharePreviewVersion;
+  const canvas=document.createElement('canvas');canvas.width=600;canvas.height=800;
   const ctx=canvas.getContext('2d');
   const comment=getShareComment();
   ctx.fillStyle='#111a20';ctx.fillRect(0,0,600,800);
@@ -849,6 +876,7 @@ async function renderShareCanvas(data){
   ctx.fillText(data.spreadName||data.spread||'Card Spread',42,84);
   await drawShareSpread(ctx,data);
   drawShareFooter(ctx,data,comment);
+  if(requestVersion===sharePreviewVersion&&document.getElementById('share-canvas')===target){target.getContext('2d').drawImage(canvas,0,0);}
 }
 
 function drawShareFooter(ctx,data,comment){
@@ -856,7 +884,7 @@ function drawShareFooter(ctx,data,comment){
   ctx.fillStyle='#f3eadb';ctx.font='700 24px Georgia, serif';
   ctx.fillText('A message from the cards',42,590);
   ctx.fillStyle='#d8cdbd';ctx.font='18px Georgia, serif';
-  wrapCanvasText(ctx,comment,42,624,516,26,4);
+  drawShareWrappedText(ctx,comment,42,624,516,26,4);
   ctx.fillStyle='#9dc7c9';ctx.font='15px Arial, sans-serif';
   ctx.fillText('Try your own reading:',42,724);
   ctx.fillStyle='#f3eadb';ctx.font='700 18px Arial, sans-serif';
@@ -1175,6 +1203,7 @@ function toggleOrient(el){
   }
   el.title=`Card orientation: ${orientation}`;
   syncOrientationState(el);
+  autoSaveState();
 }
 
 function syncOrientationState(el){
@@ -1194,6 +1223,7 @@ function syncOrientationState(el){
   state.hasDroppedCard=tog.classList.contains('on');
   if(typeof tog.setAttribute==='function')tog.setAttribute('aria-pressed',String(state.hasDroppedCard));
   document.getElementById('drop-card-entry').style.display=state.hasDroppedCard?'block':'none';
+  autoSaveState();
 }
 
 let activeDropdown=null;
@@ -1526,6 +1556,13 @@ function renderOverview(){
         <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>`;
     }
     grid.appendChild(tile);
+    if(entry){
+      const edit=document.createElement('button');
+      edit.type='button';edit.className='btn btn-sm overview-edit-card';
+      edit.textContent='Edit card';edit.setAttribute('aria-label','Edit '+pos.name+' card');
+      edit.onclick=()=>{goScreen('screen-card-entry');openCardPicker(String(pos.id));};
+      tile.appendChild(edit);
+    }
   });
   // Dropped card
   const dropDiv=document.getElementById('dropped-overview');
@@ -1582,6 +1619,7 @@ async function quickRead(){
   const settings=loadSettings();
   try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
   if(!state.uploadedImage){showToast('Upload a spread photo first.');return;}
+  const requestVersion=++readingRequestVersion;
   const concern=document.getElementById('quick-concern').value.trim();
   state.concerns=concern?[concern]:[];
   saveReaderContext('quick-reader-life-stage');
@@ -1655,6 +1693,7 @@ Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
 Address both card meaning and positional context, but avoid exhaustive card-by-card essays.`;
     }
     const rawNarrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
+    if(requestVersion!==readingRequestVersion)return;
     const narrative=applyQuickReadingCardSystem(rawNarrative,detectionRequired);
     state.narrative=narrative;
     if(!state.readingUsageRecorded){
@@ -1679,6 +1718,7 @@ Address both card meaning and positional context, but avoid exhaustive card-by-c
     wireJournalSection(results.querySelector('.journal-section'));
     renderEntitlementsUI();
   }catch(e){
+    if(requestVersion!==readingRequestVersion)return;
     results.replaceChildren();
     const error=document.createElement('p');
     error.style.color='var(--danger)';
@@ -1866,8 +1906,17 @@ function openSavedReading(readingId){
   const reading=readStoredJson('arcana_readings',[]).find(item=>item.id===readingId);
   if(!reading||!reading.narrative){showToast('The saved reading is no longer available.');return;}
   if(!Object.keys(reading.cards||{}).length){showToast('This journal entry is not linked to a card layout.');return;}
+  if(!SPREADS.some(spread=>spread.id===reading.spread)){showToast('This saved reading has no editable card layout. You can read it in the archive.');return;}
+  readingRequestVersion++;
+  state.readingPackage=reading.readingPackage||null;
+  state.readingInfographic=null;
+  state.readingMode=reading.readingMode||'classic';
+  state.readingUsageRecorded=true;
+  state.uploadedImage=null;state.quickSpreadId=null;
   state.mode='guided';state.spreadId=reading.spread;state.cards={...reading.cards};state.droppedCard=reading.droppedCard||null;state.hasDroppedCard=!!reading.hasDroppedCard;state.cardSystem=reading.cardSystem||'tarot';state.cardSystemEstablished=true;state.concerns=[...(reading.concerns||[])];state.readerLifeStage=reading.readerLifeStage||'';state.currentReadingId=reading.id||'';state.narrative=reading.narrative;currentCards=getCards();
+  const journalEntry=document.getElementById('journal-entry');if(journalEntry)journalEntry.value='';
   goScreen('screen-reading');renderReading(reading.narrative);
+  highlightReadingBtn(state.readingMode==='ai'?'ai':'classic');
 }
 
 // ===== MODALS =====
@@ -1907,7 +1956,8 @@ function deactivateDialog(root){
     activeDialog=null;
     document.body.classList.remove('dialog-open');
     document.body.style.overflow='';
-    if(lastDialogTrigger&&typeof lastDialogTrigger.focus==='function')setTimeout(()=>lastDialogTrigger.focus(),0);
+    const trigger=lastDialogTrigger;
+    if(trigger&&typeof trigger.focus==='function')setTimeout(()=>trigger.focus(),0);
     lastDialogTrigger=null;
   }
 }
@@ -2087,6 +2137,7 @@ function selectPickerCard(name){
   }
   else{state.cards[pickerPosId]={name:card.name,orientation:orient};}
   closeCardPicker();
+  autoSaveState();
 }
 
 // ===== JOURNAL =====
@@ -2164,7 +2215,7 @@ function saveJournal(trigger){
   const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),createdAt:now,updatedAt:now,date:now,spreadId:spread?spread.id:(state.spreadId||state.quickSpreadId||''),spreadName:spread?spread.name:'Custom',readingId:state.currentReadingId||'',text:txt.slice(0,10000)};
   const history=readStoredJson('arcana-journal',[]);
   history.unshift(entry);
-  writeStoredJson('arcana-journal',history.slice(0,50));
+  if(!writeStoredJson('arcana-journal',history.slice(0,50),'Reflection could not be saved. Browser storage is full or unavailable.'))return;
   const btn=trigger||(typeof event!=='undefined'&&event?event.currentTarget:null);
   const status=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-save-status') : null;
   if(status)status.textContent='Saved to your journal';

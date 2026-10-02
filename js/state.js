@@ -8,6 +8,7 @@ let state={
   readingUsageRecorded:false,currentReadingId:''
 };
 let currentCards=[];
+let readingRequestVersion=0;
 
 function getCards(){
   if(state.cardSystem==='tarot')return TAROT_CARDS;

@@ -1,0 +1,9 @@
+Use case: photorealistic-natural
+Asset type: Arcana Quiet Atelier marketing photograph illustrating a printable tarot-reading keepsake.
+Primary request: A premium editorial still life of an unframed portrait art print leaning against warm plaster on a pale oak console, a partly rolled paper print nearby, a tiny olive sprig and a brass clip.
+Art print: Deep forest ink with three small cream-and-sage botanical celestial card illustrations, fine antique-gold constellation lines, sun, star and crescent motifs. An organized infographic-like composition using only geometric linework and symbols, with absolutely no writing or readable labels. This is beautiful illustrative artwork rather than a screenshot of an app or an exact software output.
+Composition/framing: Landscape 4:3 frame with important subjects in central 70% for website card crops. The print, rolled paper, sprig and brass clip form a minimal elegant composition with generous pale breathing room.
+Lighting/mood: Warm natural daylight, soft real shadows, calm and tactile reading-room atmosphere.
+Color palette: Warm parchment #f4f0e7 surroundings, forest ink #203b33, muted sage, restrained antique brass.
+Materials/textures: Fibrous fine art paper, pale oak grain, softly textured plaster, real brushed brass.
+Constraints: Photorealistic scene, elegant premium editorial photograph. No people, no logos, no watermark, no UI, no readable words or labels, no glass or frame glare, no night sky, no glowing effects.

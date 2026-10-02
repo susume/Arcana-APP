@@ -6,7 +6,9 @@ const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal',
 function readStoredJson(key,fallback){
   try{
     const raw=localStorage.getItem(key);
-    return raw?JSON.parse(raw):fallback;
+    const value=raw?JSON.parse(raw):fallback;
+    if(Array.isArray(fallback)&&!Array.isArray(value))return fallback;
+    return value;
   }catch(e){return fallback;}
 }
 
@@ -85,7 +87,7 @@ function saveSettings(){
     readingTone:document.getElementById('reading-tone').value,
     narratorVoice:document.getElementById('narrator-voice')?.value||''
   };
-  localStorage.setItem('arcana_settings',JSON.stringify(s));
+  if(!writeStoredJson('arcana_settings',s,'Settings could not be saved. Browser storage is unavailable.'))return;
   renderEntitlementsUI();
   closeModal('modal-settings');
   showToast('Settings saved.');
@@ -116,7 +118,7 @@ async function testAndSaveGeminiKey(){
   try{
     await testApiKey(key);
     const s=loadSettings();
-    localStorage.setItem('arcana_settings',JSON.stringify({...s,geminiKey:key}));
+    if(!writeStoredJson('arcana_settings',{...s,geminiKey:key}))throw new Error('Key validated, but browser storage could not save it.');
     if(input)input.value='';
     if(status)status.textContent='Gemini key saved on this browser.';
   }catch(e){
@@ -127,7 +129,7 @@ async function testAndSaveGeminiKey(){
 function removeGeminiKey(){
   const s=loadSettings();
   delete s.geminiKey;
-  localStorage.setItem('arcana_settings',JSON.stringify(s));
+  if(!writeStoredJson('arcana_settings',s,'The key could not be removed. Browser storage is unavailable.'))return;
   loadSettingsUI();
   showToast('Gemini key removed from this browser.');
 }
@@ -152,9 +154,9 @@ if('speechSynthesis' in window){
 function persistReading(title){
   const freeLimit=3;
   const cleanTitle=String(title||'').trim().slice(0,120);
-  if(!cleanTitle)return;
+  if(!cleanTitle)return false;
   const readings=readStoredJson('arcana_readings',[]);
-  if(!Array.isArray(readings))return;
+  if(!Array.isArray(readings))return false;
   const spread=getReadingSpread();
   const readingId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   readings.unshift({
@@ -171,13 +173,16 @@ function persistReading(title){
     droppedCard:state.droppedCard,
     hasDroppedCard:state.hasDroppedCard,
     narrative:state.narrative,
+    readingMode:state.readingMode,
+    readingPackage:state.readingPackage||null,
     notes:''
   });
   const maxReadings=isPremium()?50:freeLimit;
   while(readings.length>maxReadings)readings.pop();
-  writeStoredJson('arcana_readings',readings,'Arcana could not save this reading because browser storage is full.');
+  if(!writeStoredJson('arcana_readings',readings,'Arcana could not save this reading because browser storage is full.'))return false;
   state.currentReadingId=readingId;
   showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
+  return true;
 }
 
 function closeSaveReadingDialog(restoreFocus=true){
@@ -247,7 +252,10 @@ function openSaveReadingDialog(){
       input.focus();
       return;
     }
-    persistReading(title);
+    if(!persistReading(title)){
+      error.textContent='This reading could not be saved. Free up browser storage and try again.';
+      return;
+    }
     closeSaveReadingDialog();
   });
 

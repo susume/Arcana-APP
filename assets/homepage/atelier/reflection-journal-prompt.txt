@@ -1,0 +1,9 @@
+Use case: photorealistic-natural
+Asset type: Arcana Quiet Atelier journal section photograph.
+Primary request: Photorealistic premium editorial close-up still life of an open cream paper journal with a few delicate unreadable handwritten lines, a dark forest-green cloth cover, a slender brass fountain pen, one real cream-and-sage tarot card with subtle sun and celestial engraving lying beside it, and a tiny olive stem.
+Scene/backdrop: Pale oak tabletop with natural oatmeal linen in a quiet reading room.
+Composition/framing: Square image, photographed slightly overhead at a natural angle. Center the focal journal, pen and card so the photograph remains attractive when cropped to a portrait panel of 480px height. Tactile detail, restrained generous breathing room, a carefully composed real still life.
+Lighting/mood: Warm soft natural daylight, gentle real shadows, calm and intimate reflection.
+Color palette: Warm parchment #f4f0e7, forest ink #203b33, muted sage, restrained brass.
+Materials/textures: Fibrous uncoated paper, woven cloth binding, brushed brass pen, linen weave, subtle oak grain.
+Constraints: No readable text, no invented logo, no UI, no night sky, no dark background, no glowing effects, no collage, no watermark. Keep it photographic rather than a render.

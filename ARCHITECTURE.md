@@ -71,18 +71,20 @@ environment bindings/secrets.
 
 ## 4. Product and visual direction
 
-The current design system has two connected layers:
+The current theme is **Quiet Atelier**, selected by `data-theme="atelier"` on
+the HTML element. It uses warm parchment, forest-green ink, sage panels, brass
+accents, self-hosted serif headings, and physical-card imagery. The homepage
+retains the reading journey, real-card comparison, Premium/Journal promotion,
+and guided/upload calls to action. Product screens share the same tokens and
+an Arcana/Guide/Settings/Journal utility header.
 
-- **Ritual Stage homepage**: an image-led, editorial landing experience with a
-  dark indigo atmosphere, antique-gold accents, physical-card imagery, the
-  reading journey, real-card comparison, Premium/Journal promotion, and repeated
-  guided/upload calls to action.
-- **Ritual Shell product UI**: shared visual treatment across focus, choice,
-  workspace, review, reading, archive, settings, and help surfaces.
-
-The intended character is premium self-reflection, celestial minimalism, modern
-mysticism, dark academia, and spiritual editorial design. The interface should
-remain calm and legible rather than ornamental for its own sake.
+The authoritative rules are the final `@layer base` block in
+`src/premium-theme.css`, compiled to `css/premium.css`. Theme scope and cascade
+layer placement override the earlier Ritual Stage/Shell rules, including their
+important declarations. Existing Ritual classes remain the shared structural
+API. Keep new rules within the theme scope; preserve focus, reduced motion,
+responsive layout, and print behavior. Reading image exports retain their
+separate dark canvas palette.
 
 Current shared screen variants:
 
@@ -96,8 +98,9 @@ Current shared screen variants:
 | `ritual-screen-archive` | saved reading history |
 
 Settings and help use `ritual-modal` plus purpose-specific modal classes.
-Non-homepage screens receive a shared Journal shortcut through
-`ensureRitualUtilities()` in `js/ui.js`.
+Non-homepage screens receive the utility header through
+`ensureRitualUtilities()` in `js/ui.js`; the archive omits its redundant Journal
+shortcut.
 
 The approved design sources are under `docs/superpowers/specs/`; current browser
 verification and intentional deviations are recorded in `design-qa.md`.

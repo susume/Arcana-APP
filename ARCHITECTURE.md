@@ -664,8 +664,7 @@ Other accepted POST traffic is handled by the Gemini proxy path. It requires the
 Worker secret `GOOGLE_API_KEY`, validates prompt and image size/type, applies
 route rate limits and upstream timeouts, forwards a Gemini request, and applies
 model fallback/retry behavior. Browser and Worker model order is centralized on
-`gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.1-flash-lite`, and
-`gemini-2.5-flash`.
+`gemini-3.6-flash`, `gemini-3.1-flash-lite`, and `gemini-2.5-flash`.
 
 Expected Worker configuration:
 

@@ -1,4 +1,4 @@
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
 const RETRYABLE_GEMINI_STATUSES = [429, 500, 502, 503, 504];
 const MAX_MODEL_ATTEMPTS = 2;
 const MAX_AI_BODY_BYTES = 5_500_000;

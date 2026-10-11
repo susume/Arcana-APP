@@ -1,7 +1,7 @@
 // ===== GEMINI API =====
 const GEMINI_MODELS=(typeof ARCANA_GEMINI_MODELS!=='undefined'&&Array.isArray(ARCANA_GEMINI_MODELS)&&ARCANA_GEMINI_MODELS.length)
   ? ARCANA_GEMINI_MODELS
-  : ['gemini-3.6-flash','gemini-3.5-flash','gemini-3.1-flash-lite','gemini-2.5-flash'];
+  : ['gemini-3.6-flash','gemini-3.1-flash-lite','gemini-2.5-flash'];
 let activeAIController=null;
 const AI_REQUEST_TIMEOUT_MS=30000;
 

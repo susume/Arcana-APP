@@ -1,23 +1,8 @@
 <div class="screen ritual-screen ritual-screen-workspace" id="screen-card-entry">
   <div class="step-dots" id="dots-entry"></div>
   <div class="progress-estimate" id="progress-card-entry"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How do you lay out your spread?</h2>
-  <div class="onboard compact-onboard">Place one real card in each position shown below. When the spread is complete, upload a clear photo from above so Arcana can identify the cards, or enter them manually.</div>
-
-  <div class="dropped-card-section">
-    <div class="toggle-row">
-      <button type="button" class="toggle" id="drop-toggle" onclick="toggleDrop()" aria-pressed="false" aria-label="Add a dropped or jumper card"></button>
-      <h4>Did a card fall out while you shuffled?</h4>
-    </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">A dropped or jumper card can be recorded as an extra message. Many readers treat it as an underlying theme rather than part of the main spread.</p>
-    <div id="drop-card-entry" style="display:none">
-      <div class="card-entry-row">
-        <span class="pos-name">Dropped Card</span>
-        <button type="button" class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
-        <button type="button" class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" aria-pressed="false" aria-label="Card orientation: upright. Activate to mark reversed." title="Card orientation: upright">U</button>
-      </div>
-    </div>
-  </div>
+  <h2>Add your cards</h2>
+  <p class="onboard compact-onboard">Draw from your physical deck, upload your spread, or enter the cards by hand.</p>
 
   <div class="tab-bar" role="tablist" aria-label="Card entry method">
     <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-guided" onclick="switchTab('tab-guided',this)">Guided Draw</button>
@@ -72,8 +57,25 @@
     <div id="manual-entries"></div>
   </div>
 
+  <details class="flow-details jumper-options" id="jumper-options">
+    <summary>Add a jumper card (optional)</summary>
+    <div class="dropped-card-section">
+      <div class="toggle-row">
+        <button type="button" class="toggle" id="drop-toggle" onclick="toggleDrop()" aria-pressed="false" aria-label="Add a dropped or jumper card"></button>
+        <h4>Include a dropped card</h4>
+      </div>
+      <p>A card that fell out while shuffling can add an underlying theme.</p>
+      <div id="drop-card-entry" style="display:none">
+        <div class="card-entry-row">
+          <span class="pos-name">Dropped Card</span>
+          <button type="button" class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
+          <button type="button" class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" aria-pressed="false" aria-label="Card orientation: upright. Activate to mark reversed." title="Card orientation: upright">U</button>
+        </div>
+      </div>
+    </div>
+  </details>
   <div class="nav-row">
-    <button class="btn" onclick="goScreen('screen-reflection')">Back</button>
+    <button class="btn" onclick="backFromCardEntry()">Back</button>
     <button class="btn btn-primary" onclick="confirmCards()">Review My Spread</button>
   </div>
 </div>

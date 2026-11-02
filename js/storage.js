@@ -2,6 +2,11 @@
 const AUTOSAVE_TTL_MS=60*60*1000;
 const AUTOSAVE_VERSION=2;
 const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal','arcana_settings','arcana_usage','arcana_subscription','arcana_temp_cache'];
+const FREE_READING_ARCHIVE_LIMIT=3;
+const PREMIUM_READING_ARCHIVE_LIMIT=50;
+const JOURNAL_ARCHIVE_LIMIT=50;
+function getReadingArchiveLimit(){return isPremium()?PREMIUM_READING_ARCHIVE_LIMIT:FREE_READING_ARCHIVE_LIMIT;}
+function archiveReplacementCount(key,limit){return Math.max(0,readStoredJson(key,[]).length+1-limit);}
 
 function readStoredJson(key,fallback){
   try{
@@ -10,6 +15,18 @@ function readStoredJson(key,fallback){
     if(Array.isArray(fallback)&&!Array.isArray(value))return fallback;
     return value;
   }catch(e){return fallback;}
+}
+
+function readArchiveForWrite(key){
+  try{
+    const raw=localStorage.getItem(key);
+    const entries=raw===null?[]:JSON.parse(raw);
+    if(!Array.isArray(entries))throw new Error('Invalid archive');
+    return entries;
+  }catch(e){
+    showToast('Saved entries could not be read. Keep a copy of your current text; the archive was not changed.');
+    return null;
+  }
 }
 
 function writeStoredJson(key,value,message){
@@ -37,6 +54,7 @@ function serializableState(){
     readingMode:state.readingMode,
     readerLifeStage:state.readerLifeStage||'',
     guidedStep:Number.isFinite(state.guidedStep)?state.guidedStep:0,
+    preparationSkipped:!!state.preparationSkipped,
     reversals:!!state.reversals,
     quickSpreadId:state.quickSpreadId,
     readingUsageRecorded:!!state.readingUsageRecorded,
@@ -151,12 +169,16 @@ if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
 }
 
-function persistReading(title){
-  const freeLimit=3;
+function persistReading(title,allowReplacement=false){
   const cleanTitle=String(title||'').trim().slice(0,120);
   if(!cleanTitle)return false;
-  const readings=readStoredJson('arcana_readings',[]);
-  if(!Array.isArray(readings))return false;
+  const readings=readArchiveForWrite('arcana_readings');
+  if(!readings)return false;
+  const maxReadings=getReadingArchiveLimit();
+  if(readings.length>=maxReadings&&allowReplacement!==true){
+    showToast('Your reading archive is full. Download a backup and confirm before replacing older readings.');
+    return false;
+  }
   const spread=getReadingSpread();
   const readingId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   readings.unshift({
@@ -177,11 +199,22 @@ function persistReading(title){
     readingPackage:state.readingPackage||null,
     notes:''
   });
-  const maxReadings=isPremium()?50:freeLimit;
   while(readings.length>maxReadings)readings.pop();
   if(!writeStoredJson('arcana_readings',readings,'Arcana could not save this reading because browser storage is full.'))return false;
   state.currentReadingId=readingId;
+  if(typeof updateArchiveStatus==='function')updateArchiveStatus();
   showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
+  return true;
+}
+function persistJournalEntry(entry,allowReplacement=false){
+  const entries=readArchiveForWrite('arcana-journal');
+  if(!entries)return false;
+  if(entries.length>=JOURNAL_ARCHIVE_LIMIT&&allowReplacement!==true){
+    showToast('Your reflection archive is full. Download a backup before replacing older reflections.');
+    return false;
+  }
+  if(!writeStoredJson('arcana-journal',[entry,...entries].slice(0,JOURNAL_ARCHIVE_LIMIT),'Reflection could not be saved. Browser storage is full or unavailable.'))return false;
+  if(typeof updateArchiveStatus==='function')updateArchiveStatus();
   return true;
 }
 
@@ -203,10 +236,15 @@ function openSaveReadingDialog(){
   overlay.innerHTML=`
     <div class="modal ritual-modal save-reading-dialog" role="dialog" aria-modal="true" aria-labelledby="save-reading-title" aria-describedby="save-reading-description">
       <h2 id="save-reading-title">Save this reading</h2>
-      <p id="save-reading-description">Give it a short title so you can recognize it in your journal later.</p>
+      <p id="save-reading-description">Give it a short title. Readings stay in this browser; download backups regularly.</p>
       <form id="save-reading-form" novalidate>
         <label for="save-reading-name">Reading title</label>
         <input id="save-reading-name" type="text" maxlength="80" autocomplete="off" required>
+        <div class="storage-warning" id="save-reading-capacity" hidden>
+          <p id="save-reading-capacity-message"></p>
+          <button type="button" class="btn btn-sm" onclick="downloadJournalBackup()">Download backup first</button>
+          <label class="replacement-confirm"><input type="checkbox" id="save-reading-replace"> I understand the oldest entries will be replaced.</label>
+        </div>
         <p class="save-reading-error" id="save-reading-error" aria-live="polite"></p>
         <div class="save-reading-actions">
           <button type="button" class="btn" id="save-reading-cancel">Cancel</button>
@@ -220,6 +258,16 @@ function openSaveReadingDialog(){
   const form=overlay.querySelector('#save-reading-form');
   const error=overlay.querySelector('#save-reading-error');
   input.value='Reading '+new Date().toLocaleDateString();
+  const replacement=overlay.querySelector('#save-reading-replace');
+  let acknowledgedReplacementCount=0;
+  const syncCapacity=()=>{
+    const count=archiveReplacementCount('arcana_readings',getReadingArchiveLimit());
+    overlay.querySelector('#save-reading-capacity').hidden=!count;
+    overlay.querySelector('#save-reading-capacity-message').textContent='Saving will replace '+count+' oldest reading'+(count===1?'':'s')+'. Download a backup first to keep them.';
+    return count;
+  };
+  replacement.addEventListener('change',()=>{acknowledgedReplacementCount=replacement.checked?syncCapacity():0;});
+  syncCapacity();
 
   overlay.querySelector('#save-reading-cancel').addEventListener('click',()=>closeSaveReadingDialog());
   overlay.addEventListener('click',event=>{
@@ -232,7 +280,7 @@ function openSaveReadingDialog(){
       return;
     }
     if(event.key!=='Tab')return;
-    const focusable=Array.from(overlay.querySelectorAll('input,button')).filter(el=>!el.disabled);
+    const focusable=Array.from(overlay.querySelectorAll('input,button')).filter(el=>!el.disabled&&!el.hidden&&el.offsetParent!==null);
     if(!focusable.length)return;
     const first=focusable[0];
     const last=focusable[focusable.length-1];
@@ -252,7 +300,14 @@ function openSaveReadingDialog(){
       input.focus();
       return;
     }
-    if(!persistReading(title)){
+    const replacing=syncCapacity();
+    if(replacing&&(!replacement.checked||acknowledgedReplacementCount!==replacing)){
+      replacement.checked=false;
+      error.textContent='Review the archive warning and confirm replacement before saving.';
+      replacement.focus();
+      return;
+    }
+    if(!persistReading(title,!!replacing)){
       error.textContent='This reading could not be saved. Free up browser storage and try again.';
       return;
     }

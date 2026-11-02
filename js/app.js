@@ -19,14 +19,12 @@ async function initApp(){
   const savedState=saved&&saved.state?saved.state:null;
   if(savedState){
     state=Object.assign(state,savedState);
+    state.preparationSkipped=savedState.preparationSkipped===true;
     migrateRestoredCardSystemState(savedState);
     // Rehydrate the controls as well as the state before resuming a route.
     const concerns=Array.isArray(state.concerns)?state.concerns:[];
-    concerns.forEach((value,index)=>{
-      if(index>0)addConcern();
-      const input=document.querySelectorAll('.concern-input')[index];
-      if(input)input.value=value;
-    });
+    const question=document.querySelector('.concern-input');
+    if(question)question.value=concerns.join('; ');
     document.querySelectorAll('.tag-chip').forEach(chip=>{
       const selected=concerns.includes(chip.textContent.trim());
       chip.classList.toggle('active',selected);chip.setAttribute('aria-pressed',String(selected));
@@ -46,6 +44,8 @@ async function initApp(){
     dropToggle.classList.toggle('on',!!state.hasDroppedCard);
     dropToggle.setAttribute('aria-pressed',String(!!state.hasDroppedCard));
     document.getElementById('drop-card-entry').style.display=state.hasDroppedCard?'block':'none';
+    const jumperOptions=document.getElementById('jumper-options');
+    if(jumperOptions)jumperOptions.open=!!state.hasDroppedCard;
     if(state.droppedCard){
       const picker=document.querySelector('.card-pick-btn[data-pos="drop"]');
       if(picker){picker.textContent=state.droppedCard.name;picker.classList.add('selected');}
@@ -66,6 +66,10 @@ async function initApp(){
     }
     const savedRoute=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
     goScreen(screenForRoute(savedRoute),true);
+    if(state.preparationSkipped&&document.getElementById('screen-card-entry').classList.contains('active')){
+      const uploadTab=document.querySelector('.tab-btn[aria-controls="tab-upload"]');
+      if(uploadTab)switchTab('tab-upload',uploadTab);
+    }
   }else{
     goScreen(screenForRoute(location.hash.slice(1)||'welcome'),true);
   }

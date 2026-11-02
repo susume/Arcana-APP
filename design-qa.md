@@ -289,3 +289,24 @@ final result: passed within the documented verification scope
   `docs/qa/2026-10-03/founder-activation-live.jpg`.
 - Full regressions and Worker syntax checks passed. This deployment updates
   the backend; the pay-what-you-want frontend copy remains local.
+
+## Approved onboarding, upgrade, and journal improvements — 2026-11-02
+
+- Implemented the approved seven-step usability audit within Quiet Atelier:
+  optional question and preparation, compact mobile descriptions, spread-first
+  selection, task-first entry with card search, preserved review, and the actual
+  reading summary before generic metadata.
+- Moved the upgrade price and purchase action above the benefits; separated
+  existing-customer activation. Settings now leads with reading preferences and
+  journal backups, with expandable Premium, advanced AI, and data-removal sections.
+- Added validated portable journal backups, duplicate-safe capacity-aware restore,
+  clear local-storage warnings, explicit replacement consent, and draft retention
+  on failed saves. Corrupt archives and stale reflection edits are preserved.
+- Browser-checked at 390 × 844 and 1440 × 900. Mobile action buttons remain inside
+  the viewport, inspected screens have no horizontal overflow, upgrade and
+  Settings keyboard behavior works, and final warning/error logs are empty.
+- Fresh build, full regression suite, edited JavaScript syntax checks, and diff
+  whitespace checks passed. Source and embedded templates are synchronized.
+- Detailed test notes and 17 screenshot captures are in
+  [`docs/qa/2026-11-02/usability.md`](docs/qa/2026-11-02/usability.md).
+  Changes remained local during this QA pass; release status is tracked in GitHub Actions.

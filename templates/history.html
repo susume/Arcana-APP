@@ -1,8 +1,16 @@
 <div class="screen ritual-screen ritual-screen-archive" id="screen-history">
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">How can you track readings over time?</h2>
-  <div class="onboard">
-    Arcana saves readings on this device so you can revisit card patterns, journal notes, and recurring themes. Free history keeps your latest 3 readings; Premium keeps the full archive with comparison tools.
-  </div>
+  <h2>Your reading journal</h2>
+  <p class="onboard compact-onboard">Saved in this browser. Free keeps 3 readings; Premium keeps up to 50. Reflection storage holds up to 50 entries.</p>
+  <section class="archive-backup no-print" aria-labelledby="history-backup-title">
+    <h3 id="history-backup-title">Keep a copy of your journal</h3>
+    <p>Changing devices or clearing browser data removes local entries. Download a backup regularly so you can restore them later.</p>
+    <p class="archive-status" data-archive-status></p>
+    <div class="settings-actions">
+      <button type="button" class="btn btn-primary btn-sm" onclick="downloadJournalBackup()">Download backup</button>
+      <button type="button" class="btn btn-sm" onclick="chooseJournalBackup()">Restore backup</button>
+    </div>
+    <p class="backup-status" data-backup-status role="status" aria-live="polite"></p>
+  </section>
   <div id="history-list"></div>
   <div style="text-align:center;margin-top:16px">
     <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back to Home</button>

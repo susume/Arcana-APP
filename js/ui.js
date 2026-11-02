@@ -86,6 +86,7 @@ function goScreen(id, fromRouter){
   const screen=document.getElementById(id);
   screen.classList.add('active');
   if(id==='screen-card-entry')buildCardEntry();
+  if(id==='screen-reflection')state.preparationSkipped=false;
   if(id==='screen-overview')renderOverview();
   const heading=screen.querySelector('h1,h2,[data-screen-heading]');
   if(heading){
@@ -102,17 +103,21 @@ function goScreen(id, fromRouter){
   autoSaveState();
 }
 const GUIDED_SCREENS=['screen-concerns','screen-card-system','screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
+function guidedScreens(){
+  return state.preparationSkipped?GUIDED_SCREENS.filter(id=>id!=='screen-reflection'):GUIDED_SCREENS;
+}
 function updateDots(screenId){
-  const idx=GUIDED_SCREENS.indexOf(screenId);
+  const steps=guidedScreens();
+  const idx=steps.indexOf(screenId);
   if(idx<0)return;
   document.querySelectorAll('.step-dots').forEach(container=>{
     container.innerHTML='';
     container.setAttribute('role','progressbar');
     container.setAttribute('aria-label','Guided reading progress');
     container.setAttribute('aria-valuemin','1');
-    container.setAttribute('aria-valuemax',String(GUIDED_SCREENS.length));
+    container.setAttribute('aria-valuemax',String(steps.length));
     container.setAttribute('aria-valuenow',String(idx+1));
-    GUIDED_SCREENS.forEach((_,i)=>{
+    steps.forEach((_,i)=>{
       const d=document.createElement('div');
       d.className='dot'+(i===idx?' active':'')+(i<idx?' done':'');
       d.setAttribute('aria-hidden','true');
@@ -137,6 +142,7 @@ function startGuided(){
   state.quickSpreadId=null;
   state.readerLifeStage='';
   state.guidedStep=0;
+  state.preparationSkipped=false;
   state.readingUsageRecorded=false;
   state.currentReadingId='';
   state.concerns=[];
@@ -146,7 +152,8 @@ function startGuided(){
   document.getElementById('drop-card-entry').style.display='none';
   // Reset concern inputs
   const cl=document.getElementById('concern-list');
-  cl.innerHTML='<div class="concern-row"><label class="sr-only" for="concern-input-1">Question or focus</label><input id="concern-input-1" type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button></div>';
+  cl.innerHTML='<div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input"></div>';
+  document.querySelectorAll('.flow-details').forEach(details=>{details.open=false;});
   document.querySelectorAll('.tag-chip').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-pressed','false');});
   const lifeStage=document.getElementById('reader-life-stage');
   if(lifeStage)lifeStage.value='';
@@ -162,6 +169,7 @@ function startQuick(){
   state.readingPackage=null;
   state.readingInfographic=null;
   state.mode='quick';
+  state.preparationSkipped=false;
   state.uploadedImage=null;
   state.quickSpreadId=null;
   state.spreadId=null;
@@ -211,13 +219,16 @@ function tagConcern(el){
     inputs.forEach(inp=>{if(inp.value.trim()===topic)inp.value='';});
     return;
   }
-  if(Array.from(inputs).some(inp=>inp.value.trim()===topic))return;
-  for(const inp of inputs){
-    if(!inp.value.trim()){inp.value=topic;return;}
-  }
-  addConcern();
-  const last=document.querySelectorAll('.concern-input');
-  last[last.length-1].value=topic;
+  if(inputs[0])inputs[0].value=topic;
+  document.querySelectorAll('.tag-chip').forEach(chip=>{
+    if(chip!==el){chip.classList.remove('active');chip.setAttribute('aria-pressed','false');}
+  });
+}
+function skipConcerns(){
+  document.querySelectorAll('.concern-input').forEach(input=>{input.value='';});
+  state.concerns=[];
+  document.querySelectorAll('.tag-chip').forEach(chip=>{chip.classList.remove('active');chip.setAttribute('aria-pressed','false');});
+  goScreen('screen-card-system');
 }
 function saveConcerns(){
   state.concerns=[];
@@ -292,10 +303,24 @@ function buildCustomPositions(){
     container.appendChild(row);
   }
 }
-function confirmSpread(){
+function confirmSpread(alreadyDrawn=false){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
   saveReaderContext('reader-life-stage');
+  if(alreadyDrawn===true){skipPreparation();return;}
+  state.preparationSkipped=false;
   goScreen('screen-reflection');
+}
+function skipPreparation(){
+  if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
+  state.preparationSkipped=true;
+  state.guidedStep=0;
+  goScreen('screen-card-entry');
+  const tab=document.querySelector('.tab-btn[aria-controls="tab-upload"]');
+  if(tab)switchTab('tab-upload',tab);
+  autoSaveState();
+}
+function backFromCardEntry(){
+  goScreen(state.preparationSkipped?'screen-spread':'screen-reflection');
 }
 
 function saveReaderContext(lifeStageId){
@@ -329,22 +354,22 @@ function toggleAdvancedReadings(){
 }
 
 function confirmReflection(){
+  state.preparationSkipped=false;
   if(!state.cards||typeof state.cards!=='object')state.cards={};
   state.guidedStep=0;
   buildCardEntry();
   goScreen('screen-card-entry');
+  const guidedTab=document.querySelector('.tab-btn[aria-controls="tab-guided"]');
+  if(guidedTab)switchTab('tab-guided',guidedTab);
 }
 
 // ===== PROGRESS ESTIMATE =====
 function updateProgressEstimate(screenId){
-  const steps=GUIDED_SCREENS;
+  const steps=guidedScreens();
   const idx=steps.indexOf(screenId);
   if(idx<0)return;
   const total=steps.length;
-  const remaining=total-idx-1;
-  const minsPerStep=1;
-  const minsLeft=remaining*minsPerStep;
-  const text='Step '+(idx+1)+' of '+total+(minsLeft>0?'  - About '+minsLeft+' minute'+(minsLeft>1?'s':'')+' remaining':'');
+  const text='Step '+(idx+1)+' of '+total;
   const el=document.getElementById('progress-'+screenId.replace('screen-',''));
   if(el)el.textContent=text;
 }
@@ -909,25 +934,19 @@ function enhanceReadingOutput(){
   const suitCounts={};
   cardObjects.forEach(c=>{if(c.suit)suitCounts[c.suit]=(suitCounts[c.suit]||0)+1;});
   const dominantSuit=Object.entries(suitCounts).sort((a,b)=>b[1]-a[1])[0];
-  const themes=['Decision Making','Self Trust','New Opportunities'];
-  if(state.concerns.length)themes.unshift(state.concerns[0]);
-  if(hasMajor)themes.push('Major Arcana Influence');
-  if(dominantSuit)themes.push(dominantSuit[0].charAt(0).toUpperCase()+dominantSuit[0].slice(1)+' Focus');
-  let h='<div class="reading-summary-card">';
-  h+='<h3 class="summary-title">Summary</h3>';
-  h+='<p class="summary-copy">'+escapeHtml(spread?spread.name:'Your reading')+' with '+cardNames.length+' card'+(cardNames.length===1?'':'s')+' drawn. Review the key themes first, then continue into the full reading.</p>';
+  let h='<details class="reading-summary-card reading-spread-details">';
+  h+='<summary>Spread details</summary>';
+  h+='<p class="summary-copy">'+escapeHtml(spread?spread.name:'Your reading')+' &middot; '+cardNames.length+' confirmed card'+(cardNames.length===1?'':'s')+'</p>';
   h+='<div class="summary-meta">';
   h+='<span class="summary-cards">'+escapeHtml(spread?spread.name:'Reading')+'</span>';
   if(state.readerLifeStage)h+='<span class="major-badge">'+escapeHtml(state.readerLifeStage)+'</span>';
   if(hasMajor)h+='<span class="major-badge">Major Arcana Present</span>';
   if(reversedCount)h+='<span class="major-badge">'+reversedCount+' Reversed</span>';
   h+='</div>';
-  h+='<h4 class="summary-subtitle">Key Themes</h4>';
-  h+='<div class="summary-themes">'+themes.slice(0,5).map(t=>'<span class="theme-tag">'+escapeHtml(t)+'</span>').join('')+'</div>';
+  if(dominantSuit)h+='<p>Most frequent suit: '+escapeHtml(dominantSuit[0])+'.</p>';
   h+='<p class="ai-disclaimer">AI-assisted readings are for reflection and personal insight only. They are not professional medical, legal, financial, mental-health, or crisis advice.</p>';
-  h+='<h4 class="summary-subtitle">Full Reading</h4>';
-  h+='</div>';
-  content.insertAdjacentHTML('afterbegin',h);
+  h+='</details>';
+  content.insertAdjacentHTML('beforeend',h);
 }
 
 // ===== CARD ENTRY =====
@@ -1828,11 +1847,14 @@ function renderHistory(){
     label.style.cssText='font-size:11px;color:var(--gold)';
     label.textContent='Journal Notes';
     const notes=document.createElement('textarea');
+    notes.id='history-note-'+i;
+    label.htmlFor=notes.id;
     notes.style.marginTop='4px';
     notes.placeholder='Add your reflections...';
     notes.value=String(r.notes||'');
-    notes.addEventListener('input',()=>updateNote(i,notes.value));
-    body.append(label,notes);
+    const noteStatus=document.createElement('p');noteStatus.className='backup-status';noteStatus.setAttribute('aria-live','polite');
+    notes.addEventListener('input',()=>{noteStatus.textContent=updateNote(i,notes.value)?'Saved in this browser.':'Could not save. Keep a copy of this note before leaving.';});
+    body.append(label,notes,noteStatus);
     const actions=document.createElement('div');
     actions.style.cssText='margin-top:8px;text-align:right';
     const del=document.createElement('button');
@@ -1844,11 +1866,14 @@ function renderHistory(){
     renderReadingInto(readingDiv,r.narrative||'No reading content saved.');
   });
   renderJournalArchive(list,Array.isArray(journal)?journal:[]);
+  if(typeof updateArchiveStatus==='function')updateArchiveStatus();
   renderEntitlementsUI();
 }
 function updateNote(idx,val){
   const readings=readStoredJson('arcana_readings',[]);
-  if(readings[idx]){readings[idx].notes=String(val||'').slice(0,10000);writeStoredJson('arcana_readings',readings)}
+  if(!readings[idx])return false;
+  readings[idx].notes=String(val||'').slice(0,10000);
+  return writeStoredJson('arcana_readings',readings,'This journal note could not be saved. Keep a copy before leaving.');
 }
 function deleteReading(idx){
   const remove=()=>{
@@ -1889,12 +1914,21 @@ function renderJournalArchive(list,entries){
   list.appendChild(section);
 }
 function editJournalEntry(index){
-  const entries=readStoredJson('arcana-journal',[]);const entry=entries[index];
+  const entries=readArchiveForWrite('arcana-journal');const entry=entries&&entries[index];
   if(!entry)return;
+  const original=JSON.stringify(entries);
   openTextPrompt('Edit reflection','Update this journal entry.',entry.text||'',value=>{
-    const clean=String(value||'').trim().slice(0,10000);if(!clean)return;
-    entries[index]={...entry,text:clean,updatedAt:new Date().toISOString()};
-    writeStoredJson('arcana-journal',entries);renderHistory();
+    const clean=String(value||'').trim().slice(0,10000);
+    if(!clean){showToast('Add a reflection before saving.');return false;}
+    const current=readArchiveForWrite('arcana-journal');
+    if(!current)return false;
+    if(JSON.stringify(current)!==original){
+      showToast('The journal changed while you were editing. Copy your text, then reopen the entry.');
+      return false;
+    }
+    current[index]={...entry,text:clean,updatedAt:new Date().toISOString()};
+    if(!writeStoredJson('arcana-journal',current,'This reflection could not be saved. Keep a copy before leaving.'))return false;
+    renderHistory();return true;
   });
 }
 function deleteJournalEntry(index){
@@ -1991,11 +2025,11 @@ function openTextPrompt(title,description,value,onSave){
   const form=modal.querySelector('form');
   const textInput=modal.querySelector('#text-prompt-input');
   if(textInput)textInput.value=String(value||'');
-  form.onsubmit=e=>{e.preventDefault();const input=modal.querySelector('#text-prompt-input');const callback=modal._onSave;closeModal('modal-text-prompt');if(callback)callback(input.value);};
+  form.onsubmit=e=>{e.preventDefault();const input=modal.querySelector('#text-prompt-input');const callback=modal._onSave;if(!callback||callback(input.value)!==false)closeModal('modal-text-prompt');};
   modal._onSave=typeof onSave==='function'?onSave:null;
   activateDialog(modal,document.activeElement);
 }
-function openConfirmDialog(title,description,onConfirm,actionLabel='Delete'){
+function openConfirmDialog(title,description,onConfirm,actionLabel='Delete',offerBackup=false){
   let modal=document.getElementById('modal-confirm');
   if(!modal){
     modal=document.createElement('div');modal.id='modal-confirm';modal.className='modal-overlay';
@@ -2004,6 +2038,7 @@ function openConfirmDialog(title,description,onConfirm,actionLabel='Delete'){
   modal.innerHTML=`<div class="modal ritual-modal text-prompt-modal">
     <button type="button" class="close-btn" onclick="closeModal('modal-confirm')" aria-label="Close dialog">&times;</button>
     <h2>${escapeHtml(title)}</h2><p class="settings-note">${escapeHtml(description)}</p>
+    ${offerBackup?'<button type="button" class="btn btn-sm" onclick="downloadJournalBackup()">Download backup first</button>':''}
     <div class="settings-actions"><button type="button" class="btn" onclick="closeModal('modal-confirm')">Cancel</button><button type="button" class="btn btn-danger" id="confirm-dialog-action"></button></div>
   </div>`;
   const action=modal.querySelector('#confirm-dialog-action');
@@ -2020,7 +2055,7 @@ function clearSavedData(){
     closeModal('modal-settings');
     setTimeout(()=>location.reload(),300);
   };
-  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Clear Arcana data?','This removes saved readings, reflections, settings, usage, and this browser\'s premium activation.',clear,'Clear data'))return;
+  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Clear Arcana data?','Download a backup first. This permanently removes saved readings, reflections, settings, usage, and this browser\'s Premium activation. Keep your purchase receipt to reactivate.',clear,'Clear data',true))return;
   if(confirm('Delete saved readings and settings?'))clear();
 }
 function openModal(id){
@@ -2034,6 +2069,8 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('clic
 
 // ===== CARD PICKER =====
 let pickerPosId=null;
+let pickerSuitFilter=null;
+let pickerSearchQuery='';
 function hasSelectedReadingCards(){
   return Object.keys(state.cards||{}).length>0 || !!state.droppedCard;
 }
@@ -2088,10 +2125,15 @@ function renderPickerFilters(){
 }
 function openCardPicker(posId){
   pickerPosId=posId;
+  pickerSuitFilter=null;
+  pickerSearchQuery='';
+  const search=document.getElementById('picker-search');
+  if(search)search.value='';
   currentCards=getCards();
   renderPickerFilters();
   activateDialog(document.getElementById('card-picker-modal'),document.activeElement);
   renderPickerCards(null);
+  setTimeout(()=>{if(search&&activeDialog===document.getElementById('card-picker-modal'))search.focus();},0);
 }
 function closeCardPicker(){
   deactivateDialog(document.getElementById('card-picker-modal'));
@@ -2104,14 +2146,28 @@ function filterPickerSuit(suit,el){
   renderPickerCards(suit);
 }
 function renderPickerCards(filter){
-  let cards=currentCards;
-  if(filter==='major')cards=cards.filter(c=>c.arcana==='major');
-  else if(filter)cards=cards.filter(c=>c.suit===filter);
+  pickerSuitFilter=filter;
+  const cards=matchingPickerCards(currentCards,filter,pickerSearchQuery);
   const list=document.getElementById('card-picker-list');
   list.innerHTML=cards.map(card=>{
     const esc=escapeHtml(card.name);
-    return`<button type="button" class="card-picker-item" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${escapeHtml(card.name)}</span></button>`;
-  }).join('');
+    return`<button type="button" class="card-picker-item" aria-label="${esc}" onclick="selectPickerCard(this.dataset.n)" data-n="${esc}">${renderCardArt(card,'tarot-card-thumb picker-card-art',96)}<span>${escapeHtml(card.name)}</span></button>`;
+  }).join('')||'<p class="picker-empty">No matching cards. Try another name or suit.</p>';
+  const status=document.getElementById('picker-search-status');
+  if(status)status.textContent=cards.length+' card'+(cards.length===1?'':'s')+' found';
+}
+function matchingPickerCards(cards,filter,query){
+  const terms=String(query||'').trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return cards.filter(card=>{
+    if(filter==='major'&&card.arcana!=='major')return false;
+    if(filter&&filter!=='major'&&card.suit!==filter)return false;
+    const name=(card.name+' '+(card.number??'')).toLowerCase();
+    return terms.every(term=>name.includes(term));
+  });
+}
+function searchPickerCards(query){
+  pickerSearchQuery=String(query||'').slice(0,100);
+  renderPickerCards(pickerSuitFilter);
 }
 function selectPickerCard(name){
   if(!pickerPosId)return;
@@ -2213,11 +2269,17 @@ function saveJournal(trigger){
   const spread=getReadingSpread();
   const now=new Date().toISOString();
   const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),createdAt:now,updatedAt:now,date:now,spreadId:spread?spread.id:(state.spreadId||state.quickSpreadId||''),spreadName:spread?spread.name:'Custom',readingId:state.currentReadingId||'',text:txt.slice(0,10000)};
-  const history=readStoredJson('arcana-journal',[]);
-  history.unshift(entry);
-  if(!writeStoredJson('arcana-journal',history.slice(0,50),'Reflection could not be saved. Browser storage is full or unavailable.'))return;
   const btn=trigger||(typeof event!=='undefined'&&event?event.currentTarget:null);
   const status=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-save-status') : null;
-  if(status)status.textContent='Saved to your journal';
-  if(btn){const orig=btn.textContent;btn.textContent='Saved';setTimeout(()=>{btn.textContent=orig;if(status)status.textContent=''},2200);}
+  const save=allowReplacement=>{
+    if(!persistJournalEntry(entry,allowReplacement))return;
+    if(status)status.textContent='Saved in this browser. Download backups regularly.';
+    if(btn){const orig=btn.textContent;btn.textContent='Saved';setTimeout(()=>{btn.textContent=orig;},2200);}
+  };
+  const replacing=archiveReplacementCount('arcana-journal',JOURNAL_ARCHIVE_LIMIT);
+  if(replacing){
+    openConfirmDialog('Your reflection archive is full','Saving this reflection will replace '+replacing+' oldest reflection'+(replacing===1?'':'s')+'. Download a backup first to keep them.',()=>save(true),'Replace oldest',true);
+    return;
+  }
+  save(false);
 }

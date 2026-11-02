@@ -1,21 +1,19 @@
 <div class="screen ritual-screen ritual-screen-choice" id="screen-card-system">
   <div class="step-dots" id="dots-system"></div>
   <div class="progress-estimate" id="progress-card-system"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which card system are you using?</h2>
-  <div class="onboard">
-    Arcana can interpret traditional tarot cards or playing cards used for cartomancy. Choose the deck in your hands so card meanings and suits match your reading.
-  </div>
+  <h2>Choose your deck</h2>
+  <p class="onboard compact-onboard">Use the deck in your hands. Arcana will keep its card names and meanings.</p>
   <button type="button" class="card-opt" aria-pressed="false" onclick="selectSystem('tarot',this)">
     <h3>Traditional Tarot</h3>
-    <p>Use this for a 78-card tarot deck with 22 Major Arcana and 56 Minor Arcana across Wands, Cups, Swords, and Pentacles.</p>
+    <p>A 78-card tarot deck.<span class="card-system-detail"> Major and Minor Arcana, including Wands, Cups, Swords, and Pentacles.</span></p>
   </button>
   <button type="button" class="card-opt" aria-pressed="false" onclick="selectSystem('playing',this)">
     <h3>Playing Cards</h3>
-    <p>Use this for a standard 52-card deck. Arcana reads Hearts, Diamonds, Clubs, and Spades through classic cartomancy meanings.</p>
+    <p>A standard 52-card deck.<span class="card-system-detail"> Hearts, Diamonds, Clubs, and Spades, read through cartomancy meanings.</span></p>
   </button>
   <button type="button" class="card-opt" aria-pressed="false" onclick="selectSystem('playing-joker',this)">
     <h3>Playing Cards + Joker</h3>
-    <p>Use this for a 53-card deck. The Joker adds themes of possibility, risk, surprise, and trust in the unknown.</p>
+    <p>A 52-card deck with one Joker.<span class="card-system-detail"> The Joker adds themes of possibility, surprise, and the unknown.</span></p>
   </button>
   <div class="nav-row">
     <button type="button" class="btn" onclick="goScreen('screen-concerns')">Back</button>

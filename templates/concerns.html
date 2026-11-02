@@ -1,23 +1,20 @@
 <div class="screen ritual-screen ritual-screen-focus" id="screen-concerns">
   <div class="step-dots" id="dots-concerns"></div>
   <div class="progress-estimate" id="progress-concerns"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">What question or focus should your card reading explore?</h2>
-  <div class="onboard">
-    A clear focus helps Arcana interpret the cards in context. You can name a relationship, decision, career question, or emotional pattern, or skip this for open guidance.
-  </div>
+  <h2>What would you like to reflect on?</h2>
+  <p class="onboard compact-onboard">One question is enough. You can also continue with an open reading.</p>
   <div id="concern-list">
-    <div class="concern-row"><label class="sr-only" for="concern-input-1">Question or focus</label><input id="concern-input-1" type="text" placeholder="What question or situation is on your mind?" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button></div>
+    <div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input"></div>
   </div>
-  <button type="button" class="btn btn-sm" onclick="addConcern()" style="margin:8px 0">Add Another Focus</button>
-  <div class="tag-chips">
-    <button type="button" class="tag-chip" onclick="tagConcern(this)">Love &amp; Relationships</button>
+  <button type="button" class="btn btn-sm flow-shortcut" onclick="skipConcerns()">Skip question</button>
+  <details class="flow-details question-ideas">
+    <summary>Need a starting point?</summary>
+    <div class="tag-chips">
     <button type="button" class="tag-chip" onclick="tagConcern(this)">Career</button>
-    <button type="button" class="tag-chip" onclick="tagConcern(this)">Family</button>
     <button type="button" class="tag-chip" onclick="tagConcern(this)">Personal Growth</button>
-    <button type="button" class="tag-chip" onclick="tagConcern(this)">Finances</button>
-    <button type="button" class="tag-chip" onclick="tagConcern(this)">Spiritual</button>
     <button type="button" class="tag-chip" onclick="tagConcern(this)">General Guidance</button>
-  </div>
+    </div>
+  </details>
   <div class="nav-row">
     <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back</button>
     <button class="btn btn-primary" onclick="saveConcerns()">Continue</button>

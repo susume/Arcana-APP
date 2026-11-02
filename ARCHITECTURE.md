@@ -296,6 +296,8 @@ The main guided progress sequence is:
 
 ```js
 [
+  'screen-concerns',
+  'screen-card-system',
   'screen-spread',
   'screen-reflection',
   'screen-card-entry',
@@ -304,8 +306,10 @@ The main guided progress sequence is:
 ]
 ```
 
-Concerns and card-system screens remain available but are not part of the short
-default guided route.
+The question is optional and has an explicit skip action. `guidedScreens()`
+omits preparation when `state.preparationSkipped` is true, keeping the dots and
+step count accurate. Users with cards already laid out enter the upload tab;
+Back returns to spread selection. That choice survives autosave and reload.
 
 ## 10. User flows
 
@@ -313,15 +317,19 @@ default guided route.
 
 ```text
 Homepage
+  -> optional question
+  -> card system
   -> choose spread
-  -> prepare/reflection
+  -> optional preparation/reflection
   -> guided draw, upload, or manual card entry
   -> review identified/entered cards
   -> AI or classic reading
   -> journal, save, share, print, voice, or restart
 ```
 
-`startGuided()` resets reading state and starts at spread selection.
+`startGuided()` resets reading state and starts at the optional question.
+Spread choices precede collapsed life-stage context. Preparation and jumper-card
+tips are expandable, and manual entry includes a searchable, suit-aware picker.
 
 ### Quick upload
 
@@ -572,12 +580,30 @@ concept dynamically. Prompt chips can seed the textarea, and the Save button is
 enabled only when content exists.
 
 `saveJournal()` writes lightweight entries to `arcana-journal`, capped at 50.
+At capacity, a confirmation with a backup action precedes replacement.
 Journal entries are separate from saved reading records and remain local.
 
 ### Saved readings and history
 
-`saveReading()` writes richer records to `arcana_readings`, also capped at 50.
+`saveReading()` writes richer records to `arcana_readings`, capped at 3 for Free
+and 50 for Premium. A full-archive save requires explicit replacement consent;
+storage failures leave the form and current reading available.
 History renders saved spreads, notes, and premium comparison/archive behavior.
+Unreadable archives are not overwritten by a new save. Reflection edits retain
+their draft after a write failure and reject stale changes from another tab.
+
+### Portable journal backups
+
+`js/journal-backup.js` loads after storage and before the UI. History and Settings
+offer JSON downloads of saved readings, cards, notes, structured reading content,
+and reflection entries. API keys, settings, usage, and Premium credentials are
+excluded. Files use `arcana-journal-backup`, version 1, and a 10 MB size limit.
+
+Restore validates all records before presenting a preview. Matching IDs retain
+the local entry. New entries merge only into available capacity, with skipped
+counts displayed; an import never removes an existing entry. Changes since the
+preview invalidate it. If a later storage write fails, earlier writes roll back.
+This is portable local storage, not cloud synchronization.
 
 ### Sharing
 
@@ -745,9 +771,11 @@ Core conventions:
 - Eight-pixel premium surface radii
 - CSS-only motion with `prefers-reduced-motion` support
 
-At 760px and below, guided `.nav-row` controls become a sticky safe-area-aware
-bottom action dock. Mobile copy has an explicit readability floor, and major
-controls must remain usable at a 390px viewport without horizontal overflow.
+At 760px and below, guided `.nav-row` controls become a fixed safe-area-aware
+bottom action dock. Mobile screens disable backdrop filtering so it cannot
+create a containing block that clips that dock. Mobile copy has an explicit
+readability floor, and major controls must remain usable at a 390px viewport
+without horizontal overflow.
 
 Selection surfaces use semantic `<button type="button">` elements. Preserve:
 

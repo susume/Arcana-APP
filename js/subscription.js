@@ -144,30 +144,34 @@ function showUpgradeModal(reason){
   const usage = getUsage();
   const countLine = reason === 'value'
     ? `<p class="upgrade-note">You've completed ${usage.monthlyCount || 3} readings this month.</p>`
-    : '<p class="upgrade-note">People should experience the magic before we ask for money. Free includes one complete AI-assisted reading each day.</p>';
+    : '<p class="upgrade-note">Free includes one complete AI-assisted reading each day. Keep your ritual going with Premium.</p>';
   modal.innerHTML = `
     <div class="modal upgrade-modal">
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
       <div class="plan-pill">Premium lifetime unlock from $5</div>
       <h2>${featureTitle(reason)}</h2>
+      <p class="upgrade-price">$5 minimum &middot; $20 suggested &middot; one payment</p>
       ${countLine}
-      <div class="upgrade-grid">
-        <span>Unlimited readings</span>
-        <span>Reading history</span>
-        <span>Voice narration</span>
-        <span>Journal tools</span>
-        <span>Advanced spreads</span>
-        <span>Reading comparison</span>
-      </div>
-      <p class="upgrade-note">Pay what you want. $5 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
-      <p class="upgrade-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
-      ${getGumroadProductUrl()?`<p class="upgrade-note">Your Gumroad receipt includes the license key.</p><button class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button>`:''}
-      <div class="activation-box">
+      ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button>`:''}
+      <p class="upgrade-note">Lifetime access. No recurring Arcana subscription.</p>
+      <ul class="upgrade-benefits">
+        <li>Unlimited readings and five advanced spreads</li>
+        <li>Journal tools and up to 50 saved readings</li>
+        <li>Voice narration and reading comparison</li>
+      </ul>
+      <details class="flow-details purchase-details">
+        <summary>Pricing and purchase details</summary>
+        <p class="upgrade-note">Pay what you want. $5 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+        <p class="upgrade-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+      </details>
+      <details class="flow-details activation-box">
+        <summary>Already purchased? Activate Premium</summary>
+        <p class="upgrade-note">Your Gumroad receipt includes the license key.</p>
         <label for="activation-key-input">Activation key</label>
-        <input id="activation-key-input" type="text" placeholder="Paste your founder or Gumroad key">
-        <button class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
-        <p id="activation-status" class="activation-status"></p>
-      </div>
+        <input id="activation-key-input" type="text" placeholder="Paste your activation key" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
+        <p id="activation-status" class="activation-status" aria-live="polite"></p>
+      </details>
     </div>`;
   if(typeof activateDialog==='function')activateDialog(modal,document.activeElement);
   else modal.classList.add('open');
@@ -193,7 +197,7 @@ async function submitSettingsActivationKey(){
   const input=document.getElementById('premium-key-input');
   const status=document.getElementById('premium-key-status');
   if(!input||!input.value.trim()){
-    if(status)status.textContent='Paste your founder or Gumroad key first.';
+    if(status)status.textContent='Paste your activation key first.';
     return;
   }
   try{
@@ -234,6 +238,9 @@ function renderEntitlementsUI(){
   if(settingsStatus){
     settingsStatus.textContent = premium ? 'Premium active on this browser' : 'Free plan active';
   }
+  const deactivateButton=document.getElementById('deactivate-premium');
+  if(deactivateButton)deactivateButton.hidden=!premium;
+  if(typeof updateArchiveStatus==='function')updateArchiveStatus();
 
   document.querySelectorAll('[data-premium-feature]').forEach(el => {
     const feature = el.dataset.premiumFeature;

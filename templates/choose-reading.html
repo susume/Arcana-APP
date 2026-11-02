@@ -1,28 +1,8 @@
 <div class="screen ritual-screen ritual-screen-choice" id="screen-spread">
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Which spread should you use?</h2>
-  <div class="onboard compact-onboard">Choose the smallest spread that can answer your question. One card is best for a daily focus, three cards give simple context, and six cards explore a situation in more depth.</div>
-  <div class="context-panel">
-    <div>
-      <h3>What context helps a card reading?</h3>
-      <p>Life stage is optional, but it helps Arcana phrase the interpretation with appropriate care and perspective.</p>
-    </div>
-    <div class="context-grid">
-      <label>
-        Life stage
-        <select id="reader-life-stage">
-          <option value="">Prefer not to say</option>
-          <option>Child</option>
-          <option>Teen</option>
-          <option>Young adult</option>
-          <option>Adult</option>
-          <option>Older adult</option>
-        </select>
-      </label>
-    </div>
-    <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
-  </div>
+  <h2>Choose your spread</h2>
+  <p class="onboard compact-onboard">Start small: one card for a daily focus, three for context, or six for a deeper look.</p>
   <div class="reading-choices" id="reading-choices">
     <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
@@ -61,6 +41,22 @@
       </button>
     </div>
   </div>
+  <button type="button" class="btn btn-sm flow-shortcut" onclick="confirmSpread(true)">My cards are already laid out</button>
+  <details class="flow-details context-details" id="reader-context-details">
+    <summary>Optional reading context</summary>
+    <div class="context-panel">
+      <p>Life stage helps Arcana keep the language relevant and age-aware.</p>
+      <div class="context-grid">
+        <label for="reader-life-stage">Life stage (optional)
+          <select id="reader-life-stage">
+            <option value="">Prefer not to say</option>
+            <option>Child</option><option>Teen</option><option>Young adult</option><option>Adult</option><option>Older adult</option>
+          </select>
+        </label>
+      </div>
+      <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
+    </div>
+  </details>
   <div class="nav-row">
     <button type="button" class="btn" onclick="goScreen('screen-card-system')">Back</button>
     <button class="btn btn-primary" onclick="confirmSpread()">Continue</button>

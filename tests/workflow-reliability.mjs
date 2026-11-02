@@ -107,3 +107,48 @@ resolvePhoto('Late photo identification');await photoRequest;
 assert.equal(run('state.cards[1].name'),'The Sun','Cancelled photo identification must not replace a newer spread');
 assert.equal(run('state.narrative'),'New reading');
 console.log('quick photo cancellation regression passed');
+
+// Search must compose with suit filters and work for both card systems.
+const searchCards=[
+  {name:'The Star',arcana:'major',number:17},
+  {name:'Two of Cups',suit:'cups',number:2},
+  {name:'Two of Hearts',suit:'hearts',number:2}
+];
+assert.deepEqual(Array.from(context.matchingPickerCards(searchCards,null,' STAR '),card=>card.name),['The Star']);
+assert.deepEqual(Array.from(context.matchingPickerCards(searchCards,'cups','2'),card=>card.name),['Two of Cups']);
+assert.deepEqual(Array.from(context.matchingPickerCards(searchCards,'hearts','two'),card=>card.name),['Two of Hearts']);
+assert.equal(context.matchingPickerCards(searchCards,'major','cups').length,0);
+assert.equal(context.matchingPickerCards(searchCards,null,'<script>').length,0);
+const navigations=[];
+context.goScreen=id=>navigations.push(id);
+context.autoSaveState=()=>{};
+context.buildCardEntry=()=>{};
+run("state.spreadId='one-card';state.cardSystem='playing';state.preparationSkipped=false");
+run('skipPreparation()');
+assert.equal(run('state.preparationSkipped'),true);
+assert.equal(run('state.cardSystem'),'playing','Skipping preparation must retain the chosen physical deck');
+assert.equal(run("guidedScreens().includes('screen-reflection')"),false);
+assert.equal(run('serializableState().preparationSkipped'),true,'The optional preparation route must survive an autosave');
+run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-spread');
+run('confirmReflection()');assert.equal(run('state.preparationSkipped'),false);
+run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-reflection');
+console.log('onboarding skip and card search regressions passed');
+
+// Reflection edits must retain the draft when storage fails or another tab changes the journal.
+let saveReflectionDraft;
+context.openTextPrompt=(_title,_description,_value,onSave)=>{saveReflectionDraft=onSave;};
+context.renderHistory=()=>{};
+const reflectionRecord={id:'reflection-test',date:'2026-11-02',text:'Original reflection'};
+data.set('arcana-journal',JSON.stringify([reflectionRecord]));
+run('editJournalEntry(0)');
+storageFails=true;
+assert.equal(saveReflectionDraft('Keep my draft'),false,'A failed edit must keep the editor open');
+assert.equal(JSON.parse(data.get('arcana-journal'))[0].text,'Original reflection');
+storageFails=false;
+data.set('arcana-journal',JSON.stringify([{...reflectionRecord,text:'Changed in another tab'}]));
+assert.equal(saveReflectionDraft('Stale edit'),false);
+assert.equal(JSON.parse(data.get('arcana-journal'))[0].text,'Changed in another tab','A stale editor must not overwrite newer content');
+run('editJournalEntry(0)');
+assert.equal(saveReflectionDraft('Updated reflection'),true);
+assert.equal(JSON.parse(data.get('arcana-journal'))[0].text,'Updated reflection');
+console.log('reflection edit persistence regressions passed');

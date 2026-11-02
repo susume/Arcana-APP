@@ -2,53 +2,63 @@
   <div class="modal ritual-modal ritual-settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <button type="button" class="close-btn" onclick="closeModal('modal-settings')" aria-label="Close settings">&times;</button>
     <h2 id="settings-title">Reading Settings</h2>
-
-    <div class="settings-section">
-      <h3>Premium Access</h3>
-      <p id="premium-settings-status" class="settings-status">Free plan active</p>
-      <p class="settings-note">Premium is a one-time lifetime unlock. Pay what you want, starting at $5, for unlimited readings, advanced spreads, journal history, narration, and comparison tools.</p>
-      <p class="settings-note">$5 minimum. $20 suggested. Every purchase unlocks the same Premium features. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
-      <p class="settings-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies. Your Gumroad receipt includes your activation key.</p>
-      <label for="premium-key-input">Activation key</label>
-      <input type="text" id="premium-key-input" placeholder="Paste your founder or Gumroad key" autocomplete="off" spellcheck="false">
-      <p id="premium-key-status" class="activation-status"></p>
+    <section class="settings-section reading-preferences" aria-labelledby="reading-preferences-title">
+      <h3 id="reading-preferences-title">Your reading preferences</h3>
+      <label for="reading-style">AI reading style</label>
+      <select id="reading-style"><option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option></select>
+      <label for="reading-tone">AI reading tone</label>
+      <select id="reading-tone"><option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option></select>
+      <label for="narrator-voice">Narrator voice</label>
+      <select id="narrator-voice"><option value="">Browser default</option></select>
+      <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" onclick="saveSettings()">Save preferences</button></div>
+    </section>
+    <section class="archive-backup" aria-labelledby="settings-backup-title">
+      <h3 id="settings-backup-title">Journal backups</h3>
+      <p class="settings-note">Readings and reflections stay in this browser. Download a copy before changing devices or clearing browser data.</p>
+      <p class="archive-status" data-archive-status></p>
       <div class="settings-actions">
-        <button class="btn btn-primary btn-sm" onclick="submitSettingsActivationKey()">Activate Premium</button>
-        <button class="btn btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button>
-        <button class="btn btn-sm" onclick="deactivatePremium()">Deactivate on this browser</button>
+        <button type="button" class="btn btn-sm" onclick="downloadJournalBackup()">Download backup</button>
+        <button type="button" class="btn btn-sm" onclick="chooseJournalBackup()">Restore backup</button>
       </div>
-    </div>
-
-    <div class="settings-section">
-      <h3>AI Configuration</h3>
-      <p class="settings-note">Arcana uses its hosted AI service when available. An optional advanced BYO Gemini key sends requests directly to Google and is saved only in this browser. Uploaded card photos are sent to the selected AI path for identification.</p>
+      <p class="backup-status" data-backup-status role="status" aria-live="polite"></p>
+    </section>
+    <details class="flow-details settings-section" id="settings-premium-details">
+      <summary>Premium Access <span id="premium-settings-status" class="settings-status">Free plan active</span></summary>
+      <p class="settings-note">Premium is a one-time lifetime unlock. Pay what you want, starting at $5. $20 suggested; every price unlocks the same Premium features.</p>
+      <p class="settings-note">Unlimited readings, up to 50 saved readings, advanced spreads, journal tools, narration, and comparison.</p>
+      <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button></div>
+      <details class="flow-details activation-box">
+        <summary>Already purchased? Activate Premium</summary>
+        <p class="settings-note">Your Gumroad receipt includes your activation key. Keep the receipt so you can activate another browser.</p>
+        <label for="premium-key-input">Activation key</label>
+        <input type="text" id="premium-key-input" placeholder="Paste your activation key" autocomplete="off" spellcheck="false">
+        <p id="premium-key-status" class="activation-status" aria-live="polite"></p>
+        <button type="button" class="btn btn-primary btn-sm" onclick="submitSettingsActivationKey()">Activate Premium</button>
+      </details>
+      <details class="flow-details purchase-details">
+        <summary>Pricing and purchase details</summary>
+        <p class="settings-note">$5 minimum. $20 suggested. Every purchase unlocks the same Premium features. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+        <p class="settings-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+      </details>
+      <button type="button" class="btn btn-sm" id="deactivate-premium" onclick="deactivatePremium()" hidden>Deactivate on this browser</button>
+    </details>
+    <details class="flow-details settings-section" id="settings-ai-details">
+      <summary>Advanced: AI Configuration (optional)</summary>
+      <p class="settings-note">You do not need your own API key to use Arcana&rsquo;s hosted AI when it is available. Classic readings work without an AI key.</p>
+      <p class="settings-note">An optional advanced BYO Gemini key sends requests directly to Google and is saved only in this browser. Uploaded card photos are sent to the selected AI path for identification.</p>
       <label for="gemini-key-input">Gemini API key</label>
-      <input type="password" id="gemini-key-input" placeholder="Paste your Gemini API key">
-      <p id="gemini-key-status" class="activation-status"></p>
+      <input type="password" id="gemini-key-input" placeholder="Paste your Gemini API key" autocomplete="off">
+      <p id="gemini-key-status" class="activation-status" aria-live="polite"></p>
       <div class="settings-actions">
-        <button class="btn btn-primary btn-sm" onclick="testAndSaveGeminiKey()">Test & Save Key</button>
-        <button class="btn btn-sm" onclick="removeGeminiKey()">Remove Key</button>
-        <button class="btn btn-sm" onclick="openGeminiKeyGuide()">How to get a free Gemini API key</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="testAndSaveGeminiKey()">Test &amp; Save Key</button>
+        <button type="button" class="btn btn-sm" onclick="removeGeminiKey()">Remove Key</button>
+        <button type="button" class="btn btn-sm" onclick="openGeminiKeyGuide()">How to get a free Gemini API key</button>
       </div>
-    </div>
-
-    <label for="reading-style">AI reading style</label>
-    <select id="reading-style">
-      <option>Traditional</option><option>Psychological</option><option>Spiritual</option><option>Practical</option><option>Shadow Work</option>
-    </select>
-    <label for="reading-tone">AI reading tone</label>
-    <select id="reading-tone">
-      <option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option>
-    </select>
-    <label for="narrator-voice">Narrator voice</label>
-    <select id="narrator-voice">
-      <option value="">Browser default</option>
-    </select>
-    <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border)">
+    </details>
+    <details class="flow-details settings-data-details">
+      <summary>Remove data from this browser</summary>
+      <p class="settings-note">Download a journal backup first. Clearing data also removes your settings and Premium activation from this browser.</p>
       <button type="button" class="btn btn-sm btn-danger" onclick="clearSavedData()">Clear Saved Data</button>
-    </div>
-    <div style="margin-top:12px;text-align:right">
-      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Settings</button>
-    </div>
+    </details>
   </div>
 </div>

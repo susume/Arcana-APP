@@ -310,3 +310,17 @@ final result: passed within the documented verification scope
 - Detailed test notes and 17 screenshot captures are in
   [`docs/qa/2026-11-02/usability.md`](docs/qa/2026-11-02/usability.md).
   Changes remained local during this QA pass; release status is tracked in GitHub Actions.
+
+## Premium minimum contribution of US$10 — 2026-11-02
+
+- Raised the lifetime Premium minimum from US$5 to US$10 across the homepage,
+  Settings, and upgrade dialog. The optional US$20 suggested contribution and
+  unlimited Premium readings remain in place.
+- Updated and saved the Gumroad amount and description, then verified both the
+  reloaded editor and public USD product page. Existing license verification and
+  product identifiers are preserved.
+- Desktop 1440px and mobile 390px checks show the price and purchase action
+  clearly, with no document horizontal overflow or browser warning/error logs.
+- Build, regressions, syntax checks, and diff whitespace checks passed. Embedded
+  and external templates are synchronized. Detailed evidence is in
+  [`docs/qa/2026-11-02/pricing-10.md`](docs/qa/2026-11-02/pricing-10.md).

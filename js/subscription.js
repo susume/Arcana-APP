@@ -148,11 +148,11 @@ function showUpgradeModal(reason){
   modal.innerHTML = `
     <div class="modal upgrade-modal">
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
-      <div class="plan-pill">Premium lifetime unlock from $5</div>
+      <div class="plan-pill">Premium lifetime unlock from $10</div>
       <h2>${featureTitle(reason)}</h2>
-      <p class="upgrade-price">$5 minimum &middot; $20 suggested &middot; one payment</p>
+      <p class="upgrade-price">$10 minimum &middot; $20 suggested &middot; one payment</p>
       ${countLine}
-      ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $5</button>`:''}
+      ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $10</button>`:''}
       <p class="upgrade-note">Lifetime access. No recurring Arcana subscription.</p>
       <ul class="upgrade-benefits">
         <li>Unlimited readings and five advanced spreads</li>
@@ -161,7 +161,7 @@ function showUpgradeModal(reason){
       </ul>
       <details class="flow-details purchase-details">
         <summary>Pricing and purchase details</summary>
-        <p class="upgrade-note">Pay what you want. $5 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+        <p class="upgrade-note">Pay what you want. $10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
         <p class="upgrade-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
       </details>
       <details class="flow-details activation-box">

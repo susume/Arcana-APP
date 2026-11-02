@@ -636,7 +636,7 @@ stored in settings, and reading markdown is reduced to narration-friendly text.
 ## 16. Premium and monetization
 
 Arcana Premium is a one-time **pay-what-you-want lifetime unlock**, with a
-**$5 minimum** and **$20 suggested contribution**. Every contribution amount
+**$10 minimum** and **$20 suggested contribution**. Every contribution amount
 unlocks the same Premium features. Pricing is configured on Gumroad; the app
 displays the offer on the homepage, in Settings, and in the upgrade modal.
 The displayed refund policy is all sales final, with no refunds except where

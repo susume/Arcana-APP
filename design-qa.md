@@ -324,3 +324,19 @@ final result: passed within the documented verification scope
 - Build, regressions, syntax checks, and diff whitespace checks passed. Embedded
   and external templates are synchronized. Detailed evidence is in
   [`docs/qa/2026-11-02/pricing-10.md`](docs/qa/2026-11-02/pricing-10.md).
+
+## Light Gumroad cover and thumbnail — 2026-11-04
+
+- Completed a 1672 × 941 product cover and a separate 1254 × 1254 thumbnail in
+  the site's ivory, forest, sage, and brass Quiet Atelier style. Both are native
+  RGB PNG outputs under 3 MB, with correct spelling and readable composition.
+- Reused the site's physical-card imagery and headline. The generated artwork
+  contains no prices, checkout buttons, or invented app interfaces.
+- Preserved exact prompts, source metadata, and the previous public artwork for
+  restoration under `assets/gumroad/atelier-2026-11-02/`.
+- Build, regressions, JavaScript syntax, and whitespace checks pass. The generated
+  CSS includes an additional unused utility discovered from the new asset text.
+- Gumroad publication is pending the ChatGPT Chrome extension's file-URL access
+  setting. The actual file chooser was reached, but Chrome blocked `setFiles`;
+  the previous live artwork is still in place. Details:
+  [`docs/qa/2026-11-04/gumroad-artwork.md`](docs/qa/2026-11-04/gumroad-artwork.md).

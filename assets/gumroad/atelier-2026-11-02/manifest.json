@@ -1,0 +1,30 @@
+{
+  "completed_at": "2026-11-04",
+  "generation": "built-in image_gen",
+  "product_url": "https://thelayersapp.gumroad.com/l/vjptlg",
+  "publication_status": "pending Chrome file-URL permission",
+  "assets": [
+    {
+      "file": "arcana-cover.png",
+      "prompt": "arcana-cover-final-prompt.txt",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a19983-8ddb-7c93-9e69-f7e9de71724f\\exec-b828b758-4984-4cab-81c7-f49d6894ab58.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "format": "PNG",
+      "bytes": 2795238,
+      "sha256": "36acac13b9a66e3091767f38233d19cdc207a3f3a33ba117cdb0e92da13a9907"
+    },
+    {
+      "file": "arcana-thumbnail.png",
+      "prompt": "arcana-thumbnail-prompt.txt",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a19aa1-c215-7401-b188-a6ca17da1e29\\exec-e45c3922-7666-44cd-8b0d-93e5a51fe8d2.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "format": "PNG",
+      "bytes": 2724144,
+      "sha256": "5fc30f6e038ec83d9ee067115eecefeb5f94003da813311d4913dfe8ede502c6"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "product_url": "https://thelayersapp.gumroad.com/l/vjptlg",
+  "captured_at": "2026-11-02",
+  "assets": [
+    {
+      "file": "originals/cover-before.png",
+      "source_url": "https://public-files.gumroad.com/6sq55ppt746qdqsf9aos8i13c08f",
+      "width": 1005,
+      "height": 566,
+      "format": "PNG",
+      "bytes": 924511
+    },
+    {
+      "file": "originals/thumbnail-before.png",
+      "source_url": "https://public-files.gumroad.com/wf809z1vq11zafb9gcirl27zny4p",
+      "width": 600,
+      "height": 600,
+      "format": "PNG",
+      "bytes": 533482
+    }
+  ]
+}

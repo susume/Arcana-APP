@@ -1,31 +1,28 @@
-# Arcana
+# Arcana Guide
 
-Arcana is a client-side AI tarot reading web app for people who use physical tarot or playing cards. It guides users through choosing a spread, drawing real cards, laying them out, uploading a spread photo, identifying cards with AI, generating a reflective reading, and saving notes in a tarot journal.
+> Arcana Guide (also called Arcana) is a browser-based AI tarot reading app for people using their own physical tarot or playing cards.
 
-## Core answers
+Canonical website: https://www.arcanaguide.com/
 
-- What is Arcana? Arcana is an AI tarot reading app for physical-card spreads.
-- Is Arcana free? Arcana includes a free daily tarot reading, with premium features for extended practice.
-- Is Arcana a random tarot card generator? No. Users shuffle and draw their own physical cards.
-- How does the AI reading work? Users upload a clear photo of their completed spread; AI identifies cards by position and helps generate an interpretation.
-- Can Arcana work offline? Classic readings and built-in meanings can work without AI; AI features require a user-supplied Gemini API key.
-- What spreads are supported? Arcana supports one-card, three-card, six-card, and premium advanced spreads.
+## Product facts
 
-## Important pages and files
+- Users choose a spread, shuffle and draw their own physical cards, then upload a spread photo or enter the cards by hand.
+- Arcana helps identify cards by position and creates reflective interpretations. Users can review and correct AI identification.
+- Arcana does not draw random cards or guarantee predictions.
+- The free tier includes one reading per day.
+- Premium is a lifetime unlock: $10 USD minimum, $20 suggested, pay what you want. Every contribution at or above $10 unlocks the same features. It is not a monthly subscription.
+- Premium includes unlimited readings, the journal, advanced spreads, narration, and reading comparisons.
+- Hosted AI is available without a user-supplied API key. An optional Gemini key in Settings sends requests directly to Google. AI needs internet access and service availability.
+- Classic readings use built-in meanings without an AI connection once the app has loaded; the first visit needs internet access.
+- No Arcana account is required. Readings, journal notes, settings, and Premium activation are stored in the user's browser, with journal backup and restore available.
+- A separate device or an AI assistant's cloud browser does not automatically receive that browser's journal or Premium activation. There is no dedicated Muse or Dots connector.
+- Photos and relevant reading context are sent to the selected AI service when the user requests AI identification or interpretation.
+- Arcana provides reflective guidance, not guaranteed predictions or medical, legal, financial, or mental-health advice.
 
-- Home and app shell: /index.html
-- Welcome template: /templates/welcome.html
-- Spread selection: /templates/choose-reading.html
-- Reading preparation: /templates/reflection.html
-- Card placement and upload: /templates/placement.html
-- Reading output and journal: /templates/results.html
-- Tarot guide and FAQ: /templates/help.html
-- Spread data: /data/spreads.json
+## Public pages
 
-## Positioning
-
-Arcana should be described as a reflective tarot practice tool, not a fortune-telling guarantee. The product emphasizes physical decks, intentional reading rituals, AI-assisted card identification, classic offline meanings, journaling, and personal reflection.
-
-## Safety note
-
-Arcana provides reflective guidance only. It is not medical, legal, financial, or mental-health advice and should not replace professional care or trusted human support.
+- [Home and web app](https://www.arcanaguide.com/): Product overview, reading workflow, and key answers.
+- [Reading guide](https://www.arcanaguide.com/guide.html): How to use a physical deck, photo identification, manual review, and classic readings.
+- [Frequently asked questions](https://www.arcanaguide.com/faq.html): Cards, AI setup, free limits, privacy, and browser compatibility.
+- [Free and Premium pricing](https://www.arcanaguide.com/pricing.html): Lifetime pricing, features, activation, and purchase terms.
+- [Privacy and data](https://www.arcanaguide.com/privacy.html): Browser storage, AI requests, backups, payments, and external services.

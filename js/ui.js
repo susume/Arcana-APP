@@ -2,8 +2,10 @@
 async function renderScreen(){
   const app=document.getElementById('app');
   if(!app || app.dataset.templatesLoaded)return;
+  const hasHomepage=!!app.querySelector('#screen-welcome');
   const templates=['welcome','concerns','card-system','choose-reading','reflection','placement','overview','results','history','quick','settings','help'];
   const html=await Promise.all(templates.map(async name=>{
+    if(name==='welcome' && hasHomepage)return '';
     const embedded=document.getElementById('template-'+name);
     if(location.protocol==='file:' && embedded)return embedded.innerHTML;
     try{
@@ -12,7 +14,7 @@ async function renderScreen(){
     }catch(e){}
     return embedded ? embedded.innerHTML : '';
   }));
-  app.innerHTML=html.join('\n');
+  app.insertAdjacentHTML('beforeend',html.join('\n'));
   ensureRitualUtilities();
   app.dataset.templatesLoaded='true';
 }

@@ -77,6 +77,11 @@ async function initApp(){
     m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)});
   });
   renderEntitlementsUI();
+  // The public homepage is visible before templates and spreads finish loading.
+  document.querySelectorAll('#screen-welcome button[data-app-startup]').forEach(button=>{
+    button.disabled=false;
+    button.removeAttribute('data-app-startup');
+  });
 }
 
 window.addEventListener('hashchange',()=>goScreen(screenForRoute(location.hash.slice(1)),true));

@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f4f0e7">
   <link rel="icon" type="image/png" href="assets/brand/arcana-guide-icon.png">
-  <title>Arcana - Free AI Tarot Reading With Your Own Cards</title>
-  <meta name="description" content="Arcana is a free AI tarot reading app for physical cards. Choose a spread, draw your own deck, upload a photo, identify cards with AI, and save your reflection.">
-  <meta name="keywords" content="free tarot reading, AI tarot reading, online tarot reading, tarot spread, tarot card meanings, physical tarot deck, tarot journal">
+  <title>Arcana Guide - Free AI Tarot Reading With Your Own Cards</title>
+  <meta name="description" content="Read your own tarot or playing cards with Arcana Guide. Upload a spread or enter cards by hand. One free reading daily; lifetime Premium from $10 USD.">
+  <link rel="canonical" href="https://www.arcanaguide.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Arcana Guide">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Arcana Guide - AI Tarot Reading With Your Own Cards">
+  <meta property="og:description" content="Your real cards, a reflective reading, and a place to keep your insight. One free reading daily; lifetime Premium from $10 USD.">
+  <meta property="og:url" content="https://www.arcanaguide.com/">
+  <meta property="og:image" content="https://www.arcanaguide.com/assets/homepage/atelier/personal-insight.webp">
+  <meta property="og:image:width" content="1448">
+  <meta property="og:image:height" content="1086">
+  <meta property="og:image:alt" content="Three botanical tarot cards on a sunlit linen reading table">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Arcana Guide - AI Tarot Reading With Your Own Cards">
+  <meta name="twitter:description" content="Read your own physical cards with AI or classic meanings. Start with one free reading per day.">
+  <meta name="twitter:image" content="https://www.arcanaguide.com/assets/homepage/atelier/personal-insight.webp">
+  <meta name="twitter:image:alt" content="Three botanical tarot cards on a sunlit linen reading table">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/onboarding.css">
   <link rel="stylesheet" href="css/reading.css">
@@ -18,49 +33,84 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebSite",
+        "@id": "https://www.arcanaguide.com/#website",
+        "url": "https://www.arcanaguide.com/",
+        "name": "Arcana Guide",
+        "alternateName": "Arcana",
+        "inLanguage": "en"
+      },
+      {
         "@type": "SoftwareApplication",
-        "name": "Arcana",
+        "@id": "https://www.arcanaguide.com/#app",
+        "name": "Arcana Guide",
+        "alternateName": "Arcana",
+        "url": "https://www.arcanaguide.com/",
+        "image": "https://www.arcanaguide.com/assets/homepage/atelier/personal-insight.webp",
         "applicationCategory": "LifestyleApplication",
         "operatingSystem": "Web",
-        "description": "Arcana is an AI tarot reading app for physical cards. Users choose a spread, draw real cards, upload a spread photo, identify cards with AI, and save reflections in a tarot journal.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
+        "description": "Arcana Guide is an AI tarot reading web app for physical tarot or playing cards, with hosted AI, manual card entry, classic meanings, and a Premium journal.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "One free reading per day",
+            "price": "0",
+            "priceCurrency": "USD",
+            "url": "https://www.arcanaguide.com/pricing.html"
+          },
+          {
+            "@type": "Offer",
+            "name": "Premium lifetime unlock - minimum contribution",
+            "price": "10",
+            "priceCurrency": "USD",
+            "url": "https://www.arcanaguide.com/pricing.html"
+          }
+        ],
         "featureList": [
           "Free daily tarot reading",
           "AI card identification from spread photos",
           "Guided tarot spreads",
           "Classic offline tarot meanings",
-          "Tarot journal and reading history"
+          "Premium tarot journal and reading comparisons",
+          "Printable reading infographic"
         ]
       },
       {
         "@type": "FAQPage",
+        "@id": "https://www.arcanaguide.com/#faq",
+        "url": "https://www.arcanaguide.com/",
+        "isPartOf": {"@id": "https://www.arcanaguide.com/#website"},
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "What is Arcana?",
+            "name": "What is Arcana Guide?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Arcana is an AI tarot reading app for people using physical tarot or playing cards. It guides the spread, identifies cards from a photo, and creates a reflective interpretation."
+              "text": "Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation."
             }
           },
           {
             "@type": "Question",
-            "name": "How does an AI tarot reading work in Arcana?",
+            "name": "Is Arcana Guide free?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "You choose a spread, draw real cards from your own deck, place them by position, upload a clear photo, and Arcana uses AI to identify the cards before generating a reading."
+              "text": "Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features."
             }
           },
           {
             "@type": "Question",
-            "name": "Is Arcana a random tarot card generator?",
+            "name": "Do I need my own Gemini API key?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Arcana is designed for physical-card readings. Users shuffle and draw their own deck; the app supports interpretation, AI identification, and journaling."
+              "text": "No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where are my readings saved?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy."
             }
           }
         ]
@@ -71,8 +121,7 @@
 </head>
 <body>
   <div class="stars" id="stars"></div>
-  <main id="app"></main>
-  <template id="template-welcome">
+  <main id="app">
 <div class="screen active landing-screen ritual-home" id="screen-welcome">
   <div class="ritual-ambient" aria-hidden="true"></div>
 
@@ -82,15 +131,17 @@
       <div class="brand-logo" aria-hidden="true"><img src="assets/brand/arcana-guide-horizontal.webp" alt="" width="836" height="471" fetchpriority="high"></div>
     </div>
     <nav class="ritual-nav-links" aria-label="Homepage sections">
-      <button type="button" onclick="document.getElementById('why-arcana').scrollIntoView({behavior:'smooth'})">Why Arcana</button>
-      <button type="button" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works</button>
-      <button type="button" onclick="document.getElementById('premium').scrollIntoView({behavior:'smooth'})">Premium</button>
-      <button type="button" onclick="document.getElementById('journal').scrollIntoView({behavior:'smooth'})">Journal</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('why-arcana').scrollIntoView({behavior:'smooth'})">Why Arcana</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('premium').scrollIntoView({behavior:'smooth'})">Premium</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('journal').scrollIntoView({behavior:'smooth'})">Journal</button>
     </nav>
-    <button class="icon-btn ritual-settings" onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
+    <button class="icon-btn ritual-settings" disabled data-app-startup onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
     </button>
   </header>
+
+  <noscript><p class="public-noscript">Enable JavaScript to start a reading. You can still explore Arcana and read the <a href="guide.html">reading guide</a> and <a href="faq.html">FAQ</a>.</p></noscript>
 
   <section class="ritual-hero" aria-labelledby="ritual-hero-title">
     <div class="ritual-hero-copy">
@@ -98,13 +149,13 @@
       <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
       <h2 id="ritual-hero-title"><span>Your cards.</span> <span class="gold-line">A clearer</span> <span><em>way forward.</em></span></h2>
       <div class="hero-title-rule" aria-hidden="true"></div>
-      <p>Draw your cards. Find fresh perspective. Keep your insight with a journal and a printable reading poster.</p>
+      <p>Arcana Guide is an AI tarot reading app for your own physical tarot or playing cards. Upload a spread photo or enter your cards by hand, then keep your insight with a journal and a printable reading poster.</p>
       <div class="hero-cta-row ritual-cta-row">
-        <button class="btn btn-primary ritual-primary-cta" onclick="startGuided()">
+        <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
           Start a Free Reading
         </button>
-        <button class="btn ritual-secondary-cta" onclick="startQuick()">
+        <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
           Upload a Spread
         </button>
@@ -196,9 +247,23 @@
       <p>Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
     </div>
     <div class="offer-actions">
-      <button type="button" class="btn btn-primary" onclick="showUpgradeModal('journal')">Unlock Premium from $10</button>
-      <button class="btn ritual-journal-cta" onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+      <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')">Unlock Premium from $10</button>
+      <button class="btn ritual-journal-cta" disabled data-app-startup onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
     </div>
+  </section>
+
+  <section class="ritual-journey public-faq" aria-labelledby="homepage-faq-title">
+    <div class="ritual-section-heading">
+      <span class="atelier-eyebrow">BEFORE YOUR FIRST READING</span>
+      <h3 id="homepage-faq-title">A few things to know.</h3>
+    </div>
+    <dl class="public-answer-grid">
+      <div><dt>What is Arcana Guide?</dt><dd>Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation.</dd></div>
+      <div><dt>Is Arcana Guide free?</dt><dd>Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.</dd></div>
+      <div><dt>Do I need my own Gemini API key?</dt><dd>No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection.</dd></div>
+      <div><dt>Where are my readings saved?</dt><dd>Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy.</dd></div>
+    </dl>
+    <p class="public-more"><a href="faq.html">Read all frequently asked questions</a></p>
   </section>
 
   <section class="ritual-final-cta" aria-labelledby="final-cta-title">
@@ -206,11 +271,11 @@
     <h3 id="final-cta-title">A fresh perspective is a spread away.</h3>
     <p>Bring your cards. Bring your question. Find a little direction.</p>
     <div class="hero-cta-row ritual-cta-row">
-      <button class="btn btn-primary ritual-primary-cta" onclick="startGuided()">
+      <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
         Start a Free Reading
       </button>
-      <button class="btn ritual-secondary-cta" onclick="startQuick()">
+      <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
         Upload a Spread
       </button>
@@ -219,7 +284,182 @@
   </section>
 
   <div class="footer-links ritual-footer">
-    <button type="button" class="footer-link" onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</button>
+    <a class="footer-link" href="guide.html">Reading guide</a>
+    <a class="footer-link" href="faq.html">FAQ</a>
+    <a class="footer-link" href="pricing.html">Pricing</a>
+    <a class="footer-link" href="privacy.html">Privacy</a>
+    <button type="button" class="footer-link" disabled data-app-startup onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</button>
+  </div>
+</div>
+  </main>
+  <template id="template-welcome">
+<div class="screen active landing-screen ritual-home" id="screen-welcome">
+  <div class="ritual-ambient" aria-hidden="true"></div>
+
+  <header class="ritual-nav" aria-label="Arcana homepage">
+    <div class="brand-lockup ritual-brand">
+      <h1 class="sr-only">Arcana Guide</h1>
+      <div class="brand-logo" aria-hidden="true"><img src="assets/brand/arcana-guide-horizontal.webp" alt="" width="836" height="471" fetchpriority="high"></div>
+    </div>
+    <nav class="ritual-nav-links" aria-label="Homepage sections">
+      <button type="button" disabled data-app-startup onclick="document.getElementById('why-arcana').scrollIntoView({behavior:'smooth'})">Why Arcana</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('premium').scrollIntoView({behavior:'smooth'})">Premium</button>
+      <button type="button" disabled data-app-startup onclick="document.getElementById('journal').scrollIntoView({behavior:'smooth'})">Journal</button>
+    </nav>
+    <button class="icon-btn ritual-settings" disabled data-app-startup onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+    </button>
+  </header>
+
+  <noscript><p class="public-noscript">Enable JavaScript to start a reading. You can still explore Arcana and read the <a href="guide.html">reading guide</a> and <a href="faq.html">FAQ</a>.</p></noscript>
+
+  <section class="ritual-hero" aria-labelledby="ritual-hero-title">
+    <div class="ritual-hero-copy">
+      <span class="atelier-eyebrow">PERSONAL AI READINGS FOR YOUR REAL CARDS</span>
+      <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
+      <h2 id="ritual-hero-title"><span>Your cards.</span> <span class="gold-line">A clearer</span> <span><em>way forward.</em></span></h2>
+      <div class="hero-title-rule" aria-hidden="true"></div>
+      <p>Arcana Guide is an AI tarot reading app for your own physical tarot or playing cards. Upload a spread photo or enter your cards by hand, then keep your insight with a journal and a printable reading poster.</p>
+      <div class="hero-cta-row ritual-cta-row">
+        <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+          Start a Free Reading
+        </button>
+        <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
+          Upload a Spread
+        </button>
+      </div>
+      <p class="ritual-trust-note">Start free. No account needed. Your cards stay your ritual.</p>
+    </div>
+
+    <div class="ritual-hero-visual" aria-hidden="true">
+      <img src="assets/homepage/atelier/reading-table.webp" alt="" fetchpriority="high" width="1254" height="1254">
+      <div class="ritual-orbit orbit-one"></div>
+      <div class="ritual-orbit orbit-two"></div>
+    </div>
+  </section>
+
+  <section class="ritual-comparison reading-engine-benefits" id="why-arcana" aria-labelledby="comparison-title">
+    <div class="ritual-section-heading">
+      <span class="atelier-eyebrow">A LITTLE INSIGHT. SOMETHING TO KEEP.</span>
+      <h3 id="comparison-title">Find clarity. Keep it close.</h3>
+      <p>Personal readings, a journal for your journey, and a beautiful reminder of your next step.</p>
+    </div>
+    <div class="comparison-grid">
+      <article class="comparison-panel benefit-card">
+        <div class="benefit-art" aria-hidden="true"><img src="assets/homepage/atelier/personal-insight.webp" alt="" loading="lazy" width="1448" height="1086"></div>
+        <div class="benefit-copy">
+          <span class="benefit-label">PERSONAL READINGS</span>
+          <h4>Insight that speaks to you.</h4>
+          <p>Tuned for real card readings, our AI engine turns your spread and your question into clear, personal insight.</p>
+        </div>
+      </article>
+      <article class="comparison-panel benefit-card">
+        <div class="benefit-art" aria-hidden="true"><img src="assets/homepage/atelier/reflection-journal.webp" alt="" loading="lazy" width="1254" height="1254"></div>
+        <div class="benefit-copy">
+          <span class="benefit-label">PREMIUM JOURNAL</span>
+          <h4>Your journey, remembered.</h4>
+          <p>Save past readings and personal thoughts in your journal. See the patterns. Notice your progress.</p>
+        </div>
+      </article>
+      <article class="comparison-panel benefit-card">
+        <div class="benefit-art" aria-hidden="true"><img src="assets/homepage/atelier/reading-keepsake.webp" alt="" loading="lazy" width="1448" height="1086"></div>
+        <div class="benefit-copy">
+          <span class="benefit-label">PRINTABLE KEEPSAKES</span>
+          <h4>Keep your stars in sight.</h4>
+          <p>Download a printable infographic of your reading. Keep your insight close and your next step in focus.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="ritual-journey" id="how-it-works" aria-labelledby="journey-title">
+    <div class="ritual-section-heading">
+      <h3 id="journey-title">From your cards to clarity.</h3>
+      <p>Four simple steps. Your own cards, every time.</p>
+    </div>
+    <div class="journey-steps">
+      <div class="journey-step">
+        <span class="journey-number">1</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/choose-spread.svg" alt="" loading="lazy" width="360" height="240"></div>
+        <h4>Choose a Spread</h4>
+        <p>Choose a layout that fits what&rsquo;s on your mind.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">2</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/draw-cards.svg" alt="" loading="lazy" width="360" height="240"></div>
+        <h4>Draw Your Cards</h4>
+        <p>Shuffle your own deck and lay out your cards.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">3</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/upload-spread.svg" alt="" loading="lazy" width="360" height="240"></div>
+        <h4>Upload a Photo</h4>
+        <p>Upload your spread, or enter your cards by hand.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">4</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/reading-insight.svg" alt="" loading="lazy" width="360" height="240"></div>
+        <h4>Get AI Insight</h4>
+        <p>Find personal insight and ideas for your next step.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ritual-journal-premium atelier-offer" id="journal" aria-labelledby="journal-title">
+    <div class="journal-copy" id="premium">
+      <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
+      <h3 id="journal-title">Keep your journey going.</h3>
+      <p>Get unlimited readings, a Premium journal, deeper spreads, narration, and reading comparisons.</p>
+      <p class="homepage-monetization-copy">Premium lifetime unlock. Pay what you want, starting at $10.</p>
+      <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+      <p>Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+    </div>
+    <div class="offer-actions">
+      <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')">Unlock Premium from $10</button>
+      <button class="btn ritual-journal-cta" disabled data-app-startup onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+    </div>
+  </section>
+
+  <section class="ritual-journey public-faq" aria-labelledby="homepage-faq-title">
+    <div class="ritual-section-heading">
+      <span class="atelier-eyebrow">BEFORE YOUR FIRST READING</span>
+      <h3 id="homepage-faq-title">A few things to know.</h3>
+    </div>
+    <dl class="public-answer-grid">
+      <div><dt>What is Arcana Guide?</dt><dd>Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation.</dd></div>
+      <div><dt>Is Arcana Guide free?</dt><dd>Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.</dd></div>
+      <div><dt>Do I need my own Gemini API key?</dt><dd>No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection.</dd></div>
+      <div><dt>Where are my readings saved?</dt><dd>Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy.</dd></div>
+    </dl>
+    <p class="public-more"><a href="faq.html">Read all frequently asked questions</a></p>
+  </section>
+
+  <section class="ritual-final-cta" aria-labelledby="final-cta-title">
+    <span class="atelier-eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+    <h3 id="final-cta-title">A fresh perspective is a spread away.</h3>
+    <p>Bring your cards. Bring your question. Find a little direction.</p>
+    <div class="hero-cta-row ritual-cta-row">
+      <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
+        Start a Free Reading
+      </button>
+      <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
+        Upload a Spread
+      </button>
+    </div>
+    <p>No account needed to begin.</p>
+  </section>
+
+  <div class="footer-links ritual-footer">
+    <a class="footer-link" href="guide.html">Reading guide</a>
+    <a class="footer-link" href="faq.html">FAQ</a>
+    <a class="footer-link" href="pricing.html">Pricing</a>
+    <a class="footer-link" href="privacy.html">Privacy</a>
+    <button type="button" class="footer-link" disabled data-app-startup onclick="openModal('modal-help')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.3 9.3a2.9 2.9 0 0 1 5.6.9c0 1.9-2.8 2.4-2.8 4.1"></path><circle cx="12" cy="17.4" r=".7" fill="currentColor" stroke="none"></circle></svg> Learn More</button>
   </div>
 </div>
 </template>
@@ -658,7 +898,8 @@
     <div class="help-section"><h3>What does a reversed card mean?</h3><p>A reversed card appears upside-down and usually points to blocked, delayed, internalized, or shadow-side energy. It is not automatically negative; it adds nuance to the card's upright meaning.</p></div>
     <div class="help-section"><h3>What is a dropped or jumper card?</h3><p>A dropped card is a card that falls out while shuffling. Many readers treat it as an extra message or underlying theme, so Arcana lets you record it separately from the main spread.</p></div>
     <div class="help-section"><h3>Which spread should beginners choose?</h3><p>Beginners should start with one card for a daily focus or three cards for past, present, and future. Larger spreads are better when you already have a clear question and want more detail.</p></div>
-    <div class="help-section"><h3>What is the difference between AI and classic readings?</h3><p><strong>AI readings</strong> use Google Gemini to create a personalized narrative from your cards, spread positions, and optional context. <strong>Classic readings</strong> use built-in card meanings and work offline without an API key.</p></div>
+    <div class="help-section"><h3>What is the difference between AI and classic readings?</h3><p><strong>AI readings</strong> use Google Gemini to create a personalized narrative from your cards, spread positions, and optional context. Hosted AI is available without your own API key; an optional Gemini key in Settings sends requests directly to Google. <strong>Classic readings</strong> use built-in card meanings without an AI connection once the app has loaded.</p></div>
+    <div class="help-section"><h3>More about Arcana Guide</h3><p>Explore the <a href="guide.html">reading guide</a>, <a href="faq.html">FAQ</a>, <a href="pricing.html">free and Premium features</a>, and <a href="privacy.html">privacy and data details</a>.</p></div>
     <div class="help-section" id="gemini-key-guide">
       <h3>How to get a free Gemini API key</h3>
       <ol>

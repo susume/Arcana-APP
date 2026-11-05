@@ -235,7 +235,14 @@ syntax to these runtime scripts would break the current loading model.
 
 ## 8. Dual-source templates and spread data
 
-`renderScreen()` in `js/ui.js` builds the application UI at startup.
+`npm run sync` writes the welcome template directly into `<main id="app">`.
+This makes the actual homepage readable in the first response and without
+JavaScript. It also retains the embedded welcome fallback for portable use.
+
+`renderScreen()` in `js/ui.js` preserves that homepage and appends the remaining
+screens at startup. Older empty shells still load the welcome template.
+Homepage app buttons start disabled and are enabled by `initApp()` only after
+templates, spreads, and restored state are ready. Public links work without it.
 
 - Over HTTP(S), it fetches `templates/<name>.html`.
 - Under `file://`, or when a fetch fails, it reads the matching embedded
@@ -752,6 +759,14 @@ Search/answer-engine support includes:
 - Static, answer-oriented homepage/help copy
 - JSON-LD software and FAQ schemas
 - `llms.txt`
+
+Complete, linked public pages live at `guide.html`, `faq.html`, `pricing.html`,
+and `privacy.html`. They work without JavaScript and use the existing theme and
+local assets. Each has a canonical URL, Open Graph/Twitter metadata, and JSON-LD.
+The sitemap lists only these public pages and the homepage; `robots.txt` allows
+crawling and links to it. Homepage FAQ structured data must match visible answers.
+`tests/search-discovery.mjs` checks the public link graph, schema/content parity,
+static homepage synchronization, and startup without duplicate screens.
 
 Important product explanations should remain present in static HTML rather than
 existing only after client-side interaction.

@@ -1,5 +1,8 @@
 # Arcana Homepage Design QA
 
+Latest search/discovery and public-page QA:
+[`docs/qa/2026-11-05/search-discovery.md`](docs/qa/2026-11-05/search-discovery.md).
+
 ## Source
 
 - Approved reference: `C:\Users\admin\AppData\Local\Temp\codex-clipboard-45942ecc-d677-41bb-a3fc-94da5638bcbf.png`

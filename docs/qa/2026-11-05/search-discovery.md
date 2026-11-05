@@ -39,6 +39,17 @@
   the new scoped styles now follow that reset and were rechecked visually.
 - Linked service privacy/terms pages returned HTTP 200 during validation.
 
+## Production verification
+
+The changes were published from main. GitHub Actions passed on Windows and
+Linux, and the GitHub Pages build/deployment succeeded. Fresh HTTPS requests
+returned HTTP 200 and matched the local committed contents for the homepage,
+all four public pages, robots.txt, sitemap.xml, llms.txt, both changed runtime
+scripts, and the generated stylesheet.
+
+The homepage response now exposes 3,382 characters of text without executing
+JavaScript, including hosted AI setup and the correct Premium minimum.
+
 Screenshots are stored locally under:
 
 `C:/Users/admin/.codex/visualizations/2026/11/05/01a1aa5a-b799-7222-a717-9cfcb7214ffb/arcana-seo/`
@@ -75,3 +86,10 @@ the same custom domain to request HTTPS provisioning again.
 Keep `www.arcanaguide.com` as the configured custom domain and canonical
 host, retain HTTPS enforcement, and verify that the issued certificate covers
 both names and that the apex redirects to www after provisioning.
+
+The same domain was removed and re-added through the Pages API, then the
+resulting CNAME-only commits were fast-forwarded into the local checkout.
+The original www domain and HTTPS enforcement were restored and confirmed.
+At the post-deployment check, GitHub still reported the approved www-only
+certificate and the apex still failed hostname validation. Certificate
+expansion remains unconfirmed; no security checks were bypassed.

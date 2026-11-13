@@ -1,9 +1,10 @@
 <div class="screen ritual-screen ritual-screen-archive" id="screen-history">
   <h2>Your reading journal</h2>
-  <p class="onboard compact-onboard">Saved in this browser. Free keeps 3 readings; Premium keeps up to 50. Reflection storage holds up to 50 entries.</p>
+  <p class="onboard compact-onboard">Saved in this browser.</p>
+  <div class="history-archive-primary" id="history-list"></div>
   <section class="archive-backup no-print" aria-labelledby="history-backup-title">
     <h3 id="history-backup-title">Keep a copy of your journal</h3>
-    <p>Changing devices or clearing browser data removes local entries. Download a backup regularly so you can restore them later.</p>
+    <p>Download a backup if you’re changing devices or clearing browser data.</p>
     <p class="archive-status" data-archive-status></p>
     <div class="settings-actions">
       <button type="button" class="btn btn-primary btn-sm" onclick="downloadJournalBackup()">Download backup</button>
@@ -11,7 +12,6 @@
     </div>
     <p class="backup-status" data-backup-status role="status" aria-live="polite"></p>
   </section>
-  <div id="history-list"></div>
   <div style="text-align:center;margin-top:16px">
     <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back to Home</button>
   </div>

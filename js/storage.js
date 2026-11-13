@@ -5,6 +5,7 @@ const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal',
 const FREE_READING_ARCHIVE_LIMIT=3;
 const PREMIUM_READING_ARCHIVE_LIMIT=50;
 const JOURNAL_ARCHIVE_LIMIT=50;
+let firstSavedReadingId='';
 function getReadingArchiveLimit(){return isPremium()?PREMIUM_READING_ARCHIVE_LIMIT:FREE_READING_ARCHIVE_LIMIT;}
 function archiveReplacementCount(key,limit){return Math.max(0,readStoredJson(key,[]).length+1-limit);}
 
@@ -17,17 +18,18 @@ function readStoredJson(key,fallback){
   }catch(e){return fallback;}
 }
 
-function readArchiveForWrite(key){
+function readArchiveSnapshotForWrite(key){
   try{
     const raw=localStorage.getItem(key);
     const entries=raw===null?[]:JSON.parse(raw);
     if(!Array.isArray(entries))throw new Error('Invalid archive');
-    return entries;
+    return {raw,entries};
   }catch(e){
     showToast('Saved entries could not be read. Keep a copy of your current text; the archive was not changed.');
     return null;
   }
 }
+function readArchiveForWrite(key){return readArchiveSnapshotForWrite(key)?.entries||null;}
 
 function writeStoredJson(key,value,message){
   try{
@@ -46,6 +48,7 @@ function serializableState(){
     concerns:Array.isArray(state.concerns)?state.concerns.slice(0,20):[],
     cardSystem:state.cardSystem,
     cardSystemEstablished:!!state.cardSystemEstablished,
+    cardEntryTab:['tab-guided','tab-upload','tab-manual'].includes(state.cardEntryTab)?state.cardEntryTab:null,
     spreadId:state.spreadId,
     cards:state.cards&&typeof state.cards==='object'?{...state.cards}:{},
     droppedCard:state.droppedCard?{...state.droppedCard}:null,
@@ -55,6 +58,7 @@ function serializableState(){
     readerLifeStage:state.readerLifeStage||'',
     guidedStep:Number.isFinite(state.guidedStep)?state.guidedStep:0,
     preparationSkipped:!!state.preparationSkipped,
+    photoIdentificationSent:!!state.photoIdentificationSent,
     reversals:!!state.reversals,
     quickSpreadId:state.quickSpreadId,
     readingUsageRecorded:!!state.readingUsageRecorded,
@@ -169,22 +173,40 @@ if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged=()=>populateNarratorVoiceOptions(loadSettings().narratorVoice);
 }
 
-function persistReading(title,allowReplacement=false){
+function getSavedCurrentReading(){
+  if(!state.currentReadingId||!state.narrative)return null;
+  return readStoredJson('arcana_readings',[]).find(reading=>reading?.id===state.currentReadingId&&reading.narrative===state.narrative)||null;
+}
+
+function persistReading(title,allowReplacement=false,{reflection='',allowReflectionReplacement=false}={}){
   const cleanTitle=String(title||'').trim().slice(0,120);
   if(!cleanTitle)return false;
-  const readings=readArchiveForWrite('arcana_readings');
-  if(!readings)return false;
+  const readingArchive=readArchiveSnapshotForWrite('arcana_readings');
+  if(!readingArchive)return false;
+  const readings=readingArchive.entries;
   const maxReadings=getReadingArchiveLimit();
   if(readings.length>=maxReadings&&allowReplacement!==true){
     showToast('Your reading archive is full. Download a backup and confirm before replacing older readings.');
     return false;
   }
+  const reflectionText=String(reflection||'').trim().slice(0,10000);
+  let journal;
+  if(reflectionText){
+    if(!isPremium())return false;
+    journal=readArchiveForWrite('arcana-journal');
+    if(!journal)return false;
+    if(journal.length>=JOURNAL_ARCHIVE_LIMIT&&allowReflectionReplacement!==true){
+      showToast('Your reflection archive is full. Download a backup and confirm before replacing older reflections.');
+      return false;
+    }
+  }
   const spread=getReadingSpread();
-  const readingId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  readings.unshift({
+  const readingId=createArchiveRecordId();
+  const date=new Date().toISOString();
+  const reading={
     id:readingId,
     title:cleanTitle,
-    date:new Date().toISOString(),
+    date,
     mode:state.mode,
     concerns:[...state.concerns],
     readerLifeStage:state.readerLifeStage||'',
@@ -198,24 +220,30 @@ function persistReading(title,allowReplacement=false){
     readingMode:state.readingMode,
     readingPackage:state.readingPackage||null,
     notes:''
-  });
-  while(readings.length>maxReadings)readings.pop();
-  if(!writeStoredJson('arcana_readings',readings,'Arcana could not save this reading because browser storage is full.'))return false;
+  };
+  const nextReadings=[reading,...readings].slice(0,maxReadings);
+  if(!writeStoredJson('arcana_readings',nextReadings,'Arcana could not save this reading. Browser storage may be full or unavailable.'))return false;
+  if(journal){
+    const entry={id:createArchiveRecordId(),createdAt:date,updatedAt:date,date,spreadId:reading.spread,spreadName:reading.spreadName,readingId,text:reflectionText};
+    if(!writeStoredJson('arcana-journal',[entry,...journal].slice(0,JOURNAL_ARCHIVE_LIMIT))){
+      try{
+        if(readingArchive.raw===null)localStorage.removeItem('arcana_readings');
+        else localStorage.setItem('arcana_readings',readingArchive.raw);
+      }catch(e){
+        showToast('Arcana could not restore the previous archive. Keep a copy of your reflection and check your journal.');
+      }
+      return false;
+    }
+  }
+  if(!readings.length)firstSavedReadingId=readingId;
   state.currentReadingId=readingId;
   if(typeof updateArchiveStatus==='function')updateArchiveStatus();
-  showToast(isPremium()?'Reading saved!':'Reading saved. Free history keeps your latest 3 readings.');
   return true;
 }
-function persistJournalEntry(entry,allowReplacement=false){
-  const entries=readArchiveForWrite('arcana-journal');
-  if(!entries)return false;
-  if(entries.length>=JOURNAL_ARCHIVE_LIMIT&&allowReplacement!==true){
-    showToast('Your reflection archive is full. Download a backup before replacing older reflections.');
-    return false;
-  }
-  if(!writeStoredJson('arcana-journal',[entry,...entries].slice(0,JOURNAL_ARCHIVE_LIMIT),'Reflection could not be saved. Browser storage is full or unavailable.'))return false;
-  if(typeof updateArchiveStatus==='function')updateArchiveStatus();
-  return true;
+function createArchiveRecordId(){
+  return typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'
+    ? crypto.randomUUID()
+    : Date.now().toString(36)+Math.random().toString(36).slice(2,10);
 }
 
 function closeSaveReadingDialog(restoreFocus=true){
@@ -228,6 +256,10 @@ function closeSaveReadingDialog(restoreFocus=true){
 
 function openSaveReadingDialog(){
   if(document.getElementById('save-reading-overlay'))return;
+  const narrative=state.narrative;
+  const requestVersion=readingRequestVersion;
+  const reflectionInput=document.getElementById('journal-entry');
+  const reflection=isPremium()&&reflectionInput?reflectionInput.value.trim():'';
   const returnFocus=document.activeElement;
   const overlay=document.createElement('div');
   overlay.id='save-reading-overlay';
@@ -236,7 +268,7 @@ function openSaveReadingDialog(){
   overlay.innerHTML=`
     <div class="modal ritual-modal save-reading-dialog" role="dialog" aria-modal="true" aria-labelledby="save-reading-title" aria-describedby="save-reading-description">
       <h2 id="save-reading-title">Save this reading</h2>
-      <p id="save-reading-description">Give it a short title. Readings stay in this browser; download backups regularly.</p>
+      <p id="save-reading-description">${reflection?'Your reflection will be saved with this reading.':'Readings stay in this browser.'}</p>
       <form id="save-reading-form" novalidate>
         <label for="save-reading-name">Reading title</label>
         <input id="save-reading-name" type="text" maxlength="80" autocomplete="off" required>
@@ -257,16 +289,18 @@ function openSaveReadingDialog(){
   const input=overlay.querySelector('#save-reading-name');
   const form=overlay.querySelector('#save-reading-form');
   const error=overlay.querySelector('#save-reading-error');
-  input.value='Reading '+new Date().toLocaleDateString();
+  input.value=String(state.readingPackage?.title||'Reading '+new Date().toLocaleDateString()).slice(0,input.maxLength);
   const replacement=overlay.querySelector('#save-reading-replace');
-  let acknowledgedReplacementCount=0;
+  let acknowledgedReplacement='';
   const syncCapacity=()=>{
-    const count=archiveReplacementCount('arcana_readings',getReadingArchiveLimit());
-    overlay.querySelector('#save-reading-capacity').hidden=!count;
-    overlay.querySelector('#save-reading-capacity-message').textContent='Saving will replace '+count+' oldest reading'+(count===1?'':'s')+'. Download a backup first to keep them.';
-    return count;
+    const readings=archiveReplacementCount('arcana_readings',getReadingArchiveLimit());
+    const reflections=reflection?archiveReplacementCount('arcana-journal',JOURNAL_ARCHIVE_LIMIT):0;
+    const replacing=[readings?`${readings} oldest reading${readings===1?'':'s'}`:'',reflections?`${reflections} oldest reflection${reflections===1?'':'s'}`:''].filter(Boolean).join(' and ');
+    overlay.querySelector('#save-reading-capacity').hidden=!replacing;
+    overlay.querySelector('#save-reading-capacity-message').textContent=`Saving will replace ${replacing}. Download a backup first to keep them.`;
+    return {readings,reflections,replacing};
   };
-  replacement.addEventListener('change',()=>{acknowledgedReplacementCount=replacement.checked?syncCapacity():0;});
+  replacement.addEventListener('change',()=>{acknowledgedReplacement=replacement.checked?syncCapacity().replacing:'';});
   syncCapacity();
 
   overlay.querySelector('#save-reading-cancel').addEventListener('click',()=>closeSaveReadingDialog());
@@ -294,24 +328,35 @@ function openSaveReadingDialog(){
   });
   form.addEventListener('submit',event=>{
     event.preventDefault();
+    if(state.narrative!==narrative||readingRequestVersion!==requestVersion){
+      error.textContent='The reading changed. Close this dialog and save again from the current reading.';
+      return;
+    }
     const title=input.value.trim();
     if(!title){
       error.textContent='Enter a title before saving.';
       input.focus();
       return;
     }
-    const replacing=syncCapacity();
-    if(replacing&&(!replacement.checked||acknowledgedReplacementCount!==replacing)){
+    const {readings,reflections,replacing}=syncCapacity();
+    if(replacing&&(!replacement.checked||acknowledgedReplacement!==replacing)){
       replacement.checked=false;
       error.textContent='Review the archive warning and confirm replacement before saving.';
       replacement.focus();
       return;
     }
-    if(!persistReading(title,!!replacing)){
-      error.textContent='This reading could not be saved. Free up browser storage and try again.';
+    if(reflection&&!isPremium()){
+      error.textContent='Premium is needed to save this reflection. Close this dialog to keep editing your reading.';
       return;
     }
-    closeSaveReadingDialog();
+    if(!persistReading(title,!!readings,{reflection,allowReflectionReplacement:!!reflections})){
+      error.textContent='Your reading could not be saved. Check browser storage and try again. Your draft is still here.';
+      return;
+    }
+    if(reflectionInput)reflectionInput.value='';
+    closeSaveReadingDialog(false);
+    renderReadingSaveStatus();
+    document.getElementById('view-saved-journal')?.focus();
   });
 
   requestAnimationFrame(()=>{
@@ -321,5 +366,5 @@ function openSaveReadingDialog(){
 }
 
 function saveReading(){
-  openSaveReadingDialog();
+  if(state.narrative&&!getSavedCurrentReading())openSaveReadingDialog();
 }

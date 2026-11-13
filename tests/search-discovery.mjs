@@ -7,7 +7,8 @@ import { runInNewContext } from 'node:vm';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => readFile(path.join(root, file), 'utf8');
 const origin = 'https://www.arcanaguide.com';
-const files = ['index.html', 'guide.html', 'faq.html', 'pricing.html', 'privacy.html'];
+const infoPages = ['guide.html', 'faq.html', 'pricing.html', 'privacy.html'];
+const files = ['index.html', ...infoPages, 'sample-reading.html'];
 const withoutInertContent = html => html.replace(/<(template|script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
 const text = html => withoutInertContent(html).replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
 const normalize = html => html.replace(/\r\n/g, '\n').trim();
@@ -47,7 +48,7 @@ for (const file of files) {
       assert.ok((await read(target)).includes('id="' + decodeURIComponent(url.hash.slice(1)) + '"'), file + ' has a missing anchor: ' + match[1]);
     }
   }
-  for (const page of files.slice(1)) {
+  for (const page of infoPages) {
     assert.ok(visibleHtml.includes('href="' + page + '"'), file + ' must link to ' + page);
   }
   const schemas = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));

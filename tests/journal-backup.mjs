@@ -46,10 +46,14 @@ assert.throws(()=>context.createJournalBackup(),'An unreadable local archive mus
 for(const invalid of ['{"bad":true}','broken JSON']){
   data.set('arcana_readings',invalid);data.set('arcana-journal',invalid);
   assert.equal(run("persistReading('Keep corrupt archive')"),false);
-  assert.equal(context.persistJournalEntry(reflection('blocked')),false);
   assert.equal(data.get('arcana_readings'),invalid,'Saving must not replace unreadable reading data with an empty archive');
+  premium=true;
+  data.set('arcana_readings','[]');
+  assert.equal(run("persistReading('Keep corrupt journal',false,{reflection:'A new note'})"),false);
   assert.equal(data.get('arcana-journal'),invalid,'Saving must not replace unreadable reflection data with an empty archive');
+  assert.equal(data.get('arcana_readings'),'[]','Saving a linked reflection must preserve both archives on validation failure');
 }
+premium=false;
 
 const local=reading('local');local.notes='Local note must win';
 setArchive([local],[]);
@@ -96,10 +100,33 @@ assert.equal(run('state.currentReadingId'),'previous');
 assert.equal(run("persistReading('Approved replacement',true)"),true);
 assert.equal(JSON.parse(data.get('arcana_readings')).length,3);
 assert.equal(JSON.parse(data.get('arcana_readings'))[0].title,'Approved replacement');
-setArchive([],Array.from({length:50},(_,i)=>reflection('entry-'+i)));
+setArchive([reading('existing')],[]);
+assert.equal(run("persistReading('Free reflection',false,{reflection:'Keep my words'})"),false,'Free can save a reading but cannot save a Premium reflection');
+assert.equal(JSON.parse(data.get('arcana_readings')).length,1);
+
+premium=true;
+setArchive(Array.from({length:50},(_,i)=>reading('reading-'+i)),Array.from({length:50},(_,i)=>reflection('entry-'+i)));
 const fullJournal=data.get('arcana-journal');
-assert.equal(context.persistJournalEntry(reflection('new')),false);
+const fullReadings=data.get('arcana_readings');
+const oldId=run('state.currentReadingId');
+const saveLinked="persistReading('Linked reading',true,{reflection:'  Keep my words.  ',allowReflectionReplacement:true})";
+assert.equal(run("persistReading('Unapproved reading replacement',false,{reflection:'Keep my words',allowReflectionReplacement:true})"),false);
+assert.equal(run("persistReading('Unapproved reflection replacement',true,{reflection:'Keep my words'})"),false);
 assert.equal(data.get('arcana-journal'),fullJournal,'Full reflection archives must require explicit replacement approval');
-assert.equal(context.persistJournalEntry(reflection('new'),true),true);
-assert.equal(JSON.parse(data.get('arcana-journal')).length,50);
+assert.equal(data.get('arcana_readings'),fullReadings,'A declined reflection replacement must preserve the reading archive');
+failKey='arcana-journal';
+assert.equal(run(saveLinked),false);
+assert.equal(data.get('arcana_readings'),fullReadings,'A second-write failure must restore even a reading that would have been replaced');
+assert.equal(data.get('arcana-journal'),fullJournal);
+assert.equal(run('state.currentReadingId'),oldId,'A failed save must leave the current reading in its prior state');
+failKey='';
+assert.equal(run(saveLinked),true);
+const savedReading=run('getSavedCurrentReading()');
+const linkedJournal=JSON.parse(data.get('arcana-journal'));
+assert.equal(linkedJournal.length,50);
+assert.equal(JSON.parse(data.get('arcana_readings')).length,50);
+assert.equal(savedReading.title,'Linked reading');
+assert.equal(linkedJournal[0].text,'Keep my words.');
+assert.equal(linkedJournal[0].readingId,savedReading.id);
+assert.equal(context.parseJournalBackup(JSON.stringify(context.createJournalBackup())).journal[0].readingId,savedReading.id,'A linked reading and reflection must stay paired through backup');
 console.log('journal backup, safe restore, and archive capacity regressions passed');

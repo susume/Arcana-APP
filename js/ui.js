@@ -23,7 +23,7 @@ function ensureRitualUtilities(){
   document.querySelectorAll('.ritual-screen').forEach(screen=>{
     const header=document.createElement('header');
     header.className='atelier-header no-print';
-    header.innerHTML='<button type="button" class="atelier-brand brand-logo" onclick="goScreen(\'screen-welcome\')" aria-label="Arcana home"><img src="assets/brand/arcana-guide-horizontal.webp" alt="" width="836" height="471"></button><div class="atelier-tools"><button type="button" onclick="openModal(\'modal-help\')">Guide</button><button type="button" onclick="openModal(\'modal-settings\')">Settings</button></div>';
+    header.innerHTML='<button type="button" class="atelier-brand brand-logo" onclick="goScreen(\'screen-welcome\')" aria-label="Arcana home"><img src="assets/brand/arcana-guide-horizontal-256.webp" srcset="assets/brand/arcana-guide-horizontal-256.webp 256w, assets/brand/arcana-guide-horizontal-480.webp 480w" sizes="(max-width: 760px) 138px, 190px" alt="" width="836" height="471"></button><div class="atelier-tools"><button type="button" onclick="openModal(\'modal-help\')">Guide</button><button type="button" onclick="openModal(\'modal-settings\')">Settings</button></div>';
     screen.prepend(header);
   });
   document.querySelectorAll('.ritual-screen:not(#screen-history)').forEach(screen=>{
@@ -67,12 +67,18 @@ function resolveScreenPrerequisite(id){
   if(id==='screen-welcome')return id;
   if(id==='screen-history')return id;
   if(id==='screen-quick')return state.mode==='quick'?id:'screen-welcome';
+  if(state.mode==='quick'){
+    if(!['screen-card-entry','screen-overview','screen-reading'].includes(id))return 'screen-welcome';
+    if(!getSpread())return 'screen-quick';
+    if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
+    return id;
+  }
   if(id==='screen-concerns')return state.mode==='guided'?id:'screen-welcome';
   if(id==='screen-card-system')return state.mode==='guided'?id:'screen-welcome';
   if(state.mode!=='guided')return 'screen-welcome';
   if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
   if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
-  if(['screen-overview','screen-reading'].includes(id)&&!Object.keys(state.cards||{}).length)return 'screen-card-entry';
+  if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
   return id;
 }
 function goScreen(id, fromRouter){
@@ -81,6 +87,15 @@ function goScreen(id, fromRouter){
   }
   id=resolveScreenPrerequisite(screenForRoute(id));
   if(!document.getElementById(id))id='screen-welcome';
+  const previous=document.querySelector('.screen.active')?.id;
+  if(previous!==id&&['screen-quick','screen-card-entry'].includes(previous)){
+    photoUploadVersion++;
+    cancelPhotoIdentification();
+  }
+  if(previous==='screen-reading'&&previous!==id){
+    readingRequestVersion++;
+    state.readingInProgress=false;
+  }
   const nextHash='#'+routeForScreen(id);
   if(!fromRouter && location.hash !== nextHash) location.hash = nextHash;
   else if(fromRouter && location.hash !== nextHash) history.replaceState(null,'',nextHash);
@@ -90,6 +105,15 @@ function goScreen(id, fromRouter){
   if(id==='screen-card-entry')buildCardEntry();
   if(id==='screen-reflection')state.preparationSkipped=false;
   if(id==='screen-overview')renderOverview();
+  if(id==='screen-reading'&&previous!==id&&state.narrative&&!state.readingInProgress){
+    renderReading(state.narrative);
+    highlightReadingBtn(state.readingMode);
+  }
+  if(id==='screen-card-system')renderDeckChoice();
+  if(id==='screen-quick'){
+    renderQuickSpreads();
+    updateQuickGoBtn();
+  }
   const heading=screen.querySelector('h1,h2,[data-screen-heading]');
   if(heading){
     heading.tabIndex=-1;
@@ -106,6 +130,7 @@ function goScreen(id, fromRouter){
 }
 const GUIDED_SCREENS=['screen-concerns','screen-card-system','screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
 function guidedScreens(){
+  if(state.mode==='quick')return ['screen-quick','screen-overview','screen-reading'];
   return state.preparationSkipped?GUIDED_SCREENS.filter(id=>id!=='screen-reflection'):GUIDED_SCREENS;
 }
 function updateDots(screenId){
@@ -115,7 +140,7 @@ function updateDots(screenId){
   document.querySelectorAll('.step-dots').forEach(container=>{
     container.innerHTML='';
     container.setAttribute('role','progressbar');
-    container.setAttribute('aria-label','Guided reading progress');
+    container.setAttribute('aria-label','Reading progress');
     container.setAttribute('aria-valuemin','1');
     container.setAttribute('aria-valuemax',String(steps.length));
     container.setAttribute('aria-valuenow',String(idx+1));
@@ -131,6 +156,7 @@ function updateDots(screenId){
 // ===== WELCOME =====
 function startGuided(){
   readingRequestVersion++;
+  state.readingInProgress=false;
   state.readingPackage=null;
   state.readingInfographic=null;
   const journalEntry=document.getElementById('journal-entry');if(journalEntry)journalEntry.value='';
@@ -139,13 +165,15 @@ function startGuided(){
   state.cards={};
   state.droppedCard=null;
   state.hasDroppedCard=false;
-  state.uploadedImage=null;
+  resetPhotoWorkflow();
   state.spreadId=null;
   state.quickSpreadId=null;
   state.readerLifeStage='';
   state.guidedStep=0;
   state.preparationSkipped=false;
   state.readingUsageRecorded=false;
+  state.reviewModeChoice=null;
+  state.cardEntryTab=null;
   state.currentReadingId='';
   state.concerns=[];
   // Reset drop toggle UI
@@ -163,20 +191,25 @@ function startGuided(){
   state.cardSystemEstablished=false;
   currentCards=getCards();
   syncUploadDeckSelectors();
-  document.querySelectorAll('#screen-card-system .card-opt,.reading-choice-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
+  document.querySelectorAll('.reading-choice-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
+  renderDeckChoice();
   goScreen('screen-concerns');
 }
 function startQuick(){
   readingRequestVersion++;
+  state.readingInProgress=false;
   state.readingPackage=null;
   state.readingInfographic=null;
+  const journalEntry=document.getElementById('journal-entry');if(journalEntry)journalEntry.value='';
   state.mode='quick';
   state.preparationSkipped=false;
-  state.uploadedImage=null;
+  resetPhotoWorkflow();
   state.quickSpreadId=null;
   state.spreadId=null;
   state.narrative='';
   state.readingUsageRecorded=false;
+  state.reviewModeChoice=null;
+  state.cardEntryTab=null;
   state.currentReadingId='';
   state.cards={};
   state.droppedCard=null;
@@ -190,12 +223,11 @@ function startQuick(){
   document.getElementById('quick-concern').value='';
   const lifeStage=document.getElementById('quick-reader-life-stage');
   if(lifeStage)lifeStage.value='';
-  const zone=document.getElementById('quick-upload-zone');
-  zone.classList.remove('has-image');
-  zone.innerHTML='<span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<span style="font-size:11px">JPG, PNG, WEBP</span></span>';
-  document.getElementById('quick-go').style.display='none';
+  const more=document.getElementById('quick-more-layouts');
+  if(more)more.open=false;
+  const question=document.getElementById('quick-question');
+  if(question)question.open=false;
   syncUploadDeckSelectors();
-  renderQuickSpreads();
   goScreen('screen-quick');
 }
 
@@ -242,13 +274,22 @@ function saveConcerns(){
 
 // ===== CARD SYSTEM =====
 function selectSystem(sys,el){
+  if(sys!==state.cardSystem&&hasSelectedReadingCards()){
+    if(!confirm('Changing your deck clears the cards you have entered. Continue?'))return;
+    clearSelectedReadingCards();
+  }
   state.cardSystem=sys;
   state.cardSystemEstablished=true;
-  document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.classList.remove('selected'));
-  if(el)el.classList.add('selected');
-  document.querySelectorAll('#screen-card-system .card-opt').forEach(c=>c.setAttribute('aria-pressed',String(c===el)));
+  renderDeckChoice();
   currentCards=getCards();
   syncUploadDeckSelectors();
+}
+function renderDeckChoice(){
+  document.querySelectorAll('#screen-card-system .card-opt').forEach(option=>{
+    const selected=option.dataset.deck===state.cardSystem;
+    option.classList.toggle('selected',selected);
+    option.setAttribute('aria-pressed',String(selected));
+  });
 }
 function confirmSystem(){
   if(!state.cardSystem){showToast('Choose a deck before continuing.');return;}
@@ -316,13 +357,11 @@ function skipPreparation(){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
   state.preparationSkipped=true;
   state.guidedStep=0;
+  state.cardEntryTab='tab-upload';
   goScreen('screen-card-entry');
-  const tab=document.querySelector('.tab-btn[aria-controls="tab-upload"]');
-  if(tab)switchTab('tab-upload',tab);
-  autoSaveState();
 }
 function backFromCardEntry(){
-  goScreen(state.preparationSkipped?'screen-spread':'screen-reflection');
+  goScreen(state.mode==='quick'?'screen-quick':state.preparationSkipped?'screen-spread':'screen-reflection');
 }
 
 function saveReaderContext(lifeStageId){
@@ -333,6 +372,10 @@ function saveReaderContext(lifeStageId){
 // ===== READING TYPE SELECTION =====
 function selectReadingType(id, el){
   if(PREMIUM_SPREAD_IDS.includes(id) && !requestPremiumFeature('advanced-spreads')) return;
+  if(state.spreadId&&state.spreadId!==id&&hasSelectedReadingCards()){
+    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
+    clearSelectedReadingCards();
+  }
   document.querySelectorAll('.reading-choice-card').forEach(c=>c.classList.remove('selected'));
   document.querySelectorAll('.reading-choice-card').forEach(c=>c.setAttribute('aria-pressed','false'));
   el.classList.add('selected');
@@ -359,10 +402,8 @@ function confirmReflection(){
   state.preparationSkipped=false;
   if(!state.cards||typeof state.cards!=='object')state.cards={};
   state.guidedStep=0;
-  buildCardEntry();
+  state.cardEntryTab='tab-guided';
   goScreen('screen-card-entry');
-  const guidedTab=document.querySelector('.tab-btn[aria-controls="tab-guided"]');
-  if(guidedTab)switchTab('tab-guided',guidedTab);
 }
 
 // ===== PROGRESS ESTIMATE =====
@@ -416,14 +457,14 @@ function syncUploadDeckSelectors(){
     button.classList.toggle('active',active);
     button.setAttribute('aria-pressed',String(active));
   });
+  const quickDeck=document.getElementById('quick-deck-selector');
+  if(quickDeck)quickDeck.value=activeSystem;
 
   const noun=activeSystem==='playing'?'Playing Cards':(activeSystem==='tarot'?'Tarot Cards':'Cards');
   const identifyButton=document.getElementById('identify-btn');
   const guidedButton=document.getElementById('guided-identify-btn');
-  const quickButton=document.getElementById('quick-go');
   if(identifyButton)identifyButton.innerHTML=GLYPH.star4+` Identify ${noun} with AI`;
   if(guidedButton)guidedButton.innerHTML=GLYPH.star4+` Identify ${noun} with AI`;
-  if(quickButton)quickButton.innerHTML=GLYPH.star4+` Generate My ${activeSystem==='playing'?'Cartomancy ':''}Reading`;
 }
 
 function selectUploadCardSystem(choice){
@@ -441,10 +482,12 @@ function selectUploadCardSystem(choice){
     const dropEntry=document.getElementById('drop-card-entry');
     if(dropEntry)dropEntry.style.display='none';
   }
+  if(changesDeck)cancelPhotoIdentification();
   state.cardSystem=nextSystem;
   state.cardSystemEstablished=selected!=='auto';
   currentCards=getCards();
   syncUploadDeckSelectors();
+  if(changesDeck)clearPhotoResult('quick-upload-zone');
   const spread=getReadingSpread();
   if(spread&&document.getElementById('manual-entries'))buildManualEntries(spread);
   autoSaveState();
@@ -503,16 +546,6 @@ function migrateRestoredCardSystemState(savedState){
   );
   currentCards=getCards();
   return state.cardSystemEstablished;
-}
-
-function getQuickPatternAnalysisGuide(cardSystem,allowDetection){
-  if(allowDetection){
-    return 'Keep pattern analysis consistent with the detected system: tarot may discuss Major Arcana, Minor Arcana suits, reversals, courts, and interactions; playing cards should discuss suits, repeated ranks, court patterns, reversals, and interactions, and must not discuss Major Arcana.';
-  }
-  if(cardSystem==='tarot'){
-    return 'Dominant suits, Major Arcana presence, Minor Arcana patterns, reversals, courts, and key interactions';
-  }
-  return 'Playing-card suits, repeated ranks, court patterns, reversals, and key interactions. Do not discuss Major Arcana';
 }
 
 function getAppShareUrl(){
@@ -953,15 +986,25 @@ function enhanceReadingOutput(){
 
 // ===== CARD ENTRY =====
 function switchTab(tabId,btn){
+  state.cardEntryTab=tabId;
   ['tab-guided','tab-upload','tab-manual'].forEach(t=>{
     const panel=document.getElementById(t);
     if(panel){panel.style.display='none';panel.hidden=true;}
   });
   const panel=document.getElementById(tabId);
   if(panel){panel.style.display='block';panel.hidden=false;}
-  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false');});
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
+    b.tabIndex=-1;
+  });
   btn.classList.add('active');
   btn.setAttribute('aria-selected','true');
+  btn.tabIndex=0;
+}
+function selectCardEntryTab(tabId,btn){
+  switchTab(tabId,btn);
+  autoSaveState();
 }
 document.addEventListener('keydown',e=>{
   if(!e.target.matches('.tab-btn')||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
@@ -972,14 +1015,31 @@ document.addEventListener('keydown',e=>{
   const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
   const tab=tabs[next];
   tab.focus();
-  switchTab(tab.getAttribute('aria-controls'),tab);
+  selectCardEntryTab(tab.getAttribute('aria-controls'),tab);
 });
 
 function buildCardEntry(){
   const spread=getSpread();
   if(!spread)return;
-  buildGuidedDraw(spread);
+  const quick=state.mode==='quick';
+  const tabs=document.querySelector('#screen-card-entry .tab-bar');
+  const description=document.getElementById('card-entry-description');
+  if(tabs)tabs.hidden=quick;
+  if(description)description.textContent=quick
+    ?'Choose the physical card you placed in each position.'
+    :'Draw from your physical deck, upload your spread, or enter the cards by hand.';
+  if(!quick)buildGuidedDraw(spread);
   buildManualEntries(spread);
+  const tabId=quick?'tab-manual':state.cardEntryTab||(state.preparationSkipped?'tab-upload':'tab-guided');
+  const tab=document.querySelector(`.tab-btn[aria-controls="${tabId}"]`);
+  if(tab)switchTab(tabId,tab);
+}
+
+function enterCardsManually(){
+  const tab=document.querySelector('.tab-btn[aria-controls="tab-manual"]');
+  if(!tab)return;
+  selectCardEntryTab('tab-manual',tab);
+  document.querySelector('#manual-entries .card-pick-btn')?.focus();
 }
 
 // Guided card-by-card placement
@@ -997,7 +1057,7 @@ const GUIDED_PROMPTS=[
 ];
 
 function buildGuidedDraw(spread){
-  state.guidedStep=0;
+  state.guidedStep=Math.min(state.guidedStep,spread.positions.length);
   renderGuidedRitual(spread);
 }
 
@@ -1115,8 +1175,8 @@ function prevGuidedPosition(){
 }
 
 // Guided photo upload handlers
-function handleGuidedDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processUpload(f,'guided-upload-zone','guided-identify-btn')}
-function handleGuidedUpload(inp){if(inp.files[0])processUpload(inp.files[0],'guided-upload-zone','guided-identify-btn')}
+function handleGuidedDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processUpload(f,'guided-upload-zone','guided-identify-btn','guided-file-input')}
+function handleGuidedUpload(inp){if(inp.files[0])processUpload(inp.files[0],'guided-upload-zone','guided-identify-btn','guided-file-input')}
 function setInlineMessage(id,message,type='error'){
   const target=document.getElementById(id);
   if(!target)return;
@@ -1130,41 +1190,8 @@ function setInlineMessage(id,message,type='error'){
   target.appendChild(p);
 }
 
-async function identifyGuidedCards(){
-  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
-  const spread=getSpread();
-  const btn=document.getElementById('guided-identify-btn');
-  btn.disabled=true;btn.textContent='Identifying…';
-  try{
-    const detectCardSystem=shouldDetectCardSystem();
-    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying physical cards in a photograph of a completed spread.
-
-SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
-${getSpreadLayoutHint(spread)}
-
-POSITIONS:
-${posDetails}
-
-Examine the physical card at each spread position. Position numbers describe the layout only and must never be converted into card names.
-${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
-Return ONLY a valid JSON array with no other text:
-[{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,null,state.uploadedImage);
-    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
-      throw new Error('Validated card identification is unavailable. Please review the cards manually');
-    }
-    const cardReferences=getIdentificationCardReferences(detectCardSystem);
-    const parsedByArcana=window.ArcanaAI.parseIdentifiedCards(result,cardReferences,spread.positions.map(p=>p.id));
-    validateIdentificationResult(parsedByArcana);
-    if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
-    replaceIdentifiedSpreadCards(spread,parsedByArcana);
-    buildManualEntries(spread);
-    setInlineMessage('guided-identify-results','Cards identified. Review each card before continuing.','success');
-  }catch(err){
-    setInlineMessage('guided-identify-results',`Identification failed. ${err.message||'Try Manual Entry instead.'} Review the cards manually.`);
-  }
-  btn.disabled=false;btn.innerHTML=GLYPH.star4+' Identify Cards with AI';
+function identifyGuidedCards(){
+  return identifyPhotoForReview('guided-upload-zone','guided-identify-btn','guided-identify-results','guided-file-input');
 }
 
 // Manual entries
@@ -1307,8 +1334,8 @@ document.addEventListener('keydown',e=>{
 });
 
 // Upload photo
-function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processUpload(f,'upload-zone','identify-btn')}
-function handleUpload(inp){if(inp.files[0])processUpload(inp.files[0],'upload-zone','identify-btn')}
+function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processUpload(f,'upload-zone','identify-btn','file-input')}
+function handleUpload(inp){if(inp.files[0])processUpload(inp.files[0],'upload-zone','identify-btn','file-input')}
 function handleQuickDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processQuickUpload(f)}
 function handleQuickUpload(inp){if(inp.files[0])processQuickUpload(inp.files[0])}
 
@@ -1364,13 +1391,47 @@ async function preprocessImage(file){
   return output;
 }
 
+const PHOTO_CONTROLS=[
+  ['quick-upload-zone','quick-go','quick-results','quick-file'],
+  ['guided-upload-zone','guided-identify-btn','guided-identify-results','guided-file-input'],
+  ['upload-zone','identify-btn','upload-results','file-input']
+];
+let photoUploadVersion=0;
+let photoIdentificationVersion=0;
+let activePhotoIdentification=null;
+
+function cancelPhotoIdentification(){
+  photoIdentificationVersion++;
+  const active=activePhotoIdentification;
+  if(!active)return;
+  activePhotoIdentification=null;
+  active.target.replaceChildren();
+  active.button.disabled=false;
+  syncUploadDeckSelectors();
+  updateQuickGoBtn();
+}
+
+function resetPhotoWorkflow(){
+  photoUploadVersion++;
+  cancelPhotoIdentification();
+  state.uploadedImage=null;
+  state.uploadedImageZone=null;
+  state.photoIdentificationSent=false;
+  PHOTO_CONTROLS.forEach(([zoneId,btnId,resultId,inputId])=>{
+    resetUploadZone(zoneId,btnId,inputId);
+    const results=document.getElementById(resultId);
+    if(results)results.innerHTML='';
+  });
+}
+
 function resetUploadZone(zoneId,btnId,inputId){
   const zone=document.getElementById(zoneId);
   if(!zone)return;
-  zone.classList.remove('has-image');
-  zone.innerHTML='<p style="color:var(--muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"/><circle cx="12" cy="13.1" r="3.4"/><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"/></svg>Click or drag a photo of your spread<br><span style="font-size:11px">JPG, PNG, WEBP</span></p>';
+  zone.hidden=false;
+  document.getElementById(zoneId+'-preview')?.remove();
+  document.getElementById(zoneId+'-error')?.remove();
   const btn=document.getElementById(btnId);
-  if(btn)btn.style.display='none';
+  if(btn&&zoneId!=='quick-upload-zone')btn.style.display='none';
   const input=document.getElementById(inputId);
   if(input)input.value='';
 }
@@ -1378,9 +1439,10 @@ function resetUploadZone(zoneId,btnId,inputId){
 function setUploadError(zoneId,message){
   const zone=document.getElementById(zoneId);
   if(!zone)return;
-  let status=zone.parentElement&&zone.parentElement.querySelector('.upload-error');
+  let status=document.getElementById(zoneId+'-error');
   if(!status){
     status=document.createElement('p');
+    status.id=zoneId+'-error';
     status.className='upload-error';
     status.setAttribute('role','alert');
     zone.insertAdjacentElement('afterend',status);
@@ -1391,362 +1453,458 @@ function setUploadError(zoneId,message){
 function renderUploadPreview(zoneId,dataUrl,btnId,inputId){
   const zone=document.getElementById(zoneId);
   if(!zone)return;
-  zone.classList.add('has-image');
-  zone.replaceChildren();
+  document.getElementById(zoneId+'-preview')?.remove();
+  document.getElementById(zoneId+'-error')?.remove();
+  const preview=document.createElement('div');
+  preview.id=zoneId+'-preview';
+  preview.className='quick-upload-preview upload-zone has-image';
+  preview.addEventListener('dragover',e=>e.preventDefault());
+  preview.addEventListener('drop',e=>{
+    e.preventDefault();
+    if(e.dataTransfer.files[0])processUpload(e.dataTransfer.files[0],zoneId,btnId,inputId);
+  });
   const image=document.createElement('img');
   image.src=dataUrl;
-  image.alt='Preview of uploaded spread';
-  image.loading='eager';
+  image.alt='Preview of your spread photo';
   image.decoding='async';
   const actions=document.createElement('div');
   actions.className='upload-preview-actions';
   const replace=document.createElement('button');
   replace.type='button';replace.className='btn btn-sm';replace.textContent='Replace photo';
-  replace.onclick=e=>{e.stopPropagation();document.getElementById(inputId)?.click();};
+  replace.onclick=()=>document.getElementById(inputId)?.click();
   const remove=document.createElement('button');
   remove.type='button';remove.className='btn btn-sm';remove.textContent='Remove';
-  remove.onclick=e=>{e.stopPropagation();state.uploadedImage=null;resetUploadZone(zoneId,btnId,inputId);if(zoneId==='quick-upload-zone')updateQuickGoBtn();};
+  remove.onclick=()=>{
+    photoUploadVersion++;
+    cancelPhotoIdentification();
+    state.uploadedImage=null;
+    state.uploadedImageZone=null;
+    resetUploadZone(zoneId,btnId,inputId);
+    clearPhotoResult(zoneId);
+    updateQuickGoBtn();
+    zone.focus();
+  };
   actions.append(replace,remove);
-  zone.append(image,actions);
+  preview.append(image,actions);
+  const moveFocus=document.activeElement===zone||document.activeElement?.closest?.('.quick-upload-preview');
+  zone.hidden=true;
+  zone.insertAdjacentElement('afterend',preview);
   const btn=document.getElementById(btnId);
-  if(btn)btn.style.display='block';
-  const error=zone.parentElement&&zone.parentElement.querySelector('.upload-error');
-  if(error)error.remove();
+  if(btn&&zoneId!=='quick-upload-zone')btn.style.display='block';
+  if(moveFocus)replace.focus();
 }
 
-async function processQuickUpload(file){
-  try{
-    state.uploadedImage=await preprocessImage(file);
-    renderUploadPreview('quick-upload-zone',state.uploadedImage,'quick-go','quick-file');
-    updateQuickGoBtn();
-  }catch(error){
-    state.uploadedImage=null;
-    setUploadError('quick-upload-zone',error.message||'This image could not be used.');
-    updateQuickGoBtn();
-  }
+function clearPhotoResult(zoneId){
+  const controls=PHOTO_CONTROLS.find(([id])=>id===zoneId);
+  const result=controls&&document.getElementById(controls[2]);
+  if(result)result.replaceChildren();
 }
+
+function processQuickUpload(file){
+  return processUpload(file,'quick-upload-zone','quick-go','quick-file');
+}
+
+function quickHasPhoto(){
+  return !!state.uploadedImage&&(!state.uploadedImageZone||state.uploadedImageZone==='quick-upload-zone');
+}
+
 function updateQuickGoBtn(){
-  const btn=document.getElementById('quick-go');
-  if(btn)btn.style.display=(state.uploadedImage&&state.quickSpreadId)?'block':'none';
+  const button=document.getElementById('quick-go');
+  const status=document.getElementById('quick-prerequisite');
+  if(!button||!status)return;
+  const hasSpread=!!state.quickSpreadId;
+  const hasPhoto=quickHasPhoto();
+  const busy=activePhotoIdentification?.button===button;
+  button.disabled=busy;
+  button.setAttribute('aria-disabled',String(busy||!hasPhoto||!hasSpread));
+  button.textContent=busy?'Identifying cards…':'Identify cards';
+  status.textContent=busy?'Checking the photo for your cards.':!hasPhoto&&!hasSpread
+    ?'Add a photo and choose your layout to continue.'
+    :!hasPhoto?'Add your spread photo to identify the cards.'
+    :!hasSpread?'Choose the layout you used in your photo.'
+    :'Identification sends your photo and layout to Gemini.';
 }
+
+function saveQuickDraft(){
+  const question=document.getElementById('quick-concern')?.value.trim();
+  state.concerns=question?[question]:[];
+  saveReaderContext('quick-reader-life-stage');
+  autoSaveState();
+}
+
 function selectQuickSpread(id){
-  state.quickSpreadId=(state.quickSpreadId===id)?null:id;
-  renderQuickSpreads();
-  updateQuickGoBtn();
-}
-function renderQuickSpreads(){
-  const grid=document.getElementById('quick-spread-grid');
-  if(!grid)return;
-  grid.innerHTML='';
-  const catOrder=['Daily','Classic','Relationships','Life & Decisions'];
-  catOrder.forEach(cat=>{
-    const catSpreads=SPREADS.filter(s=>ACTIVE_SPREAD_IDS.includes(s.id)&&s.category===cat);
-    if(!catSpreads.length)return;
-    const lbl=document.createElement('div');
-    lbl.className='spread-cat-label';
-    lbl.textContent=cat;
-    grid.appendChild(lbl);
-    catSpreads.forEach(sp=>{
-      const card=document.createElement('button');
-      card.type='button';
-      const locked=PREMIUM_SPREAD_IDS.includes(sp.id)&&!isPremium();
-      card.className='spread-card qs-card'+(state.quickSpreadId===sp.id?' selected':'')+(locked?' premium-locked':'');
-      card.setAttribute('aria-pressed',String(state.quickSpreadId===sp.id));
-      card.dataset.premiumFeature=PREMIUM_SPREAD_IDS.includes(sp.id)?'advanced-spreads':'';
-      card.onclick=()=>locked?showUpgradeModal('advanced-spreads'):selectQuickSpread(sp.id);
-      card.innerHTML=`<h4>${escapeHtml(sp.name)}</h4><div class="count">${sp.cardCount} cards${locked?' - Premium':''}</div>`;
-      grid.appendChild(card);
-    });
+  if(state.quickSpreadId===id)return;
+  if(hasSelectedReadingCards()){
+    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
+    clearSelectedReadingCards();
+  }
+  cancelPhotoIdentification();
+  state.quickSpreadId=id;
+  state.spreadId=id;
+  state.reviewModeChoice=null;
+  document.querySelectorAll('#screen-quick .qs-card').forEach(card=>{
+    const selected=card.dataset.spreadId===id;
+    card.classList.toggle('selected',selected);
+    card.setAttribute('aria-pressed',String(selected));
   });
+  clearPhotoResult('quick-upload-zone');
+  updateQuickGoBtn();
+  saveQuickDraft();
+}
+
+function renderQuickSpreads(){
+  const common=document.getElementById('quick-spread-grid');
+  const more=document.getElementById('quick-more-spread-grid');
+  if(!common||!more)return;
+  common.replaceChildren();
+  more.replaceChildren();
+  for(const id of ACTIVE_SPREAD_IDS){
+    const spread=SPREADS.find(item=>item.id===id);
+    if(!spread)continue;
+    const primary=id==='one-card'||id==='three-card';
+    const locked=PREMIUM_SPREAD_IDS.includes(id)&&!isPremium();
+    const selected=state.quickSpreadId===id;
+    const card=document.createElement('button');
+    const title=id==='one-card'?'One Card':id==='three-card'?'Past · Present · Future':spread.name;
+    card.type='button';
+    card.className='spread-card qs-card'+(selected?' selected':'');
+    card.dataset.spreadId=id;
+    if(PREMIUM_SPREAD_IDS.includes(id))card.dataset.premiumFeature='advanced-spreads';
+    card.setAttribute('aria-pressed',String(selected));
+    card.onclick=()=>{
+      if(PREMIUM_SPREAD_IDS.includes(id)&&!requestPremiumFeature('advanced-spreads'))return;
+      selectQuickSpread(id);
+    };
+    card.innerHTML='<h4>'+escapeHtml(title)+'</h4><span class="count">'+spread.cardCount+
+      (spread.cardCount===1?' card':' cards')+(locked?' · Premium':'')+'</span>';
+    (primary?common:more).appendChild(card);
+    if(!primary&&selected)document.getElementById('quick-more-layouts').open=true;
+  }
   renderEntitlementsUI();
 }
-async function processUpload(file,zoneId,btnId){
-  const inputId=zoneId==='guided-upload-zone'?'guided-file-input':'file-input';
+
+function enterQuickCardsManually(){
+  if(!state.quickSpreadId){
+    showToast('Choose the layout you used first.');
+    document.querySelector('#quick-spread-grid button')?.focus();
+    return;
+  }
+  if(PREMIUM_SPREAD_IDS.includes(state.quickSpreadId)&&!requestPremiumFeature('advanced-spreads'))return;
+  saveQuickDraft();
+  state.spreadId=state.quickSpreadId;
+  state.cardEntryTab='tab-manual';
+  goScreen('screen-card-entry');
+}
+
+async function processUpload(file,zoneId,btnId,inputId){
+  const version=++photoUploadVersion;
+  cancelPhotoIdentification();
   try{
-    state.uploadedImage=await preprocessImage(file);
-    renderUploadPreview(zoneId,state.uploadedImage,btnId,inputId);
+    const image=await preprocessImage(file);
+    if(version!==photoUploadVersion)return;
+    if(state.uploadedImageZone&&state.uploadedImageZone!==zoneId){
+      const previous=PHOTO_CONTROLS.find(([id])=>id===state.uploadedImageZone);
+      if(previous)resetUploadZone(previous[0],previous[1],previous[3]);
+    }
+    state.uploadedImage=image;
+    state.uploadedImageZone=zoneId;
+    clearPhotoResult(zoneId);
+    renderUploadPreview(zoneId,image,btnId,inputId);
   }catch(error){
-    state.uploadedImage=null;
-    setUploadError(zoneId,error.message||'This image could not be used.');
-    const btn=document.getElementById(btnId);
-    if(btn)btn.style.display='none';
+    if(version!==photoUploadVersion)return;
+    const message=error.message||'This image could not be used.';
+    setUploadError(zoneId,message+(state.uploadedImageZone===zoneId?' Your previous photo is still selected.':''));
+  }finally{
+    if(version===photoUploadVersion){
+      const input=document.getElementById(inputId);
+      if(input)input.value='';
+      updateQuickGoBtn();
+    }
   }
 }
 
-async function identifyCards(){
-  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
+function renderPhotoRecovery(zoneId,resultId,inputId,message){
+  setInlineMessage(resultId,message);
+  const target=document.getElementById(resultId);
+  if(!target)return;
+  target.classList.add('photo-recovery');
+  const actions=document.createElement('div');
+  actions.className='photo-recovery-actions';
+  const retry=document.createElement('button');
+  retry.type='button';retry.className='btn btn-sm';retry.textContent='Try another photo';
+  retry.onclick=()=>document.getElementById(inputId)?.click();
+  const manual=document.createElement('button');
+  manual.type='button';manual.className='btn btn-sm';manual.textContent='Enter cards manually';
+  manual.onclick=()=>{
+    if(zoneId==='quick-upload-zone'){enterQuickCardsManually();return;}
+    enterCardsManually();
+  };
+  actions.append(retry,manual);
+  target.appendChild(actions);
+  target.tabIndex=-1;
+  target.focus();
+}
+
+function identifyCards(){
+  return identifyPhotoForReview('upload-zone','identify-btn','upload-results','file-input');
+}
+
+function quickRead(){
+  if(!quickHasPhoto()||!state.quickSpreadId)return;
+  const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
+  if(!spread)return;
+  if(PREMIUM_SPREAD_IDS.includes(spread.id)&&!requestPremiumFeature('advanced-spreads'))return;
+  state.spreadId=spread.id;
+  saveQuickDraft();
+  return identifyPhotoForReview('quick-upload-zone','quick-go','quick-results','quick-file');
+}
+
+async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
+  if(activePhotoIdentification)return;
   const spread=getSpread();
-  const btn=document.getElementById('identify-btn');
-  btn.disabled=true;btn.textContent='Identifying…';
+  const button=document.getElementById(btnId);
+  const target=document.getElementById(resultId);
+  if(!spread||!button||!target||!state.uploadedImage||(state.uploadedImageZone&&state.uploadedImageZone!==zoneId))return;
   try{
-    const detectCardSystem=shouldDetectCardSystem();
-    const posDetails=spread.positions.map(p=>`  ${p.id}. ${p.name}  - ${p.description}`).join('\n');
-    const prompt=`You are identifying physical cards in a photograph of a completed spread.
-
-SPREAD: ${spread.name} (${spread.cardCount} cards)  - ${spread.description}
-${getSpreadLayoutHint(spread)}
-
-POSITIONS:
-${posDetails}
-
-Examine the physical card at each spread position. Position numbers describe the layout only and must never be converted into card names.
-${getCardSystemPromptGuide(state.cardSystem,detectCardSystem)}
-Return ONLY a valid JSON array with no other text:
-[{"position":1,"card":"Card Name","orientation":"upright"},...]\nIf a card is unclear or not visible, set "card" to null.`;
-    const result=await callGemini(prompt,null,state.uploadedImage);
-    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
-      throw new Error('Validated card identification is unavailable. Please review the cards manually');
-    }
-    const cardReferences=getIdentificationCardReferences(detectCardSystem);
-    const parsedByArcana=window.ArcanaAI.parseIdentifiedCards(result,cardReferences,spread.positions.map(p=>p.id));
-    validateIdentificationResult(parsedByArcana);
-    if(detectCardSystem)establishDetectedCardSystem(parsedByArcana);
-    replaceIdentifiedSpreadCards(spread,parsedByArcana);
-    buildManualEntries(spread);
-    setInlineMessage('upload-results','Cards identified. Switch to Manual Entry to review and correct.','success');
-  }catch(err){
-    setInlineMessage('upload-results',`Identification failed. ${err.message||'Try Manual Entry instead.'} Review the cards manually.`);
+    requireAIConfiguration();
+  }catch(error){
+    renderPhotoRecovery(zoneId,resultId,inputId,'AI identification is unavailable. You can enter your cards manually.');
+    return;
   }
-  btn.disabled=false;btn.innerHTML=GLYPH.star4+' Identify Cards with AI';
+
+  const version=++photoIdentificationVersion;
+  const requestVersion=readingRequestVersion;
+  activePhotoIdentification={button,target};
+  target.classList.remove('photo-recovery');
+  button.disabled=true;
+  button.textContent='Identifying cards…';
+  setInlineMessage(resultId,'Checking the photo for your cards…','success');
+  updateQuickGoBtn();
+  try{
+    const detectionRequired=shouldDetectCardSystem();
+    const positions=spread.positions.map(pos=>pos.id+'. '+pos.name+': '+pos.description).join('\n');
+    const prompt=[
+      'Identify the physical cards in a photograph of a completed '+spread.name+' spread.',
+      getSpreadLayoutHint(spread),
+      positions,
+      getCardSystemPromptGuide(state.cardSystem,detectionRequired),
+      'Return only JSON: [{"position":1,"card":"Card Name","orientation":"upright"}].',
+      'Use the supplied position IDs. Position numbers are not card identities. If a card is unclear, return null for the card. If only the orientation is unclear, return "unknown" for the orientation.'
+    ].join('\n');
+    state.photoIdentificationSent=true;
+    autoSaveState();
+    const response=await callGemini(prompt,null,state.uploadedImage);
+    if(version!==photoIdentificationVersion||requestVersion!==readingRequestVersion)return;
+    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
+      throw new Error('Card identification is unavailable. Reload the page or enter your cards manually.');
+    }
+    const references=getIdentificationCardReferences(detectionRequired);
+    const identified=window.ArcanaAI.parseIdentifiedCards(response,references,spread.positions.map(pos=>pos.id));
+    validateIdentificationResult(identified);
+    if(detectionRequired)establishDetectedCardSystem(identified);
+    replaceIdentifiedSpreadCards(spread,identified);
+    state.reviewModeChoice=null;
+    state.cardEntryTab='tab-manual';
+    target.replaceChildren();
+    goScreen('screen-overview');
+  }catch(error){
+    if(version!==photoIdentificationVersion||requestVersion!==readingRequestVersion)return;
+    const noCards=error.message?.startsWith('No valid cards');
+    const message=noCards?'No valid cards were identified. Try a clear photo taken directly above the spread.'
+      :'Gemini couldn’t check this photo. Try another photo or enter your cards manually.';
+    renderPhotoRecovery(zoneId,resultId,inputId,message);
+  }finally{
+    if(version===photoIdentificationVersion){
+      activePhotoIdentification=null;
+      button.disabled=false;
+      syncUploadDeckSelectors();
+      updateQuickGoBtn();
+    }
+  }
 }
 
 function confirmCards(){
-  const spread=getSpread();
-  // Collect from manual picker entries so orientation changes are persisted.
-  document.querySelectorAll('#manual-entries .card-entry-row').forEach(row=>{
-    const inp=row.querySelector('input[data-pos]');
-    const picker=row.querySelector('.card-pick-btn[data-pos]');
-    const posId=picker?picker.dataset.pos:(inp&&inp.dataset.pos);
-    if(!posId)return;
-    const picked=picker&&picker.classList.contains('selected')?picker.textContent.trim():'';
-    const val=inp?inp.value.trim():picked;
-    const orient=row.querySelector('.orient-btn').dataset.orient;
-    if(val)state.cards[posId]={name:val,orientation:orient};
-  });
-  // Check drop card
-  if(state.hasDroppedCard){
-    const dropInput=document.querySelector('#drop-card-entry input[data-pos="drop"]');
-    const dropPicker=document.querySelector('#drop-card-entry .card-pick-btn[data-pos="drop"]');
-    const dropOrient=document.querySelector('#drop-card-entry .orient-btn');
-    const dropName=dropInput&&dropInput.value.trim()
-      ? dropInput.value.trim()
-      : (dropPicker&&dropPicker.classList.contains('selected')?dropPicker.textContent.trim():'');
-    if(dropName){
-      state.droppedCard={name:dropName,orientation:dropOrient.dataset.orient};
-    }
-  }
-  // Validate - check both numeric and string keys since positions use numeric ids
-  let filled=0;
-  spread.positions.forEach(p=>{if(state.cards[p.id]||state.cards[String(p.id)])filled++});
-  const continueToOverview=()=>{
-    if(Object.values(state.cards||{}).some(entry=>entry&&entry.orientation==='unknown')||
-      (state.hasDroppedCard&&state.droppedCard&&state.droppedCard.orientation==='unknown')){
-      showToast('Confirm each card orientation before generating the reading.');
-      return;
-    }
-    renderOverview();
-    goScreen('screen-overview');
-  };
-  if(filled<spread.cardCount){
-    const message=`You have ${filled} of ${spread.cardCount} cards entered. You can return to Card Entry to finish, or continue to review what is present.`;
-    if(typeof openConfirmDialog==='function'&&openConfirmDialog('Continue with an incomplete spread?',message,continueToOverview,'Review anyway'))return;
-    if(!confirm(message))return;
-  }
-  continueToOverview();
+  if(getSpread())goScreen('screen-overview');
 }
+
 // ===== OVERVIEW =====
-function renderOverview(){
+function isCardOrientationConfirmed(entry){
+  return entry.orientation==='upright'||entry.orientation==='reversed';
+}
+
+function getSpreadReview(){
   const spread=getSpread();
-  const grid=document.getElementById('overview-grid');
-  grid.innerHTML='';
-  spread.positions.forEach(pos=>{
-    const entry=state.cards[pos.id];
-    const card=entry?currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase()):null;
-    const tile=document.createElement('div');
-    tile.className='overview-tile';
-    if(!entry){
-      tile.innerHTML=`<div class="c-pos">${escapeHtml(pos.name)}</div><button type="button" class="overview-missing-card" onclick="goScreen('screen-card-entry')">Unknown - tap to set</button>`;
-    }else{
-      const art=card?renderCardArt(card,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>';
-      const kws=card?card.keywords.slice(0,3):[];
-      tile.innerHTML=`
-        <div class="suit-sym">${art}</div>
-        <div class="c-name">${escapeHtml(entry.name)}</div>
-        <div class="c-pos">${escapeHtml(pos.name)}</div>
-        <span class="orient ${entry.orientation==='reversed'?'reversed':entry.orientation==='upright'?'upright':'unknown'}">${entry.orientation==='upright'?'↑ Upright':entry.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
-        <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>`;
-    }
-    grid.appendChild(tile);
-    if(entry){
-      const edit=document.createElement('button');
-      edit.type='button';edit.className='btn btn-sm overview-edit-card';
-      edit.textContent='Edit card';edit.setAttribute('aria-label','Edit '+pos.name+' card');
-      edit.onclick=()=>{goScreen('screen-card-entry');openCardPicker(String(pos.id));};
-      tile.appendChild(edit);
-    }
+  const deck=new Map(currentCards.map(card=>[card.name.toLowerCase(),card]));
+  const cards=state.cards||{};
+  const positions=(spread?.positions||[]).map(position=>{
+    const entry=cards[position.id];
+    const card=deck.get(String(entry?.name||'').toLowerCase());
+    return {position,entry:card?entry:null,card};
   });
-  // Dropped card
-  const dropDiv=document.getElementById('dropped-overview');
-  if(state.hasDroppedCard&&state.droppedCard){
-    const dc=currentCards.find(c=>c.name.toLowerCase()===state.droppedCard.name.toLowerCase());
-    const kws=dc?dc.keywords.slice(0,3):[];
-    dropDiv.style.display='block';
-    dropDiv.innerHTML=`<div class="overview-tile" style="border-color:var(--au-violet)">
-      <div style="font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✦ Dropped Card (Jumper)</div>
-      <div class="suit-sym">${dc?renderCardArt(dc,'tarot-card-thumb overview-card-art',180):'<span class="card-art-fallback">?</span>'}</div>
-      <div class="c-name">${escapeHtml(state.droppedCard.name)}</div>
-      <span class="orient ${state.droppedCard.orientation==='reversed'?'reversed':state.droppedCard.orientation==='upright'?'upright':'unknown'}">${state.droppedCard.orientation==='upright'?'↑ Upright':state.droppedCard.orientation==='reversed'?'↓ Reversed':'? Orientation unknown'}</span>
-      <div class="kw">${kws.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}</div>
-      <p style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic">This card jumped out during shuffling  - it may reveal an underlying theme influencing your reading.</p>
-    </div>`;
-  }else{
-    dropDiv.style.display='none';
+  const filled=positions.filter(item=>item.entry).length;
+  const dropEntry=state.hasDroppedCard?state.droppedCard:null;
+  const dropCard=deck.get(String(dropEntry?.name||'').toLowerCase());
+  const drop=dropCard?{position:{id:'drop',name:'Jumper card'},entry:dropEntry,card:dropCard}:null;
+  const uncertain=positions.some(({entry})=>entry&&!isCardOrientationConfirmed(entry))||
+    !!(drop&&!isCardOrientationConfirmed(drop.entry));
+  return {positions,filled,missing:positions.length-filled,uncertain,drop};
+}
+
+function backFromOverview(){
+  goScreen(state.mode==='quick'?'screen-quick':'screen-card-entry');
+}
+
+function setReviewedOrientation(positionId,orientation,focusType){
+  const entry=positionId==='drop'?state.droppedCard:state.cards[positionId];
+  if(!entry)return;
+  entry.orientation=orientation;
+  autoSaveState();
+  renderOverview();
+  document.getElementById('review-'+focusType+'-'+positionId)?.focus();
+}
+
+function renderReviewCard({position,entry,card},index){
+  const row=document.createElement('div');
+  const needsCheck=!entry||!isCardOrientationConfirmed(entry);
+  row.className='review-card-row'+(needsCheck?' needs-check':'');
+  const positionLabel=position.name;
+  const copy=document.createElement('div');
+  copy.className='review-card-copy';
+  const positionText=document.createElement('p');
+  positionText.className='review-card-position';
+  positionText.textContent=(index===undefined?'':index+1+' · ')+positionLabel;
+  const name=document.createElement('strong');
+  name.className='review-card-name';
+  name.textContent=entry?.name||'Card not identified';
+  copy.append(positionText,name);
+
+  const art=document.createElement('span');
+  art.className='review-card-art';
+  art.setAttribute('aria-hidden','true');
+  if(card)art.innerHTML=renderCardArt(card,'tarot-card-thumb overview-card-art',96);
+  else art.textContent='?';
+  row.append(art,copy);
+
+  const actions=document.createElement('div');
+  actions.className='review-card-actions';
+  if(needsCheck){
+    const status=document.createElement('span');
+    status.className='review-card-state';
+    status.textContent='Needs your check';
+    copy.appendChild(status);
   }
-}
-
-// ===== QUICK READING =====
-function buildQuickSpreadRef(){
-  return SPREADS.filter(s=>ACTIVE_SPREAD_IDS.includes(s.id)).map(s=>
-    s.name+' ('+s.cardCount+' cards): '+s.positions.map(p=>p.id+'. '+p.name+' ['+p.description+']').join(' | ')
-  ).join('\n');
-}
-
-function applyQuickReadingCardSystem(narrative,detectionRequired){
-  const text=String(narrative||'');
-  const marker=text.match(/^CARD_SYSTEM: (tarot|playing)(?:\r?\n|$)/);
-  if(!marker){
-    if(detectionRequired){
-      throw new Error('Quick reading did not return a valid CARD_SYSTEM marker. Please try again or choose the deck manually');
+  const edit=document.createElement('button');
+  edit.type='button';
+  edit.className='btn btn-sm overview-edit-card';
+  edit.id='review-edit-'+position.id;
+  edit.textContent=entry?'Edit':'Add card';
+  edit.setAttribute('aria-label',(entry?'Edit ':'Add ')+positionLabel+' card');
+  edit.onclick=()=>openCardPicker(String(position.id));
+  actions.appendChild(edit);
+  if(entry){
+    if(!needsCheck){
+      const orientation=document.createElement('button');
+      const reversed=entry.orientation==='reversed';
+      const opposite=reversed?'upright':'reversed';
+      orientation.type='button';
+      orientation.id='review-orientation-'+position.id;
+      orientation.className='btn btn-sm review-orientation';
+      orientation.textContent=reversed?'Reversed':'Upright';
+      orientation.setAttribute('aria-label',positionLabel+' card is '+entry.orientation+'. Mark '+opposite);
+      orientation.onclick=()=>setReviewedOrientation(String(position.id),opposite,'orientation');
+      copy.appendChild(orientation);
+    }else{
+      const choices=document.createElement('div');
+      choices.className='review-orientation-options';
+      for(const orientation of ['upright','reversed']){
+        const option=document.createElement('button');
+        option.type='button';
+        option.className='btn btn-sm';
+        option.textContent=orientation==='upright'?'Upright':'Reversed';
+        option.setAttribute('aria-label','Mark '+positionLabel+' card '+orientation);
+        option.onclick=()=>setReviewedOrientation(String(position.id),orientation,'orientation');
+        choices.appendChild(option);
+      }
+      copy.appendChild(choices);
     }
-    return text;
   }
-  if(!detectionRequired){
-    if(marker[1]!==state.cardSystem){
-      throw new Error(`Quick reading CARD_SYSTEM marker conflicts with the established ${state.cardSystem} deck`);
-    }
-    return text.slice(marker[0].length);
-  }
-  state.cardSystem=marker[1];
-  state.cardSystemEstablished=true;
-  currentCards=getCards();
-  return text.slice(marker[0].length);
+  row.appendChild(actions);
+  return row;
 }
 
-async function quickRead(){
-  if(!canGenerateReading()){
-    showUpgradeModal('daily-limit');
+function renderOverview(){
+  const review=getSpreadReview();
+  const grid=document.getElementById('overview-grid');
+  if(!grid)return;
+  const empty=document.getElementById('review-empty');
+  const count=document.getElementById('review-card-count');
+  const first=document.getElementById('review-first-card');
+  const drop=document.getElementById('dropped-overview');
+  const note=document.getElementById('review-photo-note');
+  const quick=state.mode==='quick';
+  document.getElementById('dots-overview').hidden=quick;
+  document.getElementById('progress-overview').hidden=quick;
+  empty.hidden=review.filled>0;
+  first.onclick=()=>{
+    if(review.positions.length)openCardPicker(String(review.positions[0].position.id));
+  };
+  count.textContent=review.filled+' of '+review.positions.length+' cards added';
+  grid.replaceChildren();
+  review.positions.forEach((item,index)=>grid.appendChild(renderReviewCard(item,index)));
+  drop.replaceChildren();
+  drop.hidden=!review.drop;
+  if(review.drop)drop.appendChild(renderReviewCard(review.drop));
+  const modes=document.querySelector('#screen-overview .review-mode');
+  if(modes)modes.hidden=!review.filled;
+  note.hidden=!state.photoIdentificationSent;
+  updateReviewMode(review);
+}
+
+function selectReviewMode(mode){
+  if(mode!=='classic'&&mode!=='ai')return;
+  state.reviewModeChoice=mode;
+  updateReviewMode(getSpreadReview());
+}
+
+const AI_READING_DISCLOSURE='AI reading sends your confirmed cards, spread positions, question, and any optional reading context to Gemini.';
+
+function reviewPrerequisite(review){
+  if(!review.filled)return 'Add at least one card to start a reading.';
+  if(review.uncertain)return 'Confirm the orientation of every card you’ve added.';
+  if(!state.reviewModeChoice)return 'Choose AI or Classic to continue.';
+  if(state.reviewModeChoice==='ai'&&!hasAIConfiguration())return 'AI is unavailable. Choose Classic or check your AI settings.';
+  return '';
+}
+
+function updateReviewMode(review){
+  const mode=state.reviewModeChoice;
+  const detail=document.getElementById('review-mode-detail');
+  const action=document.getElementById('review-generate');
+  const status=document.getElementById('review-prerequisite');
+  if(!detail||!action||!status)return;
+  document.querySelectorAll('.review-mode-option').forEach(button=>{
+    button.setAttribute('aria-pressed',String(button.dataset.readingMode===mode));
+  });
+  detail.textContent=mode==='ai'?AI_READING_DISCLOSURE+(state.photoIdentificationSent?' Your photo isn’t sent again.':'')
+    :mode==='classic'?'Classic uses built-in meanings. It doesn’t send your cards or question to Gemini.':'';
+  const prerequisite=reviewPrerequisite(review);
+  status.textContent=prerequisite||(review.missing?'You can continue with the cards you’ve added.':'');
+  action.setAttribute('aria-disabled',String(!!prerequisite));
+  action.textContent=!review.filled?'Start reading':mode==='ai'?'Start AI reading':mode==='classic'?'Start Classic reading':'Choose a reading to continue';
+}
+
+function submitReviewedReading(){
+  const review=getSpreadReview();
+  if(reviewPrerequisite(review))return;
+  const mode=state.reviewModeChoice;
+  const start=()=>generateReading(mode);
+  if(review.missing){
+    const message='You’ve added '+review.filled+' of '+review.positions.length+
+      ' cards. Your reading will include only the cards you’ve added.';
+    openConfirmDialog('Continue with a partial spread?',message,start,'Continue',false,false);
     return;
   }
-  const settings=loadSettings();
-  try{requireAIConfiguration();}catch(e){showToast(e.message);return;}
-  if(!state.uploadedImage){showToast('Upload a spread photo first.');return;}
-  const requestVersion=++readingRequestVersion;
-  const concern=document.getElementById('quick-concern').value.trim();
-  state.concerns=concern?[concern]:[];
-  saveReaderContext('quick-reader-life-stage');
-  const results=document.getElementById('quick-results');
-  results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
-  try{
-    const detectionRequired=shouldDetectCardSystem();
-    const cardSystemMarkerInstruction=detectionRequired
-      ? 'Your exact first line must be CARD_SYSTEM: tarot or CARD_SYSTEM: playing. Begin markdown on the next line.'
-      : '';
-    const qs=state.quickSpreadId?SPREADS.find(s=>s.id===state.quickSpreadId):null;
-    const quickPromptSpread=qs||{id:'unknown-photo-spread',name:'Unknown Photo Spread',description:'A photographed spread whose structure should be inferred from the image',cardCount:0,layout:'photo',positions:[]};
-    const quickSystemInstructions=getReadingSystemInstructions();
-    const quickOutputGuide=getReadingOutputInstructions(quickPromptSpread,quickSystemInstructions);
-    const quickSafety=getReadingSafetyDisclaimer();
-    let prompt;
-    if(qs){
-      const layoutHint=getCleanSpreadLayoutHint(qs);
-      const posLines=qs.positions.map(p=>p.id+'. '+p.name+': '+p.description).join('\n');
-      prompt=`You are a skilled card reader analyzing a photograph of a ${qs.name} spread (${qs.cardCount} cards).
-
-${layoutHint}
-
-POSITION MEANINGS:
-${posLines}
-
-${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
-${cardSystemMarkerInstruction}
-
-For each visible card, identify its name, orientation (upright/reversed), and position. Then write a concise, mobile-friendly reading through the position meanings.
-
-Length: ${getReadingLengthInstruction(qs)}
-${quickOutputGuide}
-Pattern focus: ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
-
-${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
-Reader context: ${readerContextLine()}
-Life-stage guidance: ${readerSafetyInstruction()}
-Safety: ${quickSafety}
-For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
-Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
-
-Do not write a long paragraph for every card in large spreads. Group highlights by the spread structure when the spread has many cards.`;
-    }else{
-      const spreadRef=buildQuickSpreadRef();
-      prompt=`You are a skilled card reader analyzing a photograph of a card spread.
-
-KNOWN SPREADS (match the layout in the photo to one of these):
-${spreadRef}
-
-STEP 1 - IDENTIFY:
-${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
-${cardSystemMarkerInstruction}
-- Match the layout to a known spread above, or describe it if unknown
-- For each visible card, identify: position number, card name, orientation (upright/reversed)
-
-STEP 2 - READ:
-Keep the ${detectionRequired?'detected':'established'} card system's terminology consistent throughout the reading.
-Write a concise, premium, mobile-friendly reading using this guide:
-Length: ${getReadingLengthInstruction(quickPromptSpread)}
-${quickOutputGuide}
-Pattern focus: ${getQuickPatternAnalysisGuide(state.cardSystem,detectionRequired)}
-
-${concern?'Querent concern: '+concern:'No specific concern - provide general guidance.'}
-Reader context: ${readerContextLine()}
-Life-stage guidance: ${readerSafetyInstruction()}
-Safety: ${quickSafety}
-For health, finances, relationships, and career, use reflective language. Do not claim certainty, diagnose, promise outcomes, or give professional advice as fact.
-Reading style: ${settings.readingStyle}. Tone: ${settings.readingTone}.
-
-Address both card meaning and positional context, but avoid exhaustive card-by-card essays.`;
-    }
-    const rawNarrative=await callGemini(prompt,null,state.uploadedImage,document.getElementById('quick-ai-status'));
-    if(requestVersion!==readingRequestVersion)return;
-    const narrative=applyQuickReadingCardSystem(rawNarrative,detectionRequired);
-    state.narrative=narrative;
-    if(!state.readingUsageRecorded){
-      recordCompletedReading();
-      state.readingUsageRecorded=true;
-    }
-    results.innerHTML='';
-    const content=document.createElement('div');
-    content.id='quick-reading-content';
-    results.appendChild(content);
-    renderReadingInto(content,narrative);
-    results.insertAdjacentHTML('beforeend',`
-      <div class="reading-actions no-print">
-        <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
-        <div class="reading-actions-secondary">
-          <button class="btn" onclick="shareReading()">Share</button>
-          <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
-          <button class="btn" onclick="goScreen('screen-welcome')">Start Again</button>
-        </div>
-      </div>`);
-    renderJournalSection(results);
-    wireJournalSection(results.querySelector('.journal-section'));
-    renderEntitlementsUI();
-  }catch(e){
-    if(requestVersion!==readingRequestVersion)return;
-    results.replaceChildren();
-    const error=document.createElement('p');
-    error.style.color='var(--danger)';
-    error.setAttribute('role','alert');
-    error.textContent=`Reading failed. ${e.message||'Try again or use Classic Reading.'}`;
-    results.appendChild(error);
-  }
+  start();
 }
 
 function renderReadingInto(container,text){
@@ -1770,7 +1928,9 @@ function renderHistory(){
   list.replaceChildren();
   if(!Array.isArray(readings))return;
   const visibleReadings=isPremium()?readings:readings.slice(0,3);
-  if(!readings.length){
+  const reflections=Array.isArray(journal)?journal:[];
+  const linkedReflections=new Set();
+  if(!readings.length&&!reflections.some(Boolean)){
     const empty=document.createElement('p');
     empty.className='history-empty';
     empty.textContent='No saved readings yet. Complete a reading and save it to see it here.';
@@ -1782,53 +1942,81 @@ function renderHistory(){
       note.textContent='Showing your latest 3 readings. Premium unlocks the full saved history.';
       list.appendChild(note);
     }
-    const tools=document.createElement('div');
-    tools.className='history-tools';
-    tools.innerHTML='<button type="button" class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare Selected</button>';
-    list.appendChild(tools);
-    const comparison=document.createElement('div');
-    comparison.id='comparison-output';
-    list.appendChild(comparison);
+    if(visibleReadings.length>=2){
+      const tools=document.createElement('div');
+      tools.className='history-tools';
+      tools.innerHTML='<button type="button" class="btn btn-sm" onclick="compareSelectedReadings()" data-premium-feature="comparison">Compare selected</button>';
+      list.appendChild(tools);
+      const comparison=document.createElement('div');
+      comparison.id='comparison-output';
+      list.appendChild(comparison);
+    }
   }
   visibleReadings.forEach((r,i)=>{
+    if(!r)return;
     const d=new Date(r.date);
     const readerContext=[r.readerLifeStage||''].filter(Boolean).join(' / ');
     const item=document.createElement('div');
-    item.className='history-item';
+    item.className='history-item history-entry';
     const header=document.createElement('div');
     header.className='history-header';
-    header.setAttribute('role','button');
-    header.tabIndex=0;
-    header.setAttribute('aria-expanded','false');
-    const check=document.createElement('input');
-    check.className='compare-reading-check';
-    check.type='checkbox';
-    check.value=String(i);
-    check.title='Select for comparison';
-    check.setAttribute('aria-label','Select reading for comparison');
-    check.addEventListener('click',e=>e.stopPropagation());
     const summary=document.createElement('div');
     const title=document.createElement('h4');
-    title.style.fontSize='13px';
     title.textContent=r.title||'Untitled Reading';
     const detail=document.createElement('span');
-    detail.style.cssText='font-size:11px;color:var(--muted)';
-    detail.textContent=(r.spreadName||r.spread||'Reading')+' / '+(r.cardSystem||'cards');
+    detail.className='history-entry-detail';
+    const cardCount=Object.keys(r.cards||{}).length;
+    detail.textContent=(r.spreadName||r.spread||'Reading')+(cardCount?` · ${cardCount} card${cardCount===1?'':'s'}`:'');
     summary.append(title,detail);
     const date=document.createElement('span');
     date.className='h-date';
     date.textContent=Number.isNaN(d.getTime())?'Saved reading':d.toLocaleDateString();
-    header.append(check,summary,date);
+    header.append(summary,date);
+    if(isPremium()&&visibleReadings.length>=2){
+      const check=document.createElement('input');
+      check.className='compare-reading-check';
+      check.type='checkbox';
+      check.value=String(i);
+      check.title='Select for comparison';
+      check.setAttribute('aria-label','Select '+title.textContent+' for comparison');
+      header.appendChild(check);
+    }
+    item.appendChild(header);
+    const linkedControls=[];
+    if(r.id){
+      const linked=document.createElement('div');
+      linked.className='history-linked-reflections';
+      reflections.forEach((entry,index)=>{
+        if(entry?.readingId!==r.id)return;
+        linkedReflections.add(index);
+        const reflection=createHistoryReflection(entry,index,true);
+        linkedControls.push(reflection.querySelector('.journal-history-actions'));
+        linked.appendChild(reflection);
+      });
+      if(linked.childElementCount)item.appendChild(linked);
+    }
     const body=document.createElement('div');
     body.className='history-body';
+    body.id='history-reading-body-'+i;
     body.hidden=true;
-    const toggle=()=>{
-      const isOpen=body.classList.toggle('open');
+    const entryActions=document.createElement('div');
+    entryActions.className='history-entry-actions';
+    const toggle=document.createElement('button');
+    toggle.type='button';
+    toggle.className='btn btn-sm';
+    toggle.textContent='Open reading';
+    toggle.setAttribute('aria-controls',body.id);
+    toggle.setAttribute('aria-expanded','false');
+    toggle.addEventListener('click',()=>{
+      const isOpen=body.hidden;
       body.hidden=!isOpen;
-      header.setAttribute('aria-expanded',String(isOpen));
-    };
-    header.addEventListener('click',toggle);
-    header.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+      body.classList.toggle('open',isOpen);
+      linkedControls.forEach(actions=>{actions.hidden=!isOpen;});
+      toggle.textContent=isOpen?'Close reading':'Open reading';
+      toggle.setAttribute('aria-expanded',String(isOpen));
+    });
+    entryActions.appendChild(toggle);
+    item.appendChild(entryActions);
     if(r.concerns&&r.concerns.length){
       const p=document.createElement('p');
       p.style.cssText='font-size:12px;color:var(--muted);margin-bottom:8px';
@@ -1850,6 +2038,7 @@ function renderHistory(){
     label.textContent='Journal Notes';
     const notes=document.createElement('textarea');
     notes.id='history-note-'+i;
+    notes.maxLength=10000;
     label.htmlFor=notes.id;
     notes.style.marginTop='4px';
     notes.placeholder='Add your reflections...';
@@ -1862,12 +2051,18 @@ function renderHistory(){
     const del=document.createElement('button');
     del.type='button';del.className='btn btn-sm btn-danger';del.textContent='Delete';
     del.addEventListener('click',()=>deleteReading(i));
+    if(r.id&&r.narrative&&cardCount&&SPREADS.some(spread=>spread.id===r.spread)){
+      const reopen=document.createElement('button');
+      reopen.type='button';reopen.className='btn btn-sm';reopen.textContent='View full reading';
+      reopen.onclick=()=>openSavedReading(r.id);
+      actions.appendChild(reopen);
+    }
     actions.appendChild(del);body.appendChild(actions);
-    item.append(header,body);
+    item.appendChild(body);
     list.appendChild(item);
     renderReadingInto(readingDiv,r.narrative||'No reading content saved.');
   });
-  renderJournalArchive(list,Array.isArray(journal)?journal:[]);
+  renderJournalArchive(list,reflections,linkedReflections);
   if(typeof updateArchiveStatus==='function')updateArchiveStatus();
   renderEntitlementsUI();
 }
@@ -1889,31 +2084,31 @@ function deleteReading(idx){
   remove();
 }
 
-function renderJournalArchive(list,entries){
+function renderJournalArchive(list,entries,linkedReflections){
+  if(!entries.some((entry,index)=>entry&&!linkedReflections.has(index)))return;
   const section=document.createElement('section');
   section.className='history-journal';
-  const heading=document.createElement('h3');heading.textContent='Journal';section.appendChild(heading);
-  const intro=document.createElement('p');intro.className='history-journal-intro';intro.textContent='Saved reflections live here so you can return to the words that mattered.';section.appendChild(intro);
-  if(!entries.length){
-    const empty=document.createElement('p');empty.className='history-empty';empty.textContent='No saved reflections yet. Add one after a reading.';section.appendChild(empty);
-  }else{
-    entries.slice(0,50).forEach((entry,index)=>{
-      const card=document.createElement('article');card.className='journal-history-item';
-      const meta=document.createElement('p');meta.className='journal-history-meta';
-      const when=new Date(entry.updatedAt||entry.createdAt||entry.date);
-      meta.textContent=(entry.spreadName||entry.spread||'Reading')+' · '+(Number.isNaN(when.getTime())?'Saved':when.toLocaleDateString());
-      const text=document.createElement('p');text.className='journal-history-text';text.textContent=entry.text||'';
-      const actions=document.createElement('div');actions.className='journal-history-actions';
-      const edit=document.createElement('button');edit.type='button';edit.className='btn btn-sm';edit.textContent='Edit';edit.onclick=()=>editJournalEntry(index);
-      const remove=document.createElement('button');remove.type='button';remove.className='btn btn-sm btn-danger';remove.textContent='Delete';remove.onclick=()=>deleteJournalEntry(index);
-      actions.append(edit,remove);
-      if(entry.readingId){
-        const open=document.createElement('button');open.type='button';open.className='btn btn-sm';open.textContent='Open reading';open.onclick=()=>openSavedReading(entry.readingId);actions.appendChild(open);
-      }
-      card.append(meta,text,actions);section.appendChild(card);
-    });
-  }
+  const heading=document.createElement('h3');heading.textContent='Other reflections';section.appendChild(heading);
+  entries.forEach((entry,index)=>{
+    if(entry&&!linkedReflections.has(index))section.appendChild(createHistoryReflection(entry,index,false));
+  });
   list.appendChild(section);
+}
+function createHistoryReflection(entry,index,linked){
+  const card=document.createElement('article');
+  card.className=linked?'history-linked-reflection':'journal-history-item';
+  const meta=document.createElement('p');
+  meta.className='journal-history-meta';
+  const when=new Date(entry.updatedAt||entry.createdAt||entry.date);
+  meta.textContent=linked?'Your reflection':(entry.spreadName||entry.spread||'Reading')+' · '+(Number.isNaN(when.getTime())?'Saved':when.toLocaleDateString());
+  const text=document.createElement('p');text.className='journal-history-text';text.textContent=entry.text||'';
+  const actions=document.createElement('div');actions.className='journal-history-actions';
+  actions.hidden=linked;
+  const edit=document.createElement('button');edit.type='button';edit.className='btn btn-sm';edit.textContent='Edit reflection';edit.onclick=()=>editJournalEntry(index);
+  const remove=document.createElement('button');remove.type='button';remove.className='btn btn-sm btn-danger';remove.textContent='Delete reflection';remove.onclick=()=>deleteJournalEntry(index);
+  actions.append(edit,remove);
+  card.append(meta,text,actions);
+  return card;
 }
 function editJournalEntry(index){
   const entries=readArchiveForWrite('arcana-journal');const entry=entries&&entries[index];
@@ -1939,7 +2134,7 @@ function deleteJournalEntry(index){
   if(confirm('Delete this reflection?'))remove();
 }
 function openSavedReading(readingId){
-  const reading=readStoredJson('arcana_readings',[]).find(item=>item.id===readingId);
+  const reading=readStoredJson('arcana_readings',[]).find(item=>item?.id===readingId);
   if(!reading||!reading.narrative){showToast('The saved reading is no longer available.');return;}
   if(!Object.keys(reading.cards||{}).length){showToast('This journal entry is not linked to a card layout.');return;}
   if(!SPREADS.some(spread=>spread.id===reading.spread)){showToast('This saved reading has no editable card layout. You can read it in the archive.');return;}
@@ -1948,10 +2143,13 @@ function openSavedReading(readingId){
   state.readingInfographic=null;
   state.readingMode=reading.readingMode||'classic';
   state.readingUsageRecorded=true;
+  state.readingInProgress=false;
+  state.photoIdentificationSent=false;
+  state.reviewModeChoice=null;
   state.uploadedImage=null;state.quickSpreadId=null;
   state.mode='guided';state.spreadId=reading.spread;state.cards={...reading.cards};state.droppedCard=reading.droppedCard||null;state.hasDroppedCard=!!reading.hasDroppedCard;state.cardSystem=reading.cardSystem||'tarot';state.cardSystemEstablished=true;state.concerns=[...(reading.concerns||[])];state.readerLifeStage=reading.readerLifeStage||'';state.currentReadingId=reading.id||'';state.narrative=reading.narrative;currentCards=getCards();
   const journalEntry=document.getElementById('journal-entry');if(journalEntry)journalEntry.value='';
-  goScreen('screen-reading');renderReading(reading.narrative);
+  goScreen('screen-reading');
   highlightReadingBtn(state.readingMode==='ai'?'ai':'classic');
 }
 
@@ -2031,17 +2229,17 @@ function openTextPrompt(title,description,value,onSave){
   modal._onSave=typeof onSave==='function'?onSave:null;
   activateDialog(modal,document.activeElement);
 }
-function openConfirmDialog(title,description,onConfirm,actionLabel='Delete',offerBackup=false){
+function openConfirmDialog(title,description,onConfirm,actionLabel='Delete',offerBackup=false,destructive=true){
   let modal=document.getElementById('modal-confirm');
   if(!modal){
     modal=document.createElement('div');modal.id='modal-confirm';modal.className='modal-overlay';
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal(modal.id)});document.body.appendChild(modal);
   }
-  modal.innerHTML=`<div class="modal ritual-modal text-prompt-modal">
+  modal.innerHTML=`<div class="modal ritual-modal text-prompt-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-description">
     <button type="button" class="close-btn" onclick="closeModal('modal-confirm')" aria-label="Close dialog">&times;</button>
-    <h2>${escapeHtml(title)}</h2><p class="settings-note">${escapeHtml(description)}</p>
+    <h2 id="confirm-dialog-title">${escapeHtml(title)}</h2><p class="settings-note" id="confirm-dialog-description">${escapeHtml(description)}</p>
     ${offerBackup?'<button type="button" class="btn btn-sm" onclick="downloadJournalBackup()">Download backup first</button>':''}
-    <div class="settings-actions"><button type="button" class="btn" onclick="closeModal('modal-confirm')">Cancel</button><button type="button" class="btn btn-danger" id="confirm-dialog-action"></button></div>
+    <div class="settings-actions"><button type="button" class="btn" onclick="closeModal('modal-confirm')">Cancel</button><button type="button" class="btn ${destructive?'btn-danger':'btn-primary'}" id="confirm-dialog-action"></button></div>
   </div>`;
   const action=modal.querySelector('#confirm-dialog-action');
   if(!action)return false;
@@ -2173,6 +2371,7 @@ function searchPickerCards(query){
 }
 function selectPickerCard(name){
   if(!pickerPosId)return;
+  const position=pickerPosId;
   const card=currentCards.find(item=>item.name===name);
   if(!card)return;
   state.cardSystem=card.system==='tarot'?'tarot':(state.cardSystem==='playing-joker'?'playing-joker':'playing');
@@ -2181,7 +2380,11 @@ function selectPickerCard(name){
   const btn=document.querySelector(`.card-pick-btn[data-pos="${pickerPosId}"]`);
   if(btn){btn.textContent=card.name;btn.classList.add('selected');}
   const orientBtn=document.querySelector(`.orient-btn[data-pos="${pickerPosId}"]`);
-  const orient=orientBtn?orientBtn.dataset.orient:'upright';
+  const reviewing=document.getElementById('screen-overview')?.classList.contains('active');
+  const existing=position==='drop'?state.droppedCard:state.cards[position];
+  const orient=reviewing
+    ?(existing?.name===card.name?existing.orientation:'unknown')
+    :(orientBtn?.dataset.orient||'upright');
   if(pickerPosId==='drop'){
     state.droppedCard={name:card.name,orientation:orient};
     state.hasDroppedCard=true;
@@ -2196,36 +2399,13 @@ function selectPickerCard(name){
   else{state.cards[pickerPosId]={name:card.name,orientation:orient};}
   closeCardPicker();
   autoSaveState();
+  if(reviewing){
+    renderOverview();
+    document.getElementById('review-edit-'+position)?.focus();
+  }
 }
 
 // ===== JOURNAL =====
-function renderJournalSection(container){
-  if(!container || container.querySelector('.journal-section'))return;
-  const section=document.createElement('div');
-  section.className='journal-section no-print';
-  section.dataset.premiumFeature='journal';
-  section.innerHTML=`
-    <div class="journal-orbit" aria-hidden="true"></div>
-    <div class="journal-topline">
-      <span class="journal-badge">Premium Journal</span>
-      <span class="journal-moon" aria-hidden="true"></span>
-    </div>
-    <div class="journal-prompt">Reflection</div>
-    <p class="reflection-question">Before the moment passes, write down the message you want to remember.</p>
-    <div class="reflection-chips" aria-label="Reflection prompts">
-      <button type="button" onclick="useReflectionPrompt(this)">What surprised me?</button>
-      <button type="button" onclick="useReflectionPrompt(this)">Which card keeps echoing?</button>
-      <button type="button" onclick="useReflectionPrompt(this)">What action will I take?</button>
-    </div>
-    <textarea class="journal-textarea" placeholder="I want to remember..."></textarea>
-    <div class="journal-actions">
-    <button type="button" class="btn btn-primary journal-save-btn" onclick="saveJournal(this)" disabled>Save Reflection</button>
-      <span class="journal-save-status" aria-live="polite"></span>
-    </div>`;
-  container.appendChild(section);
-  wireJournalSection(section);
-}
-
 function setReadingReadyState(ready){
   const screen=document.getElementById('screen-reading');
   if(!screen)return;
@@ -2234,54 +2414,22 @@ function setReadingReadyState(ready){
   screen.setAttribute('aria-busy',ready?'false':'true');
 }
 
-function wireJournalSection(section){
+function renderReadingSaveStatus(){
+  const section=document.getElementById('journal-section');
   if(!section)return;
-  const textarea=section.querySelector('.journal-textarea');
-  const button=section.querySelector('.journal-save-btn');
-  const status=section.querySelector('.journal-save-status');
-  if(!textarea||!button)return;
-  const sync=()=>{
-    const hasText=textarea.value.trim().length>0;
-    button.disabled=!hasText;
-    if(status&&!hasText)status.textContent='';
-  };
-  textarea.removeEventListener('input',textarea._arcanaJournalSync||(()=>{}));
-  textarea._arcanaJournalSync=sync;
-  textarea.addEventListener('input',sync);
-  sync();
-}
-
-function useReflectionPrompt(btn){
-  const section=btn.closest('.journal-section');
-  const textarea=section&&section.querySelector('.journal-textarea');
-  if(!textarea)return;
-  const prompt=btn.textContent.trim();
-  const prefix=textarea.value.trim()?'\n\n':'';
-  textarea.value+=prefix+prompt+'\n';
-  textarea.focus();
-  textarea.dispatchEvent(new Event('input',{bubbles:true}));
-}
-
-function saveJournal(trigger){
-  if(!requestPremiumFeature('journal')) return;
-  const journalRoot=trigger&&trigger.closest ? trigger.closest('.journal-section') : (typeof event!=='undefined'&&event&&event.currentTarget&&event.currentTarget.closest ? event.currentTarget.closest('.journal-section') : document.getElementById('journal-section'));
-  const textarea=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-textarea') : document.getElementById('journal-entry');
-  const txt=textarea?textarea.value.trim():'';
-  if(!txt)return;
-  const spread=getReadingSpread();
-  const now=new Date().toISOString();
-  const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),createdAt:now,updatedAt:now,date:now,spreadId:spread?spread.id:(state.spreadId||state.quickSpreadId||''),spreadName:spread?spread.name:'Custom',readingId:state.currentReadingId||'',text:txt.slice(0,10000)};
-  const btn=trigger||(typeof event!=='undefined'&&event?event.currentTarget:null);
-  const status=journalRoot&&journalRoot.querySelector ? journalRoot.querySelector('.journal-save-status') : null;
-  const save=allowReplacement=>{
-    if(!persistJournalEntry(entry,allowReplacement))return;
-    if(status)status.textContent='Saved in this browser. Download backups regularly.';
-    if(btn){const orig=btn.textContent;btn.textContent='Saved';setTimeout(()=>{btn.textContent=orig;},2200);}
-  };
-  const replacing=archiveReplacementCount('arcana-journal',JOURNAL_ARCHIVE_LIMIT);
-  if(replacing){
-    openConfirmDialog('Your reflection archive is full','Saving this reflection will replace '+replacing+' oldest reflection'+(replacing===1?'':'s')+'. Download a backup first to keep them.',()=>save(true),'Replace oldest',true);
-    return;
-  }
-  save(false);
+  const premium=isPremium();
+  const saved=getSavedCurrentReading();
+  section.hidden=!!saved;
+  document.getElementById('journal-premium-preview').hidden=premium;
+  document.getElementById('journal-composer').hidden=!premium;
+  document.getElementById('journal-reflection-prompt').textContent=state.readingPackage?.reflectionQuestions?.[0]||'What do you want to remember about this reading?';
+  document.getElementById('reading-monthly-offer').hidden=premium||(getUsage().monthlyCount||0)<3;
+  document.getElementById('reading-save-primary').hidden=!!saved;
+  document.getElementById('reading-save-hint').textContent=premium?'Your reflection will be linked to this reading.':`Free keeps up to ${FREE_READING_ARCHIVE_LIMIT} readings in this browser.`;
+  document.getElementById('reading-save-status').hidden=!saved;
+  const message=document.getElementById('reading-save-message');
+  const hasReflection=saved&&readStoredJson('arcana-journal',[]).some(entry=>entry?.readingId===saved.id);
+  const text=saved?(hasReflection?'Your reading and reflection are together in your journal.':'Your reading is in your journal.'):'';
+  if(message.textContent!==text)message.textContent=text;
+  document.getElementById('reading-first-backup').hidden=!saved||saved.id!==firstSavedReadingId;
 }

@@ -316,7 +316,9 @@ The main guided progress sequence is:
 The question is optional and has an explicit skip action. `guidedScreens()`
 omits preparation when `state.preparationSkipped` is true, keeping the dots and
 step count accurate. Users with cards already laid out enter the upload tab;
-Back returns to spread selection. That choice survives autosave and reload.
+Back returns to spread selection. The selected card-entry tab and preparation
+choice survive autosave and reload. Quick Upload uses the same `#card-entry`,
+`#overview`, and `#reading` screens with its own Back destination.
 
 ## 10. User flows
 
@@ -343,15 +345,18 @@ tips are expandable, and manual entry includes a searchable, suit-aware picker.
 ```text
 Homepage
   -> quick workspace
-  -> choose the already-used spread
-  -> upload spread photo
-  -> identify cards and generate interpretation
-  -> dynamically append journal/actions
+  -> choose the layout used
+  -> identify a photo or enter cards by hand
+  -> review cards and correct missing or uncertain positions
+  -> choose AI or Classic
+  -> shared reading and save screen
 ```
 
-`startQuick()` resets state for the shorter flow. Quick results use the same
-underlying reading, sharing, and persistence concepts but are rendered into the
-quick screen rather than the guided results template.
+`startQuick()` resets state for the shorter flow. Identification sends the photo
+and layout to Gemini when requested. A photo error leaves the spread and
+question available for retry or manual entry. The shared review requires at least
+one card and a confirmed orientation for every included card. A partial spread
+requires confirmation before either reading mode can start.
 
 ## 11. Global state and UI model
 
@@ -537,14 +542,15 @@ than overriding it.
 
 ## 14. Reading generation and readiness
 
-`generateReading()` in `js/reading-engine.js` chooses AI or classic output:
+`generateReading()` in `js/reading-engine.js` runs the mode chosen in the shared
+review. Identification and review do not consume the daily reading allowance.
 
 ```text
-AI configured and not forced to classic
+AI selected and configured
   -> generate AI reading
   -> on failure, fall back to classic
 
-otherwise
+Classic selected
   -> generate classic reading
 ```
 
@@ -582,19 +588,19 @@ This prevents empty journal/actions UI from appearing during generation.
 
 ### Reflection journal
 
-Guided results include a static Journal component; quick results inject the same
-concept dynamically. Prompt chips can seed the textarea, and the Save button is
-enabled only when content exists.
-
-`saveJournal()` writes lightweight entries to `arcana-journal`, capped at 50.
-At capacity, a confirmation with a backup action precedes replacement.
-Journal entries are separate from saved reading records and remain local.
+Both entry paths show a Premium preview before writing or an optional reflection
+composer for Premium users. Save reading writes the reading and links an optional
+reflection in `arcana-journal`, capped at 50. Linked reflections appear with the
+reading, and older standalone entries remain available in the journal. At
+capacity, a confirmation with a backup action precedes replacement.
 
 ### Saved readings and history
 
 `saveReading()` writes richer records to `arcana_readings`, capped at 3 for Free
-and 50 for Premium. A full-archive save requires explicit replacement consent;
-storage failures leave the form and current reading available.
+and 50 for Premium. A full-archive save requires explicit replacement consent.
+If the linked reflection write fails, the reading write rolls back and the
+draft remains available. Successful saves show a persistent link to the journal
+and provide backup guidance when saving into an empty archive.
 History renders saved spreads, notes, and premium comparison/archive behavior.
 Unreadable archives are not overwritten by a new save. Reflection edits retain
 their draft after a write failure and reject stale changes from another tab.
@@ -761,8 +767,10 @@ Search/answer-engine support includes:
 - `llms.txt`
 
 Complete, linked public pages live at `guide.html`, `faq.html`, `pricing.html`,
-and `privacy.html`. They work without JavaScript and use the existing theme and
-local assets. Each has a canonical URL, Open Graph/Twitter metadata, and JSON-LD.
+`privacy.html`, and `sample-reading.html`. They work without JavaScript and use
+the existing theme and local assets. The sample page includes all ten Celtic
+Cross positions, with a printable keepsake view at `#keepsake`. Each public page
+has a canonical URL, Open Graph/Twitter metadata, and JSON-LD.
 The sitemap lists only these public pages and the homepage; `robots.txt` allows
 crawling and links to it. Homepage FAQ structured data must match visible answers.
 `tests/search-discovery.mjs` checks the public link graph, schema/content parity,

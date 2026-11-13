@@ -28,6 +28,7 @@ function makeElement() {
     },
     appendChild(child) { if (child && child.textContent) this.textContent += child.textContent; },
     append() {},
+    insertAdjacentElement() {},
     replaceChildren() {},
     addEventListener() {},
     querySelector() { return null; },
@@ -217,57 +218,6 @@ const detectionReferences = run("getIdentificationCardReferences(true).map(card=
 assert.ok(detectionReferences.includes("The Fool"));
 assert.ok(detectionReferences.includes("Ace of Hearts"));
 
-run("state.cardSystem='tarot'; state.cardSystemEstablished=false; currentCards=getCards()");
-assert.equal(
-  run("applyQuickReadingCardSystem('CARD_SYSTEM: playing\\n## Introduction\\nPlaying reading',true)"),
-  "## Introduction\nPlaying reading"
-);
-assert.equal(run("state.cardSystem"), "playing");
-assert.equal(run("state.cardSystemEstablished"), true);
-assert.equal(run("currentCards[0].system"), "playing");
-
-run("state.cardSystem='playing'; state.cardSystemEstablished=false; currentCards=getCards()");
-assert.equal(
-  run("applyQuickReadingCardSystem('CARD_SYSTEM: tarot\\r\\n## Introduction\\r\\nTarot reading',true)"),
-  "## Introduction\r\nTarot reading"
-);
-assert.equal(run("state.cardSystem"), "tarot");
-assert.equal(run("state.cardSystemEstablished"), true);
-assert.equal(run("currentCards[0].system"), "tarot");
-
-run("state.cardSystem='tarot'; state.cardSystemEstablished=false; currentCards=getCards()");
-assert.throws(
-  () => run("applyQuickReadingCardSystem('## Introduction\\nNo marker',true)"),
-  /CARD_SYSTEM/
-);
-assert.throws(
-  () => run("applyQuickReadingCardSystem('CARD_SYSTEM: oracle\\n## Introduction\\nInvalid marker',true)"),
-  /CARD_SYSTEM/
-);
-assert.equal(run("state.cardSystemEstablished"), false);
-
-run("state.cardSystem='playing'; state.cardSystemEstablished=true; currentCards=getCards()");
-assert.equal(
-  run("applyQuickReadingCardSystem('## Introduction\\nEstablished reading',false)"),
-  "## Introduction\nEstablished reading"
-);
-assert.equal(run("state.cardSystem"), "playing");
-assert.equal(run("state.cardSystemEstablished"), true);
-
-assert.equal(
-  run("applyQuickReadingCardSystem('CARD_SYSTEM: playing\\n## Introduction\\nMatching marker',false)"),
-  "## Introduction\nMatching marker"
-);
-assert.equal(run("state.cardSystem"), "playing");
-assert.equal(run("state.cardSystemEstablished"), true);
-
-assert.throws(
-  () => run("applyQuickReadingCardSystem('CARD_SYSTEM: tarot\\n## Introduction\\nConflicting marker',false)"),
-  /conflicts with the established/
-);
-assert.equal(run("state.cardSystem"), "playing");
-assert.equal(run("state.cardSystemEstablished"), true);
-
 run(`SPREADS.push({
   id:'allowed-position-test',
   name:'Allowed Position Test',
@@ -297,6 +247,7 @@ window.ArcanaAI.parseIdentifiedCards=(response,references,allowedPositions)=>{
   return originalParseIdentifiedCards(response,references,allowedPositions);
 };
 replaceIdentifiedSpreadCards=()=>{replacementCalls++;};`);
+run("state.uploadedImage='mock-image'");
 await run("identifyCards()");
 await run("identifyGuidedCards()");
 assert.equal(JSON.stringify(context.allowedPositionCalls), JSON.stringify([[1, "2"], [1, "2"]]));

@@ -2,65 +2,72 @@
 // Arcana reading engine with structured AI output and a shareable canvas infographic.
 // This file remains framework-free and works with the existing global runtime.
 
-async function generateReading(){
+async function generateReading(mode=state.reviewModeChoice){
+  const review=getSpreadReview();
+  if(!review.filled||review.uncertain){
+    showToast(!review.filled?'Add at least one card before starting a reading.':'Confirm each card’s orientation before starting a reading.');
+    goScreen('screen-overview');
+    return;
+  }
+  if(mode!=='ai'&&mode!=='classic')return;
+  if(PREMIUM_SPREAD_IDS.includes(state.spreadId)&&!requestPremiumFeature('advanced-spreads'))return;
   if(!canGenerateReading()){
     showUpgradeModal('daily-limit');
     return;
   }
-  if(Object.values(state.cards||{}).some(entry=>entry&&entry.orientation==='unknown')||
-    (state.hasDroppedCard&&state.droppedCard&&state.droppedCard.orientation==='unknown')){
-    showToast('Confirm each card orientation before generating the reading.');
-    goScreen('screen-card-entry');
+  if(mode==='ai'&&!hasAIConfiguration()){
+    updateReviewMode(review);
     return;
   }
+  state.cards=Object.fromEntries(review.positions.filter(item=>item.entry).map(({position,entry})=>[position.id,entry]));
+  state.droppedCard=review.drop?.entry||null;
+  state.hasDroppedCard=!!review.drop;
+  state.narrative='';
+  state.readingPackage=null;
+  state.readingInfographic=null;
+  state.readingMode=mode;
+  state.readingInProgress=true;
   goScreen('screen-reading');
   const requestVersion=++readingRequestVersion;
   setReadingReadyState(false);
-  clearAutoSave();
   const content=document.getElementById('reading-content');
-  content.innerHTML=thoughtfulLoadingHtml('ai-status');
-  const settings=loadSettings();
-  const hasConfiguredAI=hasAIConfiguration();
+  content.innerHTML=mode==='ai'?thoughtfulLoadingHtml('ai-status'):'';
+  highlightReadingBtn(mode);
 
-  if(hasConfiguredAI&&state.readingMode!=='classic-forced'){
-    state.readingMode='ai';
+  if(mode==='ai'){
     try{
-      const narrative=await generateAIReading(settings);
+      const narrative=await generateAIReading(loadSettings());
       if(requestVersion!==readingRequestVersion)return;
       state.narrative=narrative;
       renderReading(narrative);
-      if(!state.readingUsageRecorded){
-        recordCompletedReading();
-        state.readingUsageRecorded=true;
-      }
-      highlightReadingBtn('ai');
     }catch(e){
       if(requestVersion!==readingRequestVersion)return;
       state.readingMode='classic';
       const fallback=generateClassicReading();
       state.narrative=fallback;
       renderReading(fallback);
-      if(!state.readingUsageRecorded){
-        recordCompletedReading();
-        state.readingUsageRecorded=true;
-      }
       highlightReadingBtn('classic');
       const notice=document.createElement('p');
-      notice.style.cssText='color:var(--danger);font-size:11px;margin-bottom:12px';
-      notice.textContent='AI reading failed. Showing the built-in reading instead.';
+      notice.className='reading-mode-notice';
+      notice.setAttribute('role','status');
+      notice.textContent='Gemini couldn’t complete the reading. Here’s your Classic reading.';
       content.insertAdjacentElement('afterbegin',notice);
     }
   }else{
-    state.readingMode='classic';
     const classic=generateClassicReading();
     state.narrative=classic;
     renderReading(classic);
-    if(!state.readingUsageRecorded){
-      recordCompletedReading();
-      state.readingUsageRecorded=true;
-    }
-    highlightReadingBtn('classic');
   }
+  recordReviewedReading();
+}
+
+function recordReviewedReading(){
+  state.readingInProgress=false;
+  if(!state.readingUsageRecorded){
+    recordCompletedReading();
+    state.readingUsageRecorded=true;
+  }
+  autoSaveState();
 }
 
 function highlightReadingBtn(mode){
@@ -70,7 +77,21 @@ function highlightReadingBtn(mode){
   if(classic){classic.classList.toggle('btn-primary',mode==='classic');classic.setAttribute('aria-pressed',String(mode==='classic'));}
 }
 
+function requestReadingMode(mode){
+  if(mode==='ai'){
+    if(state.readingMode==='ai'&&state.narrative)return;
+    openConfirmDialog('Switch to an AI reading?',AI_READING_DISCLOSURE,()=>switchReadingMode('ai'),'Start AI reading',false,false);
+    return;
+  }
+  switchReadingMode(mode);
+}
+
 async function switchReadingMode(mode){
+  const review=getSpreadReview();
+  if(!review.filled||review.uncertain){
+    showToast('Review your cards before starting another reading.');
+    return;
+  }
   if(!state.readingUsageRecorded&&!canGenerateReading()){
     showUpgradeModal('daily-limit');
     return;
@@ -117,10 +138,7 @@ async function switchReadingMode(mode){
     state.narrative=classic;
     renderReading(classic);
   }
-  if(!state.readingUsageRecorded){
-    recordCompletedReading();
-    state.readingUsageRecorded=true;
-  }
+  recordReviewedReading();
   highlightReadingBtn(mode);
 }
 
@@ -431,7 +449,7 @@ function normalizeThemeItems(value){
   return themes;
 }
 
-function readingPackageToMarkdown(readingPackage){
+function readingPackageToMarkdown(readingPackage,mode='ai'){
   const lines=[];
   lines.push('## Your Reading in 30 Seconds','',readingPackage.quickSummary,'');
   lines.push('## Main Message','',readingPackage.mainMessage,'');
@@ -467,7 +485,9 @@ function readingPackageToMarkdown(readingPackage){
   }
 
   lines.push('## Closing Message','',readingPackage.closingMessage,'');
-  lines.push('*This AI-assisted reading is for reflection, not a guaranteed prediction or professional advice.*');
+  lines.push(mode==='classic'
+    ? '*This Classic reading uses built-in card meanings for reflection. It does not predict outcomes or provide professional advice.*'
+    : '*This AI-assisted reading is for reflection, not a guaranteed prediction or professional advice.*');
   return lines.join('\n');
 }
 
@@ -475,7 +495,7 @@ function generateClassicReading(){
   const readingPackage=buildClassicReadingPackage();
   state.readingPackage=readingPackage;
   state.readingInfographic=buildInfographicModel(readingPackage);
-  return readingPackageToMarkdown(readingPackage);
+  return readingPackageToMarkdown(readingPackage,'classic');
 }
 
 function buildClassicReadingPackage(){
@@ -564,9 +584,11 @@ function buildClassicReadingPackage(){
   return {
     title:`${spread.name}: A Reflective Reading`,
     quickSummary:quickParts.join(' ')||'This spread offers a reflective look at the present situation, the forces shaping it, and the choices available next.',
-    mainMessage:first&&last
-      ? `The spread moves from ${first.entry.name} toward ${last.entry.name}. The useful question is not whether these cards predict a fixed result, but how the qualities they describe can help you respond more deliberately.`
-      : 'The cards invite a deliberate response rather than a fixed prediction. Notice what is within your influence and begin with one manageable step.',
+    mainMessage:entries.length>1
+      ? `Read ${first.entry.name} alongside ${last.entry.name} to consider how the themes at the start of the spread relate to where it ends.`
+      : first
+        ? `Use ${first.entry.name} as a prompt to notice what you can influence and choose one manageable next step.`
+        : 'Notice what is within your influence and begin with one manageable step.',
     keyThemes:packageThemes,
     positions,
     patterns,
@@ -666,12 +688,6 @@ function renderReading(text){
   enhanceReadingOutput();
   renderReadingInfographicPanel(content);
 
-  const jSec=document.getElementById('journal-section');
-  if(jSec){
-    jSec.style.display='block';
-    const journalEntry=document.getElementById('journal-entry');
-    if(typeof wireJournalSection==='function')wireJournalSection(jSec);
-  }
   setReadingReadyState(true);
   renderEntitlementsUI();
 }
@@ -1431,119 +1447,3 @@ function canvasToPngBlob(canvas){
 
 
 // ===== QUICK PHOTO READING OVERRIDE =====
-// ui.js defines an older quickRead() that asks Gemini for one markdown response.
-// This later definition intentionally replaces it because reading-engine.js loads
-// after ui.js. It identifies the cards first, stores validated cards in state,
-// then uses the same structured reading + infographic pipeline as guided readings.
-async function quickRead(){
-  if(!canGenerateReading()){
-    showUpgradeModal('daily-limit');
-    return;
-  }
-
-  const settings=loadSettings();
-  try{requireAIConfiguration();}catch(error){alert(error.message);return;}
-  if(!state.uploadedImage){alert('Please upload a photo first.');return;}
-
-  const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
-  if(!spread){alert('Please choose the spread used in the photo.');return;}
-  const requestVersion=++readingRequestVersion;
-
-  const concernElement=document.getElementById('quick-concern');
-  const concern=concernElement?concernElement.value.trim():'';
-  state.concerns=concern?[concern]:[];
-  if(typeof saveReaderContext==='function')saveReaderContext('quick-reader-life-stage');
-
-  // getSpread() reads state.spreadId, so make the selected quick spread the
-  // authoritative spread before creating the structured reading package.
-  state.spreadId=spread.id;
-  state.readingPackage=null;
-  state.readingInfographic=null;
-  state.cards={};
-
-  const results=document.getElementById('quick-results');
-  results.innerHTML=thoughtfulLoadingHtml('quick-ai-status');
-  const statusElement=document.getElementById('quick-ai-status');
-
-  try{
-    if(statusElement)statusElement.textContent='Identifying and validating the cards…';
-    const detectionRequired=shouldDetectCardSystem();
-    const positionDetails=spread.positions
-      .map(position=>`${position.id}. ${position.name} — ${position.description}`)
-      .join('\n');
-
-    const identificationPrompt=`You are identifying physical cards in a photograph of a completed spread.
-
-SPREAD: ${spread.name} (${spread.cardCount} cards) — ${spread.description}
-${getCleanSpreadLayoutHint(spread)}
-
-POSITIONS:
-${positionDetails}
-
-${getCardSystemPromptGuide(state.cardSystem,detectionRequired)}
-
-For every visible spread position, identify the exact card name and whether it is upright or reversed.
-Return ONLY a valid JSON array with no markdown or commentary:
-[{"position":1,"card":"Card Name","orientation":"upright"}]
-Use the supplied position IDs exactly. If a card cannot be identified, use null for its card value.`;
-
-    const identificationRaw=await callGemini(
-      identificationPrompt,
-      null,
-      state.uploadedImage,
-      statusElement
-    );
-    if(requestVersion!==readingRequestVersion)return;
-
-    if(!window.ArcanaAI||typeof window.ArcanaAI.parseIdentifiedCards!=='function'){
-      throw new Error('Validated card identification is unavailable. Please reload the page and try again.');
-    }
-
-    const references=getIdentificationCardReferences(detectionRequired);
-    const identified=window.ArcanaAI.parseIdentifiedCards(
-      identificationRaw,
-      references,
-      spread.positions.map(position=>position.id)
-    );
-    validateIdentificationResult(identified);
-    if(detectionRequired)establishDetectedCardSystem(identified);
-    replaceIdentifiedSpreadCards(spread,identified);
-    currentCards=getCards();
-
-    if(statusElement)statusElement.textContent='Creating the reading and infographic…';
-    const narrative=await generateAIReading(settings,statusElement);
-    if(requestVersion!==readingRequestVersion)return;
-    state.narrative=narrative;
-    state.readingMode='ai';
-
-    if(!state.readingUsageRecorded){
-      recordCompletedReading();
-      state.readingUsageRecorded=true;
-    }
-
-    results.innerHTML='';
-    const content=document.createElement('div');
-    content.id='quick-reading-content';
-    content.innerHTML=readingMarkdownToHtml(narrative);
-    results.appendChild(content);
-    renderReadingInfographicPanel(content);
-
-    results.insertAdjacentHTML('beforeend',`
-      <div class="reading-actions no-print">
-        <button class="btn btn-primary save-reading-action" onclick="saveReading()" data-premium-feature="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"/></svg> Save Reading</button>
-        <div class="reading-actions-secondary">
-          <button class="btn" onclick="shareReading()">Share</button>
-          <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"/><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"/><rect x="7.4" y="14" width="9.2" height="5.4"/><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"/></svg> Print</button>
-          <button class="btn" onclick="goScreen('screen-welcome')">Start Again</button>
-        </div>
-      </div>`);
-
-    renderJournalSection(results);
-    const journal=results.querySelector('.journal-section');
-    if(journal)wireJournalSection(journal);
-    renderEntitlementsUI();
-  }catch(error){
-    if(requestVersion!==readingRequestVersion)return;
-    results.innerHTML=`<p style="color:var(--danger)">Error: ${escapeReadingHtml(error.message)}</p>`;
-  }
-}

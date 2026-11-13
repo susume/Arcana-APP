@@ -1,7 +1,22 @@
 // ===== INIT =====
+const homepageSections = new Set(['why-arcana', 'how-it-works', 'reading-examples', 'premium', 'journal']);
+
+function openHomepageSection(route){
+  if(!homepageSections.has(route))return false;
+  const homepage=document.getElementById('screen-welcome');
+  const section=document.getElementById(route);
+  if(!homepage||!section)return false;
+  if(!homepage.classList.contains('active')){
+    goScreen('screen-welcome',true);
+    history.replaceState(null,'','#'+route);
+  }
+  section.scrollIntoView();
+  return true;
+}
+
 async function initApp(){
-  await renderScreen();
-  await loadSpreads();
+  const startFromSample=location.search&&!location.hash&&new URLSearchParams(location.search).get('start')==='guided';
+  await Promise.all([renderScreen(),loadSpreads()]);
   // Stars
   const s=document.getElementById('stars');
   for(let i=0;i<60;i++){
@@ -28,10 +43,6 @@ async function initApp(){
     document.querySelectorAll('.tag-chip').forEach(chip=>{
       const selected=concerns.includes(chip.textContent.trim());
       chip.classList.toggle('active',selected);chip.setAttribute('aria-pressed',String(selected));
-    });
-    document.querySelectorAll('#screen-card-system .card-opt').forEach(option=>{
-      const selected=state.cardSystemEstablished&&option.getAttribute('onclick').includes("'"+state.cardSystem+"'");
-      option.classList.toggle('selected',selected);option.setAttribute('aria-pressed',String(selected));
     });
     document.querySelectorAll('.reading-choice-card').forEach(option=>{
       const selected=!!state.spreadId&&option.getAttribute('onclick').includes("'"+state.spreadId+"'");
@@ -61,17 +72,15 @@ async function initApp(){
     }
     syncUploadDeckSelectors();
     if(state.mode==='quick'){
-      renderQuickSpreads();
       document.getElementById('quick-concern').value=concerns.join(', ');
+      document.getElementById('quick-question').open=concerns.length>0;
+      if(!state.spreadId)state.spreadId=state.quickSpreadId;
     }
     const savedRoute=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
-    goScreen(screenForRoute(savedRoute),true);
-    if(state.preparationSkipped&&document.getElementById('screen-card-entry').classList.contains('active')){
-      const uploadTab=document.querySelector('.tab-btn[aria-controls="tab-upload"]');
-      if(uploadTab)switchTab('tab-upload',uploadTab);
-    }
+    if(!openHomepageSection(location.hash.slice(1)))goScreen(screenForRoute(savedRoute),true);
   }else{
-    goScreen(screenForRoute(location.hash.slice(1)||'welcome'),true);
+    const route=location.hash.slice(1)||'welcome';
+    if(!openHomepageSection(route))goScreen(screenForRoute(route),true);
   }
   document.querySelectorAll('.modal-overlay').forEach(m=>{
     m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)});
@@ -82,7 +91,23 @@ async function initApp(){
     button.disabled=false;
     button.removeAttribute('data-app-startup');
   });
+  if(startFromSample){
+    if(location.protocol!=='file:'){
+      const url=new URL(location.href);
+      url.searchParams.delete('start');
+      history.replaceState(null,'',url);
+    }
+    const hasDraft=savedState&&!savedState.readingUsageRecorded&&(
+      savedState.spreadId||savedState.quickSpreadId||savedState.concerns?.length
+    );
+    if(hasDraft){
+      openConfirmDialog('Start a new reading?', 'You have a reading in progress. Starting a new reading replaces that draft.', startGuided, 'Start new reading', false, false);
+    }else startGuided();
+  }
 }
 
-window.addEventListener('hashchange',()=>goScreen(screenForRoute(location.hash.slice(1)),true));
+window.addEventListener('hashchange',()=>{
+  const route=location.hash.slice(1);
+  if(!openHomepageSection(route))goScreen(screenForRoute(route),true);
+});
 initApp();

@@ -2,7 +2,8 @@
 let state={
   mode:'guided',concerns:[],cardSystem:'tarot',cardSystemEstablished:false,spreadId:null,
   cards:{},droppedCard:null,hasDroppedCard:false,
-  uploadedImage:null,narrative:'',readingMode:'ai',
+  uploadedImage:null,uploadedImageZone:null,photoIdentificationSent:false,
+  narrative:'',readingMode:'ai',readingInProgress:false,reviewModeChoice:null,cardEntryTab:null,
   readerLifeStage:'',
   guidedStep:0,reversals:false,quickSpreadId:null,preparationSkipped:false,
   readingUsageRecorded:false,currentReadingId:''

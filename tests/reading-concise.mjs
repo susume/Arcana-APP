@@ -44,9 +44,6 @@ function makeContext() {
     enhanceReadingOutput() {
       context.enhanced = true;
     },
-    wireJournalSection() {
-      context.journalWired = true;
-    },
     setReadingReadyState(value) {
       context.ready = value;
     },
@@ -323,7 +320,7 @@ function seedSpread(context,{id,name,cardCount,layout}) {
 {
   assert.doesNotMatch(uiSource, /## Position-by-Position/);
   assert.doesNotMatch(uiSource, /Generate a complete reading using/);
-  assert.match(uiSource, /getReadingOutputInstructions\(quickPromptSpread,quickSystemInstructions\)/);
+  assert.match(uiSource, /function quickRead\(\)[\s\S]*?return identifyPhotoForReview\('quick-upload-zone'/);
 }
 
 {
@@ -346,7 +343,6 @@ This has **bold**, *italic*, and <img src=x onerror=alert(1)>.
   assert.match(content.innerHTML, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(content.innerHTML, /<img/);
   assert.equal(context.enhanced, true);
-  assert.equal(context.journalWired, true);
   assert.equal(context.ready, true);
   assert.equal(context.entitlementsRendered, true);
 }

@@ -1,14 +1,30 @@
 <div class="screen ritual-screen ritual-screen-review" id="screen-overview">
+  <button type="button" class="btn btn-sm review-back" onclick="backFromOverview()">← Back</button>
   <div class="step-dots" id="dots-overview"></div>
   <div class="progress-estimate" id="progress-overview"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Are these the right cards for your reading?</h2>
-  <div class="onboard">
-    Review each card and position before generating the reading. If AI identification missed a card or orientation, tap the card to correct it.
+  <h2>Review your cards</h2>
+  <p class="onboard compact-onboard">Check each card and its orientation before you start your reading.</p>
+  <p class="review-card-count" id="review-card-count" role="status"></p>
+  <div class="review-empty" id="review-empty" hidden>
+    <h3>No cards added yet</h3>
+    <p>Add at least one card from your spread to continue.</p>
+    <button type="button" class="btn" id="review-first-card">Add your first card</button>
   </div>
-  <div id="dropped-overview" style="display:none;margin-bottom:16px"></div>
-  <div class="overview-grid" id="overview-grid"></div>
-  <div class="nav-row">
-    <button type="button" class="btn" onclick="goScreen('screen-card-entry')">Edit Cards</button>
-    <button type="button" class="btn btn-primary" onclick="generateReading()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6 .8 9.6 4.4 10.4-10.4Z"></path></svg> Generate My Reading</button>
+  <div class="overview-rows" id="overview-grid"></div>
+  <div class="overview-rows" id="dropped-overview" hidden></div>
+  <section class="review-mode" aria-labelledby="review-mode-heading">
+    <h3 id="review-mode-heading">Choose your reading</h3>
+    <div class="review-mode-options" role="group" aria-label="Reading type">
+      <button type="button" class="btn review-mode-option" data-reading-mode="ai" aria-pressed="false" onclick="selectReviewMode('ai')"><strong>AI reading</strong><span>Personalized interpretation from Gemini</span></button>
+      <button type="button" class="btn review-mode-option" data-reading-mode="classic" aria-pressed="false" onclick="selectReviewMode('classic')"><strong>Classic reading</strong><span>Built-in card meanings on this device</span></button>
+    </div>
+    <p class="review-mode-detail" id="review-mode-detail" role="status"></p>
+    <p class="review-photo-note" id="review-photo-note" hidden>Arcana already sent your photo to Gemini for card identification.</p>
+  </section>
+  <div class="nav-row review-reading-dock">
+    <div class="review-reading-dock-inner">
+      <button type="button" class="btn btn-primary" id="review-generate" aria-disabled="true" aria-describedby="review-prerequisite review-mode-detail" onclick="submitReviewedReading()">Choose a reading to continue</button>
+      <p class="review-prerequisite" id="review-prerequisite" role="status"></p>
+    </div>
   </div>
 </div>

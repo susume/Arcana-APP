@@ -23,6 +23,7 @@ Canonical website: https://www.arcanaguide.com/
 
 - [Home and web app](https://www.arcanaguide.com/): Product overview, reading workflow, and key answers.
 - [Reading guide](https://www.arcanaguide.com/guide.html): How to use a physical deck, photo identification, manual review, and classic readings.
+- [Sample Celtic Cross reading](https://www.arcanaguide.com/sample-reading.html): A fictional ten-card reading with all positions, a reflection prompt, and a printable keepsake.
 - [Frequently asked questions](https://www.arcanaguide.com/faq.html): Cards, AI setup, free limits, privacy, and browser compatibility.
 - [Free and Premium pricing](https://www.arcanaguide.com/pricing.html): Lifetime pricing, features, activation, and purchase terms.
 - [Privacy and data](https://www.arcanaguide.com/privacy.html): Browser storage, AI requests, backups, payments, and external services.

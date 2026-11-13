@@ -6,7 +6,8 @@ const nodes=new Map();
 const makeNode=()=>({value:'',innerHTML:'',textContent:'',style:{},dataset:{},children:[],
   setAttribute(name,value){this[name]=value;},getAttribute(name){return this[name]||null;},
   classList:{items:new Set(),toggle(name){if(this.items.has(name)){this.items.delete(name);return false;}this.items.add(name);return true;},add(name){this.items.add(name);},remove(name){this.items.delete(name);},contains(name){return this.items.has(name);}},
-  appendChild(node){this.children.push(node);},prepend(){},querySelector(){return null;},querySelectorAll(){return [];},addEventListener(){},focus(){}});
+  appendChild(node){this.children.push(node);},append(...nodes){this.children.push(...nodes);},
+  replaceChildren(){this.children=[];},prepend(){},querySelector(){return null;},querySelectorAll(){return [];},addEventListener(){},focus(){}});
 const getNode=id=>{if(!nodes.has(id))nodes.set(id,makeNode());return nodes.get(id);};
 let inputs=[{id:'concern-input-1',value:''}];
 const messages=[];
@@ -16,7 +17,7 @@ const context=vm.createContext({console:{warn(){}},setTimeout,clearTimeout,
   location:{hash:'#card-entry'},window:{addEventListener(){}},
   document:{getElementById:getNode,querySelectorAll(selector){return selector==='.concern-input'?inputs:[];},querySelector(){return null;},addEventListener(){},createElement:makeNode},
   localStorage:{getItem(key){return data.get(key)||null;},setItem(key,value){if(storageFails)throw new Error('QuotaExceededError');data.set(key,value);}},
-  getReadingSpread:()=>({id:'one-card',name:'One Card'}),getSpread:()=>({id:'one-card'}),SPREADS:[],
+  getReadingSpread:()=>({id:'one-card',name:'One Card'}),getSpread:()=>({id:'one-card'}),SPREADS:[],GLYPH:{star4:''},
 });
 for(const file of ['state','subscription','storage','ui','reading-engine'])vm.runInContext(fs.readFileSync(new URL('../js/'+file+'.js',import.meta.url),'utf8'),context);
 context.showToast=message=>messages.push(message);
@@ -47,6 +48,8 @@ data.set('arcana-journal','{}');assert.equal(run("readStoredJson('arcana-journal
 const renders=[];let resolveAI,rejectAI;let completions=0;
 context.canGenerateReading=()=>true;context.recordCompletedReading=()=>{completions++;};
 context.requireAIConfiguration=()=>{};context.thoughtfulLoadingHtml=()=>'';
+context.SPREADS.push({id:'one-card',layout:'row',cardCount:1,name:'One Card',positions:[{id:1,name:'Focus',description:'Focus'}]});
+run("state.spreadId='one-card';state.cards={1:{name:'The Sun',orientation:'upright'}};currentCards=[{name:'The Sun'}]");
 context.setReadingReadyState=ready=>{context.ready=ready;};
 context.generateClassicReading=()=>{run("state.readingPackage={source:'classic'}");return 'Classic reflection';};
 context.generateAIReading=()=>new Promise((resolve,reject)=>{resolveAI=resolve;rejectAI=reject;});
@@ -96,17 +99,52 @@ previewResolvers[1]();await latestPreview;previewResolvers[0]();await oldPreview
 assert.deepEqual(painted,['2'],'Slow image loading must not overwrite the latest share comment');
 console.log('share canvas concurrency regressions passed');
 
+context.document.createElement=makeNode;
 let resolvePhoto;
 context.callGemini=()=>new Promise(resolve=>{resolvePhoto=resolve;});
 context.saveReaderContext=()=>{};context.shouldDetectCardSystem=()=>false;context.getCardSystemPromptGuide=()=>'';
-context.SPREADS.push({id:'one-card',layout:'row',cardCount:1,name:'One Card',positions:[{id:1,name:'Focus',description:'Focus'}]});
+context.getSpreadLayoutHint=()=> 'Layout hint';
 run("state.quickSpreadId='one-card';state.uploadedImage='synthetic-photo';state.mode='quick'");
 const photoRequest=run('quickRead()');
-run("readingRequestVersion++;state.cards={1:{name:'The Sun',orientation:'upright'}};state.narrative='New reading'");
+assert.equal(typeof resolvePhoto,'function','A ready Quick Upload should send the identification request');
+run("cancelPhotoIdentification();readingRequestVersion++;state.cards={1:{name:'The Sun',orientation:'upright'}};state.narrative='New reading'");
 resolvePhoto('Late photo identification');await photoRequest;
 assert.equal(run('state.cards[1].name'),'The Sun','Cancelled photo identification must not replace a newer spread');
 assert.equal(run('state.narrative'),'New reading');
 console.log('quick photo cancellation regression passed');
+
+const reviewRoutes=[];
+context.goScreen=id=>reviewRoutes.push(id);
+context.window.ArcanaAI={parseIdentifiedCards:()=>({1:{name:'The Sun',orientation:'unknown'}})};
+context.getIdentificationCardReferences=()=>[];
+getNode('quick-concern').value='A private question';
+let photoPrompt;
+context.callGemini=async prompt=>{photoPrompt=prompt;return 'Mock photo identification';};
+const usesBeforeReview=completions;
+await run('quickRead()');
+assert.equal(reviewRoutes.at(-1),'screen-overview','Quick identification must lead to the shared review');
+assert.equal(run('state.photoIdentificationSent'),true);
+assert.equal(run('state.cards[1].orientation'),'unknown','Uncertain orientation must reach review');
+assert.equal(completions,usesBeforeReview,'Photo identification must not use the daily reading');
+assert.doesNotMatch(photoPrompt,/A private question/,'Photo identification must not send the question');
+assert.equal(run('state.concerns[0]'),'A private question');
+
+await run("generateReading('classic')");
+assert.equal(reviewRoutes.at(-1),'screen-overview');
+assert.equal(completions,usesBeforeReview,'An unconfirmed orientation must prevent generation');
+
+run("state.cards={};state.readingUsageRecorded=false");
+await run("generateReading('classic')");
+assert.equal(reviewRoutes.at(-1),'screen-overview');
+assert.equal(completions,usesBeforeReview,'An empty spread must not use the daily reading');
+context.hasAIConfiguration=()=>{throw new Error('Classic must not check AI configuration');};
+context.generateAIReading=()=>{throw new Error('Classic must not send an AI request');};
+run("state.cards={1:{name:'The Sun',orientation:'upright'}}");
+await run("generateReading('classic')");
+assert.equal(reviewRoutes.at(-1),'screen-reading');
+assert.equal(completions,usesBeforeReview+1);
+assert.equal(run('state.readingMode'),'classic');
+console.log('shared review and local Classic regressions passed');
 
 // Search must compose with suit filters and work for both card systems.
 const searchCards=[
@@ -123,7 +161,7 @@ const navigations=[];
 context.goScreen=id=>navigations.push(id);
 context.autoSaveState=()=>{};
 context.buildCardEntry=()=>{};
-run("state.spreadId='one-card';state.cardSystem='playing';state.preparationSkipped=false");
+run("state.mode='guided';state.spreadId='one-card';state.cardSystem='playing';state.preparationSkipped=false");
 run('skipPreparation()');
 assert.equal(run('state.preparationSkipped'),true);
 assert.equal(run('state.cardSystem'),'playing','Skipping preparation must retain the chosen physical deck');

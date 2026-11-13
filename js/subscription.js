@@ -75,7 +75,6 @@ function getUsage(){
   if(usage.monthKey !== month){
     usage.monthKey = month;
     usage.monthlyCount = 0;
-    usage.monthlyUpgradePrompted = false;
   }
   sessionUsage=usage;
   usagePersisted=writeStoredJson('arcana_usage',usage);
@@ -99,12 +98,6 @@ function recordCompletedReading(){
   sessionUsage=usage;
   usagePersisted=writeStoredJson('arcana_usage',usage);
   renderEntitlementsUI();
-
-  if(!isPremium() && usage.monthlyCount >= 3 && !usage.monthlyUpgradePrompted){
-    usage.monthlyUpgradePrompted = true;
-    usagePersisted=writeStoredJson('arcana_usage',usage);
-    setTimeout(() => showUpgradeModal('value'), 900);
-  }
 }
 
 function premiumFeature(name){
@@ -125,8 +118,7 @@ function featureTitle(reason){
     'voice':'Voice narration is Premium',
     'advanced-spreads':'Advanced spreads are Premium',
     'comparison':'Reading comparison is Premium',
-    'unlimited':'Unlimited readings are Premium',
-    'value':"You've completed 3 readings this month"
+    'unlimited':'Unlimited readings are Premium'
   };
   return titles[reason] || 'Upgrade to Premium';
 }
@@ -141,17 +133,13 @@ function showUpgradeModal(reason){
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-upgrade')});
     document.body.appendChild(modal);
   }
-  const usage = getUsage();
-  const countLine = reason === 'value'
-    ? `<p class="upgrade-note">You've completed ${usage.monthlyCount || 3} readings this month.</p>`
-    : '<p class="upgrade-note">Free includes one complete AI-assisted reading each day. Keep your ritual going with Premium.</p>';
   modal.innerHTML = `
     <div class="modal upgrade-modal">
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
       <div class="plan-pill">Premium lifetime unlock from $10</div>
       <h2>${featureTitle(reason)}</h2>
       <p class="upgrade-price">$10 minimum &middot; $20 suggested &middot; one payment</p>
-      ${countLine}
+      <p class="upgrade-note">Free includes one complete AI-assisted reading each day. Keep your ritual going with Premium.</p>
       ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $10</button>`:''}
       <p class="upgrade-note">Lifetime access. No recurring Arcana subscription.</p>
       <ul class="upgrade-benefits">
@@ -241,6 +229,7 @@ function renderEntitlementsUI(){
   const deactivateButton=document.getElementById('deactivate-premium');
   if(deactivateButton)deactivateButton.hidden=!premium;
   if(typeof updateArchiveStatus==='function')updateArchiveStatus();
+  if(typeof renderReadingSaveStatus==='function'&&document.getElementById('screen-reading')?.classList.contains('reading-ready'))renderReadingSaveStatus();
 
   document.querySelectorAll('[data-premium-feature]').forEach(el => {
     const feature = el.dataset.premiumFeature;

@@ -1,50 +1,60 @@
 <div class="screen ritual-screen ritual-screen-workspace" id="screen-quick">
-  <h2>Read your spread</h2>
-  <p class="onboard compact-onboard">Upload a clear photo of the cards you drew, then choose your spread below. Adding a question is optional.</p>
-  <div class="quick-step-label" style="margin-top:14px">Choose the cards in your photo</div>
-  <div class="upload-deck-selector" id="quick-deck-selector" role="group" aria-label="Card system in uploaded photo">
-    <button type="button" class="upload-deck-option active" data-card-system="auto" aria-pressed="true" onclick="selectUploadCardSystem('auto',this)">Auto-detect</button>
-    <button type="button" class="upload-deck-option" data-card-system="tarot" aria-pressed="false" onclick="selectUploadCardSystem('tarot',this)">Tarot</button>
-    <button type="button" class="upload-deck-option" data-card-system="playing" aria-pressed="false" onclick="selectUploadCardSystem('playing',this)">Playing cards</button>
-  </div>
-  <p class="upload-deck-note" id="quick-deck-note">Choose Playing cards for cartomancy so ranks and suits are never converted into tarot names.</p>
-  <div class="quick-step-label" style="margin-top:14px">Upload a clear spread photo</div>
-  <button type="button" class="upload-zone" id="quick-upload-zone" onclick="document.getElementById('quick-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleQuickDrop(event)">
-    <span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Click or drag a photo where every card is visible<span style="font-size:11px">JPG, PNG, WEBP</span></span>
-  </button>
-  <input type="file" id="quick-file" accept="image/jpeg,image/png,image/webp" aria-label="Choose spread photo" style="display:none" onchange="handleQuickUpload(this)">
-  <label class="sr-only" for="quick-concern">Optional question or focus</label>
-  <input type="text" id="quick-concern" placeholder="Optional: what question should this reading explore?" style="margin-bottom:16px">
-  <section class="quick-spread-options" aria-label="Choose the spread you used">
-  <div class="quick-step-label">Choose the spread you used</div>
-  <div class="spread-grid" id="quick-spread-grid"></div>
+  <button type="button" class="btn btn-sm quick-back" onclick="goScreen('screen-welcome')">← Back</button>
+  <h2>Upload a spread</h2>
+  <p class="onboard compact-onboard">Use the physical cards you’ve already laid out.</p>
+  <section class="quick-upload-step" aria-labelledby="quick-photo-heading">
+    <h3 class="quick-step-label" id="quick-photo-heading">Spread photo</h3>
+    <div class="quick-deck-field">
+      <label for="quick-deck-selector">Deck in photo</label>
+      <select id="quick-deck-selector" onchange="if(!selectUploadCardSystem(this.value))syncUploadDeckSelectors()">
+        <option value="auto">Auto-detect</option>
+        <option value="tarot">Tarot</option>
+        <option value="playing">Playing cards</option>
+      </select>
+    </div>
+    <button type="button" class="upload-zone" id="quick-upload-zone" onclick="document.getElementById('quick-file').click()" ondragover="event.preventDefault()" ondrop="handleQuickDrop(event)">
+      <span class="upload-zone-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>Choose a spread photo<span>JPG, PNG, or WebP · Up to 10 MB</span></span>
+    </button>
+    <input type="file" id="quick-file" accept="image/jpeg,image/png,image/webp" aria-label="Choose spread photo" hidden onchange="handleQuickUpload(this)">
+    <div id="quick-results"></div>
   </section>
-  <details class="flow-details context-details">
-    <summary>Optional reading context</summary>
-  <div class="context-panel quick-context">
-    <div>
-      <h3>What context helps the card reading?</h3>
-      <p>Life stage is optional, but it helps Arcana keep the language relevant, gentle, and age-aware.</p>
-    </div>
-    <div class="context-grid">
-      <label>
-        Life stage
-        <select id="quick-reader-life-stage">
-          <option value="">Prefer not to say</option>
-          <option>Child</option>
-          <option>Teen</option>
-          <option>Young adult</option>
-          <option>Adult</option>
-          <option>Older adult</option>
-        </select>
-      </label>
-    </div>
-    <p class="ai-disclaimer">Arcana uses AI for reflective guidance only. It is not medical, legal, financial, or mental-health advice, and it should not replace trusted human support or professional care.</p>
+  <section class="quick-spread-options" aria-labelledby="quick-layout-heading">
+    <h3 class="quick-step-label" id="quick-layout-heading">Which layout did you use?</h3>
+    <div class="spread-grid" id="quick-spread-grid"></div>
+    <details class="flow-details quick-more-layouts" id="quick-more-layouts">
+      <summary>See more layouts</summary>
+      <div class="spread-grid" id="quick-more-spread-grid"></div>
+    </details>
+  </section>
+  <div class="quick-secondary-options">
+    <details class="flow-details quick-question" id="quick-question">
+      <summary>Question or focus (optional)</summary>
+      <label class="sr-only" for="quick-concern">Question or focus</label>
+      <input type="text" id="quick-concern" maxlength="1000" placeholder="What would you like to reflect on?" oninput="saveQuickDraft()">
+    </details>
+    <details class="flow-details context-details">
+      <summary>Optional reading context</summary>
+      <div class="context-panel quick-context">
+        <p>Life stage helps Arcana keep the language relevant and age-aware.</p>
+        <div class="context-grid">
+          <label for="quick-reader-life-stage">Life stage</label>
+          <select id="quick-reader-life-stage" onchange="saveQuickDraft()">
+            <option value="">Prefer not to say</option>
+            <option>Child</option>
+            <option>Teen</option>
+            <option>Young adult</option>
+            <option>Adult</option>
+            <option>Older adult</option>
+          </select>
+        </div>
+      </div>
+    </details>
   </div>
-  </details>
-  <button class="btn btn-primary" id="quick-go" style="display:none;width:100%" onclick="quickRead()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> Generate My Reading</button>
-  <div id="quick-results"></div>
-  <div style="margin-top:16px">
-    <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back</button>
+  <div class="nav-row quick-reading-dock">
+    <div class="quick-reading-dock-inner">
+      <button type="button" class="btn btn-primary" id="quick-go" aria-disabled="true" aria-describedby="quick-prerequisite" onclick="quickRead()">Identify cards</button>
+      <p class="quick-prerequisite" id="quick-prerequisite" role="status">Add a photo and choose your layout to continue.</p>
+      <button type="button" class="btn btn-sm quick-manual" aria-describedby="quick-prerequisite" onclick="enterQuickCardsManually()">Enter cards manually</button>
+    </div>
   </div>
 </div>

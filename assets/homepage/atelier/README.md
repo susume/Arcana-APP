@@ -12,9 +12,11 @@ per PNG. Images depict a warm daylight reading table and a tactile journal.
 
 ## Illustrations
 
-The SVG files are original code-native decorative illustrations in the same
-palette: spread selection, physical draw, photographing a spread, reading
-insight, a physical card, and a digital card grid. They contain no product copy.
+The SVG files are original decorative illustrations in the same palette. The
+four journey steps now use `journey-*.webp`, a set of 840 × 560 photographs
+created with built-in ImageGen using `reading-table-800.webp` as the style
+reference. The scenes share the hero's oak, linen, and botanical tarot cards.
+See [the generation prompts](journey-photos-prompts.md) for all four images.
 
 ## Branding
 

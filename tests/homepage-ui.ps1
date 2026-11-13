@@ -25,7 +25,7 @@ Assert-Contains $template 'class="btn ritual-journal-cta"' "Visible homepage Jou
 Assert-Contains $template 'Open Tarot Journal' "Homepage Journal action label is missing."
 Assert-Contains $template 'aria-labelledby="comparison-title"' "Reading-engine section accessible heading is missing."
 Assert-Contains $template 'id="comparison-title"' "Reading-engine section heading target is missing."
-Assert-Contains $template 'assets/homepage/atelier/choose-spread.svg' "Journey illustration is missing."
+Assert-Contains $template 'assets/homepage/atelier/journey-choose-spread.webp' "Journey photo is missing."
 Assert-Contains $template '<h3 id="final-cta-title">' "Final CTA headline target is missing."
 
 if ($template -match 'generated_images|\.codex') {

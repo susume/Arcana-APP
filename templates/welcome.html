@@ -6,11 +6,11 @@
       <h1 class="sr-only">Arcana Guide</h1>
       <div class="brand-logo" aria-hidden="true"><img src="assets/brand/arcana-guide-horizontal-256.webp" srcset="assets/brand/arcana-guide-horizontal-256.webp 256w, assets/brand/arcana-guide-horizontal-480.webp 480w, assets/brand/arcana-guide-horizontal.webp 836w" sizes="(max-width: 760px) 175px, 200px" alt="" width="836" height="471"></div>
     </div>
-    <nav class="ritual-nav-links" aria-label="Homepage sections">
+    <nav class="ritual-nav-links" aria-label="Arcana navigation">
       <a href="#why-arcana" class="home-nav-wide">Why Arcana</a>
       <a href="#how-it-works" class="home-nav-wide">How it works</a>
       <a href="#reading-examples">Examples</a>
-      <a href="#journal">Journal</a>
+      <a href="#history">Journal</a>
     </nav>
     <button class="icon-btn ritual-settings" disabled data-app-startup onclick="openModal('modal-settings')" title="Settings" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -152,12 +152,14 @@
       <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
       <h3 id="journal-title">Keep your journey going.</h3>
       <p>Get unlimited readings, a Premium journal, deeper spreads, narration, and reading comparisons.</p>
+      <!-- play:home-offer -->
       <p class="homepage-monetization-copy">Premium lifetime unlock. Pay what you want, starting at $10.</p>
       <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
       <p>Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+      <!-- /play:home-offer -->
     </div>
     <div class="offer-actions">
-      <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')">Unlock Premium from $10</button>
+      <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')"><!-- play:home-button -->Unlock Premium from $10<!-- /play:home-button --></button>
       <button class="btn ritual-journal-cta" disabled data-app-startup onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
     </div>
   </section>
@@ -169,7 +171,7 @@
     </div>
     <dl class="public-answer-grid">
       <div><dt>What is Arcana Guide?</dt><dd>Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation.</dd></div>
-      <div><dt>Is Arcana Guide free?</dt><dd>Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.</dd></div>
+      <div><dt>Is Arcana Guide free?</dt><dd><!-- play:faq-price -->Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.<!-- /play:faq-price --></dd></div>
       <div><dt>Do I need my own Gemini API key?</dt><dd>No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection.</dd></div>
       <div><dt>Where are my readings saved?</dt><dd>Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy.</dd></div>
     </dl>

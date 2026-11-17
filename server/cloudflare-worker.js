@@ -9,12 +9,19 @@ const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
 const AI_UPSTREAM_TIMEOUT_MS = 20_000;
 const GUMROAD_UPSTREAM_TIMEOUT_MS = 12_000;
 const GUMROAD_LICENSE_VERIFY_URL = 'https://api.gumroad.com/v2/licenses/verify';
+const PLAY_PACKAGE = 'com.arcanaguide.app';
+const PLAY_PRODUCT = 'arcana_premium_lifetime';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const PLAY_API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PLAY_PACKAGE}`;
+const PLAY_TIMEOUT_MS = 8_000;
+const REPORT_REASONS = new Set(['unsafe', 'offensive', 'misleading', 'other']);
 const ARCANA_GUMROAD_PRODUCT_ID = 'HOp54WHc-rZtK8nTrqtFcg==';
 const ARCANA_GUMROAD_SELLER_ID = 'dNW90VHgyFlXSIHD7Xr6Sw==';
 // Approved founder entitlement; only the digest belongs in server code.
 const ARCANA_FOUNDER_LICENSE_HASH = '64fe0c8a6456a665f33b31bb1df11a29b244a4c3d9dc4875590fa1dcb90c81ee';
 const DEFAULT_ALLOWED_ORIGINS = ['https://www.arcanaguide.com', 'https://arcanaguide.com'];
 const localRateBuckets = new Map();
+let playAuthorization;
 
 function allowedOrigins(env) {
   const configured = String(env.ARCANA_ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
@@ -164,6 +171,170 @@ async function isRateLimited(request, env, route, limit, windowMs) {
   return current.count > limit;
 }
 
+async function createPlayAccessToken(secret) {
+  const { client_email: issuer, private_key: pem } = JSON.parse(secret);
+  if (!issuer || !pem) throw new Error('Google Play service account is incomplete.');
+  const keyBytes = Uint8Array.from(atob(pem.replace(/-----[^-]+-----|\s/g, '')), char => char.charCodeAt(0));
+  const algorithm = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
+  const key = await crypto.subtle.importKey('pkcs8', keyBytes, algorithm, false, ['sign']);
+  const now = Math.floor(Date.now() / 1000);
+  const claims = {
+    iss: issuer, aud: GOOGLE_TOKEN_URL, iat: now, exp: now + 3600,
+    scope: 'https://www.googleapis.com/auth/androidpublisher'
+  };
+  const message = `${base64UrlText('{"alg":"RS256","typ":"JWT"}')}.${base64UrlText(JSON.stringify(claims))}`;
+  const signature = await crypto.subtle.sign(algorithm, key, new TextEncoder().encode(message));
+  const response = await fetchWithTimeout(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: `${message}.${base64Url(new Uint8Array(signature))}`
+    })
+  }, PLAY_TIMEOUT_MS);
+  if (!response.ok) throw new Error('Google Play authentication failed.');
+  const token = await response.json();
+  if (!token.access_token || !Number.isFinite(token.expires_in)) throw new Error('Invalid Google OAuth response.');
+  return token;
+}
+
+async function playAccessToken(secret) {
+  if (playAuthorization?.secret === secret && playAuthorization.expiresAt > Date.now()) {
+    return (await playAuthorization.token).access_token;
+  }
+  const authorization = {
+    secret,
+    expiresAt: Date.now() + PLAY_TIMEOUT_MS,
+    token: createPlayAccessToken(secret)
+  };
+  playAuthorization = authorization;
+  try {
+    const token = await authorization.token;
+    authorization.expiresAt = Date.now() + Math.max(0, token.expires_in - 60) * 1000;
+    return token.access_token;
+  } catch (error) {
+    if (playAuthorization === authorization) playAuthorization = undefined;
+    throw error;
+  }
+}
+
+async function handlePlay(request, env, origin, verify) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
+  if (await isRateLimited(request, env, verify ? 'play-verify' : 'play-status', 20, 60_000)) {
+    return json({ error: 'Too many requests. Try again shortly.' }, 429, origin);
+  }
+  if (!env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || !env.ARCANA_ENTITLEMENT_SECRET) {
+    return json({ error: 'Google Play purchase verification is unavailable.' }, 503, origin);
+  }
+
+  let purchaseToken;
+  if (verify) {
+    const body = await parseBody(request, 8_192).catch(() => null);
+    purchaseToken = body?.purchaseToken;
+    if (typeof purchaseToken !== 'string' || !/^[A-Za-z0-9._~+=/-]{10,4096}$/.test(purchaseToken)) {
+      return json({ error: 'A valid Google Play purchase token is required.' }, 400, origin);
+    }
+  }
+
+  try {
+    const accessToken = await playAccessToken(env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON);
+    if (!verify) return json({ ready: true }, 200, origin);
+
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const encodedToken = encodeURIComponent(purchaseToken);
+    const verifyUrl = `${PLAY_API}/purchases/productsv2/tokens/${encodedToken}`;
+    const response = await fetchWithTimeout(verifyUrl, { headers }, PLAY_TIMEOUT_MS);
+    if (response.status === 404 || response.status === 410) return json({ status: 'inactive' }, 200, origin);
+    if (!response.ok) throw new Error('Google Play verification failed.');
+    const purchase = await response.json();
+    const items = purchase.productLineItem;
+    const item = Array.isArray(items) && items.length === 1 ? items[0] : null;
+    const offer = item?.productOfferDetails;
+    const state = purchase.purchaseStateContext?.purchaseState;
+    if (item?.productId !== PLAY_PRODUCT || offer?.rentOfferDetails || state === 'CANCELLED') {
+      return json({ status: 'inactive' }, 200, origin);
+    }
+    if (state === 'PENDING') return json({ status: 'pending' }, 200, origin);
+    if (state !== 'PURCHASED') throw new Error('Unknown Google Play purchase state.');
+    if (offer?.refundableQuantity === 0 || offer?.consumptionState === 'CONSUMPTION_STATE_CONSUMED') {
+      return json({ status: 'inactive' }, 200, origin);
+    }
+
+    const entitlementToken = await signEntitlement({
+      source: 'google-play',
+      tier: 'premium',
+      productId: PLAY_PRODUCT,
+      purchaseHash: await licenseHash(purchaseToken),
+      iat: Math.floor(Date.now() / 1000)
+    }, env.ARCANA_ENTITLEMENT_SECRET);
+    if (purchase.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING') {
+      const ackUrl = `${PLAY_API}/purchases/products/${PLAY_PRODUCT}/tokens/${encodedToken}:acknowledge`;
+      const ack = await fetchWithTimeout(ackUrl, {
+        method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}'
+      }, PLAY_TIMEOUT_MS);
+      if (!ack.ok) throw new Error('Google Play acknowledgement failed.');
+    } else if (purchase.acknowledgementState !== 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED') {
+      throw new Error('Unknown Google Play acknowledgement state.');
+    }
+    return json({ status: 'active', entitlementToken }, 200, origin);
+  } catch {
+    return json({ error: 'Google Play purchase verification is unavailable. Please try again.' }, 503, origin);
+  }
+}
+
+async function handleAndroidTester(request, env, origin) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
+  const body = await parseBody(request, 2_048).catch(() => null);
+  const code = typeof body?.code === 'string' ? normalizeLicenseKey(body.code) : '';
+  const testerPass = typeof body?.testerPass === 'string' ? body.testerPass : '';
+  if ((!code && !testerPass) || (code && testerPass) || code.length > 128 || testerPass.length > 512) {
+    return json({ error: 'Enter a valid tester code.' }, 400, origin);
+  }
+  const action = code ? 'android-tester-code' : 'android-tester-restore';
+  if (await isRateLimited(request, env, action, code ? 15 : 60, 60_000)) {
+    return json({ error: 'Too many tester access attempts. Try again shortly.' }, 429, origin);
+  }
+  const codeHash = String(env.ARCANA_ANDROID_TESTER_CODE_HASH || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(codeHash)) {
+    return json({ error: 'Android tester access is unavailable.' }, testerPass ? 410 : 503, origin);
+  }
+  if (!env.ARCANA_ENTITLEMENT_SECRET) {
+    return json({ error: 'Android tester access is unavailable.' }, 503, origin);
+  }
+  if (code && (!code.startsWith('ARCANA-TEST-') || !constantTimeEqual(await licenseHash(code), codeHash))) {
+    return json({ error: 'That tester code was not recognized.' }, 403, origin);
+  }
+
+  // Derive a separate signing secret so rotating the tester code revokes saved passes.
+  const signingSecret = JSON.stringify(['android-tester', env.ARCANA_ENTITLEMENT_SECRET, codeHash]);
+  const issuedPass = await signEntitlement({ source: 'android-tester', packageName: PLAY_PACKAGE }, signingSecret);
+  if (testerPass && !constantTimeEqual(testerPass, issuedPass)) {
+    return json({ error: 'This tester pass is no longer valid.' }, 403, origin);
+  }
+  return json({ active: true, testerPass: issuedPass }, 200, origin);
+}
+
+async function handleReadingReport(request, env, origin) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
+  if (!env.ARCANA_REPORTS) return json({ error: 'Reading reports are temporarily unavailable.' }, 503, origin);
+  if (await isRateLimited(request, env, 'reading-report', 5, 60_000)) {
+    return json({ error: 'Too many reports. Please try again later.' }, 429, origin);
+  }
+  const body = await parseBody(request, 96_000).catch(() => null);
+  if (!REPORT_REASONS.has(body?.reason) || typeof body?.reading !== 'string'
+      || !body.reading.trim() || body.reading.length > 20_000) {
+    return json({ error: 'Choose a reason and provide the reading text.' }, 400, origin);
+  }
+  try {
+    const reportedAt = new Date().toISOString();
+    await env.ARCANA_REPORTS.put(`reading:${reportedAt}:${crypto.randomUUID()}`, JSON.stringify({
+      reason: body.reason, reading: body.reading, reportedAt
+    }), { expirationTtl: 90 * 24 * 60 * 60 });
+    return json({ received: true }, 201, origin);
+  } catch {
+    return json({ error: 'Reading reports are temporarily unavailable.' }, 503, origin);
+  }
+}
+
 function parseImageData(value) {
   if (typeof value !== 'string') return null;
   const match = value.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i);
@@ -205,8 +376,8 @@ async function handleActivate(request, env, origin) {
     }, env.ARCANA_ENTITLEMENT_SECRET);
     return json({ isPremium: true, source: 'founder', activatedAt, entitlementToken }, 200, origin);
   }
-  // Founder credentials are verified here and must never be sent to Gumroad.
-  if (licenseKey.startsWith('ARCANA-FOUNDER-')) {
+  // Keep Arcana-issued credentials on the Worker.
+  if (licenseKey.startsWith('ARCANA-FOUNDER-') || licenseKey.startsWith('ARCANA-TEST-')) {
     return json({ isPremium: false, error: 'That activation key was not recognized.' }, 403, origin);
   }
 
@@ -380,6 +551,10 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/activate') return handleActivate(request, env, origin);
     if (url.pathname === '/api/gumroad/webhook') return handleGumroadWebhook(request, env, origin);
+    if (url.pathname === '/api/play/status') return handlePlay(request, env, origin, false);
+    if (url.pathname === '/api/play/verify') return handlePlay(request, env, origin, true);
+    if (url.pathname === '/api/android/tester') return handleAndroidTester(request, env, origin);
+    if (url.pathname === '/api/reading-report') return handleReadingReport(request, env, origin);
     if (url.pathname === '/' || url.pathname === '/api/ai') return handleAiProxy(request, env, origin);
     return json({ error: 'Not found.' }, 404, origin);
   }

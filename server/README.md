@@ -43,3 +43,38 @@ For dashboard deployments, replace the existing Worker's code with
 Retain its existing secret and KV bindings. A local frontend rebuild does not
 publish the Worker; until it is updated, the live service continues using the
 old Gumroad-only activation path.
+
+## Google Play purchases and Android reading reports
+
+1. Enable **Google Play Android Developer API** in Google Cloud. Give the
+   service account Play Console access to `com.arcanaguide.app` and the billing
+   permissions to view financial data and manage orders. The app uses the
+   one-time product `arcana_premium_lifetime`.
+2. Put the complete service-account JSON into the Worker secret
+   `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`. Keep `ARCANA_ENTITLEMENT_SECRET` configured
+   and retain the existing browser origins, including
+   `https://www.arcanaguide.com`. The Android app uses that origin for its bundled
+   WebView and does not receive the service-account credentials.
+3. Bind a Cloudflare KV namespace as `ARCANA_REPORTS` to accept Android AI
+   reading reports. The value contains only the user-selected reason, the
+   submitted reading text, and its report time. Reports expire after 90 days.
+4. Deploy the Worker. `POST /api/play/status` checks OAuth configuration before
+   the app offers checkout. `POST /api/play/verify` checks Google ownership,
+   acknowledges completed purchases, and returns signed Premium metadata.
+   Pending or revoked purchases cannot unlock Premium. The app rechecks
+   ownership when opened, resumed, or explicitly restored with Play.
+   `POST /api/reading-report` records a report only when the user submits it.
+
+Use a Play license tester to verify that Google grants the service account
+the needed permissions for both purchase lookup and acknowledgement.
+The Worker never stores Play purchase tokens. A purchase that completes after
+the user leaves is processed when the app next checks Play ownership.
+
+## Android tester access
+
+`POST /api/android/tester` verifies the digest in the
+`ARCANA_ANDROID_TESTER_CODE_HASH` secret and signs a tester pass using
+`ARCANA_ENTITLEMENT_SECRET`. The same route rechecks passes. Removing the
+digest disables the tester endpoint. Rotating the digest invalidates the old
+code and its passes. See [Android tester setup](../android/README.md) for the
+internal build and code-generation commands.

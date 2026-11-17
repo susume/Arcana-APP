@@ -1,41 +1,47 @@
 <div class="screen ritual-screen ritual-screen-reading" id="screen-reading">
   <div class="step-dots" id="dots-reading"></div>
-  <h2 style="text-align:center;font-size:27px;font-weight:600;margin-bottom:8px;letter-spacing:.2px">Your card reading</h2>
-  <div class="reading-toggle no-print">
+  <h2 class="reading-page-title">Your card reading</h2>
+  <div class="reading-toggle no-print" role="group" aria-label="Reading options">
     <button class="btn btn-sm" id="btn-ai-read" onclick="requestReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
     <button class="btn btn-sm" id="btn-classic-read" onclick="switchReadingMode('classic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> Classic Reading</button>
     <button class="btn btn-sm" onclick="narrateReading()" data-premium-feature="voice">Voice</button>
   </div>
   <div id="reading-content"></div>
 
-  <div class="journal-section no-print result-only" id="journal-section" hidden>
-    <div class="journal-premium-preview" id="journal-premium-preview" hidden>
-      <h3>Keep a reflection with this reading</h3>
-      <p>Writing reflections in your journal is a Premium feature.</p>
-      <p class="reading-monthly-offer" id="reading-monthly-offer" hidden>You’ve completed three or more readings this month. Premium gives you room to save up to 50.</p>
-      <button type="button" class="btn btn-sm" onclick="showUpgradeModal('journal')">Explore Premium</button>
-    </div>
-    <div class="journal-composer" id="journal-composer" hidden>
-      <label class="journal-prompt" for="journal-entry">Add a reflection (optional)</label>
-      <p class="reflection-question" id="journal-reflection-prompt">What do you want to remember about this reading?</p>
-      <textarea id="journal-entry" class="journal-textarea" maxlength="10000" aria-describedby="journal-reflection-prompt" placeholder="I want to remember..."></textarea>
-    </div>
-  </div>
-  <div class="reading-actions no-print result-only">
-    <div class="reading-save-primary" id="reading-save-primary">
-      <p class="reading-save-hint" id="reading-save-hint">Free keeps up to 3 readings in this browser.</p>
-      <button type="button" class="btn btn-primary save-reading-action" onclick="saveReading()" aria-describedby="reading-save-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save reading</button>
-    </div>
-    <div class="reading-save-status" id="reading-save-status" hidden>
-      <h3>Saved in this browser</h3>
-      <p id="reading-save-message" role="status"></p>
-      <button type="button" class="btn btn-primary view-saved-journal" id="view-saved-journal" onclick="goScreen('screen-history')" aria-describedby="reading-save-message">View journal</button>
-    </div>
-    <p class="reading-first-backup" id="reading-first-backup" hidden>Changing devices or clearing browser data? Download a backup from your journal.</p>
-    <div class="reading-actions-secondary">
-      <button class="btn" onclick="shareReading()">Share</button>
-      <button class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print</button>
-      <button class="btn" onclick="goScreen('screen-welcome')">Back to home</button>
-    </div>
+  <div class="reading-finish no-print result-only">
+    <section class="reading-actions" aria-labelledby="reading-keep-heading">
+      <h3 class="reading-tool-heading" id="reading-keep-heading">Keep this reading</h3>
+      <div class="journal-section" id="journal-section" hidden>
+        <div class="journal-composer" id="journal-composer" hidden>
+          <label class="journal-prompt" for="journal-entry">Add a reflection <span class="optional-label">Optional</span></label>
+          <p class="reflection-question" id="journal-reflection-prompt">What do you want to remember about this reading?</p>
+          <textarea id="journal-entry" class="journal-textarea" maxlength="10000" aria-describedby="journal-reflection-prompt" placeholder="I want to remember…"></textarea>
+        </div>
+      </div>
+      <div class="reading-save-primary" id="reading-save-primary">
+        <p class="reading-save-hint" id="reading-save-hint">Free keeps up to 3 readings in this browser.</p>
+        <button type="button" class="btn btn-primary save-reading-action" onclick="saveReading()" aria-describedby="reading-save-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.3L6 20V5.5a1 1 0 0 1 1-1Z"></path></svg> Save reading</button>
+      </div>
+      <div class="reading-save-status" id="reading-save-status" hidden>
+        <h4>Reading saved</h4>
+        <p id="reading-save-message" role="status"></p>
+        <button type="button" class="btn btn-primary view-saved-journal" id="view-saved-journal" onclick="goScreen('screen-history')" aria-describedby="reading-save-message">View journal</button>
+      </div>
+      <p class="reading-first-backup" id="reading-first-backup" hidden>Changing devices or clearing local data? Download a backup from your journal.</p>
+      <div class="journal-premium-preview" id="journal-premium-preview" hidden>
+        <p>Premium lets you save a personal reflection with your reading.</p>
+        <p class="reading-monthly-offer" id="reading-monthly-offer" hidden>You’ve completed three or more readings this month. Premium gives you room to save up to 50.</p>
+        <button type="button" class="btn btn-sm" onclick="showUpgradeModal('journal')">Explore Premium</button>
+      </div>
+    </section>
+    <section class="reading-export" aria-labelledby="reading-export-heading">
+      <h3 class="reading-tool-heading" id="reading-export-heading">Share or print</h3>
+      <div class="reading-actions-secondary">
+        <button type="button" class="btn" onclick="shareReading()">Share reading</button>
+        <button type="button" class="btn" onclick="printReading()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5V4.2h10v5.3"></path><rect x="4.4" y="9.5" width="15.2" height="7.4" rx="1.6"></rect><rect x="7.4" y="14" width="9.2" height="5.4"></rect><circle cx="16.6" cy="12.2" r=".7" fill="currentColor" stroke="none"></circle></svg> Print / PDF</button>
+      </div>
+      <div id="reading-image-export"></div>
+    </section>
+    <button type="button" class="btn reading-home-action" onclick="goScreen('screen-welcome')">Back to home</button>
   </div>
 </div>

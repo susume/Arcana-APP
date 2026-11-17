@@ -31,6 +31,7 @@ function saveSubscription(sub){
 }
 
 function isPremium(){
+  if(globalThis.arcanaAndroid)return arcanaAndroid.isPremium();
   return getSubscription().tier === 'premium';
 }
 
@@ -133,7 +134,7 @@ function showUpgradeModal(reason){
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-upgrade')});
     document.body.appendChild(modal);
   }
-  modal.innerHTML = `
+  modal.innerHTML = globalThis.arcanaAndroid ? arcanaAndroid.upgradeMarkup(featureTitle(reason)) : `
     <div class="modal upgrade-modal">
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
       <div class="plan-pill">Premium lifetime unlock from $10</div>
@@ -161,6 +162,7 @@ function showUpgradeModal(reason){
         <p id="activation-status" class="activation-status" aria-live="polite"></p>
       </details>
     </div>`;
+  globalThis.arcanaAndroid?.renderPurchaseControls();
   if(typeof activateDialog==='function')activateDialog(modal,document.activeElement);
   else modal.classList.add('open');
 }
@@ -224,7 +226,9 @@ function renderEntitlementsUI(){
 
   const settingsStatus = document.getElementById('premium-settings-status');
   if(settingsStatus){
-    settingsStatus.textContent = premium ? 'Premium active on this browser' : 'Free plan active';
+    settingsStatus.textContent = premium
+      ? (globalThis.arcanaAndroid ? 'Premium active' : 'Premium active on this browser')
+      : 'Free plan active';
   }
   const deactivateButton=document.getElementById('deactivate-premium');
   if(deactivateButton)deactivateButton.hidden=!premium;
@@ -239,12 +243,22 @@ function renderEntitlementsUI(){
     if(locked)el.setAttribute('title', `${featureTitle(feature)} - activate Premium to use this.`);
     else el.removeAttribute('title');
   });
+  globalThis.arcanaAndroid?.renderPurchaseControls();
+  globalThis.arcanaAndroid?.renderReporting();
 }
 
 function narrateReading(){
   if(!requestPremiumFeature('voice')) return;
   const content = [document.getElementById('reading-content'), document.getElementById('quick-reading-content')]
     .find(el => el && el.innerText.trim());
+  if(content && globalThis.arcanaAndroid?.narrate){
+    const text = getNarrationText(content);
+    if(!text)return showToast('No reading text is ready to narrate.');
+    arcanaAndroid.narrate(text)
+      .then(result=>{if(result.stopped)showToast('Narration stopped.');})
+      .catch(error=>showToast(error.message||'Voice narration is unavailable on this device.'));
+    return;
+  }
   if(!content || !('speechSynthesis' in window)) return showToast('Voice narration is not available in this browser.');
   if(window.speechSynthesis.speaking){
     window.speechSynthesis.cancel();

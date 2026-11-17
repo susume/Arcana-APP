@@ -1,0 +1,16 @@
+{
+  "appId": "com.arcanaguide.app",
+  "appName": "Arcana Guide",
+  "webDir": "dist/android",
+  "server": {
+    "hostname": "www.arcanaguide.com",
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#f4f0e7",
+    "loggingBehavior": "none"
+  },
+  "plugins": {
+    "SystemBars": { "style": "LIGHT" }
+  }
+}

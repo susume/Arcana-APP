@@ -59,10 +59,10 @@
     <h1>Know where your reading goes.</h1>
     <p class="public-intro">Arcana Guide works without an Arcana account. This page describes the app's browser storage and the external services involved when you use its features.</p>
 
-      <p class="public-updated">Updated November 5, 2026</p>
+      <p class="public-updated">Updated November 17, 2026</p>
       <section aria-labelledby="browser-data">
         <h2 id="browser-data">Saved in your browser</h2>
-        <p>Arcana stores saved readings, journal notes, settings, usage counters, and Premium activation in your browser's local storage. It does not have an Arcana account database that syncs your journal across devices.</p>
+        <p>Arcana stores saved readings, journal notes, settings, and usage counters locally in your browser or Android app. The website also stores its Premium activation locally. Journals move between installations only when you export and import a backup.</p>
         <p>Clearing site data, using a private browsing session, or changing browsers can make that archive unavailable. Export a journal backup and keep it somewhere you control. Backups contain private reading and journal content; share them only when you choose.</p>
       </section>
       <section aria-labelledby="ai-requests">
@@ -74,8 +74,15 @@
       </section>
       <section aria-labelledby="payments">
         <h2 id="payments">Payments and Premium activation</h2>
+        <!-- play:privacy-web-payments -->
         <p>Gumroad handles checkout and provides your activation key. Arcana's activation service verifies that key and may retain license and entitlement records to support Premium activation. The browser saves your verified activation status.</p>
         <p>See <a href="https://gumroad.com/privacy">Gumroad's privacy policy</a> for its handling of purchase information.</p>
+        <!-- /play:privacy-web-payments -->
+        <p>Google Play processes Android purchases. Arcana sends a purchase token to its Cloudflare Worker, which checks product ownership and purchase status with Google to activate or restore Premium. Arcana does not receive your payment card details or store the raw purchase token.</p>
+      </section>
+      <section aria-labelledby="reading-reports">
+        <h2 id="reading-reports">Reporting an AI reading</h2>
+        <p>When you submit a report in the Android app, Arcana receives the text of the AI reading and the reason you select. Review the text before sending if your reading contains personal details. Reports are retained for up to 90 days and used to review and improve AI content.</p>
       </section>
       <section aria-labelledby="hosting">
         <h2 id="hosting">Hosting and external images</h2>
@@ -86,6 +93,7 @@
         <h2 id="data-control">Your choices</h2>
         <p>Use classic readings when you do not want to send a reading to an AI service. Remove an optional Gemini key in Settings when you no longer want it saved. Export your journal before clearing site data, and use the available archive controls to manage saved entries.</p>
         <p>An AI assistant's separate browser does not automatically have your Arcana archive. Sharing a backup or reading with another service is your choice and gives that service access to the information you share.</p>
+        <p>For privacy questions about the Android app, use the developer contact listed for Arcana Guide on Google Play.</p>
       </section>
     <div class="public-next">
       <p>A quiet moment with your own cards.</p>

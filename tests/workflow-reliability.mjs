@@ -19,7 +19,7 @@ const context=vm.createContext({console:{warn(){}},setTimeout,clearTimeout,
   localStorage:{getItem(key){return data.get(key)||null;},setItem(key,value){if(storageFails)throw new Error('QuotaExceededError');data.set(key,value);}},
   getReadingSpread:()=>({id:'one-card',name:'One Card'}),getSpread:()=>({id:'one-card'}),SPREADS:[],GLYPH:{star4:''},
 });
-for(const file of ['state','subscription','storage','ui','reading-engine'])vm.runInContext(fs.readFileSync(new URL('../js/'+file+'.js',import.meta.url),'utf8'),context);
+for(const file of ['state','subscription','storage','dom-helpers','ui','reading-engine'])vm.runInContext(fs.readFileSync(new URL('../js/'+file+'.js',import.meta.url),'utf8'),context);
 context.showToast=message=>messages.push(message);
 context.renderEntitlementsUI=()=>{};
 context.getReadingSpread=()=>({id:'one-card',name:'One Card'});
@@ -190,3 +190,26 @@ run('editJournalEntry(0)');
 assert.equal(saveReflectionDraft('Updated reflection'),true);
 assert.equal(JSON.parse(data.get('arcana-journal'))[0].text,'Updated reflection');
 console.log('reflection edit persistence regressions passed');
+
+// Printing uses the completed reading, not a copy of controls or private journal UI.
+context.document.documentElement={lang:'en'};
+getNode('reading-content').innerHTML='<canvas>HTML preview</canvas>';
+getNode('journal-entry').value='Private draft reflection';
+const narrative='## Your Reading in 30 Seconds\n\nA moment to pause.\n\n## Position-by-Position\n\n**Focus — Ace of Hearts (Reversed)**\n\n## Practical Guidance\n\n- Take one small step.';
+context.narrative=narrative;
+run("state.narrative=narrative;state.readingInProgress=false;state.currentReadingId='print-test';state.concerns=['<img src=x> & focus'];state.cardSystem='playing-joker';state.readingMode='classic'");
+data.set('arcana_readings',JSON.stringify([{id:'print-test',title:'A <quiet> reading',narrative,date:'2026-11-04T12:00:00Z'}]));
+let printed;
+context.arcanaAndroid={print:async (html,title)=>{printed={html,title};}};
+run('printReading()');
+assert.equal(printed.title,'A <quiet> reading');
+assert.match(printed.html,/A &lt;quiet&gt; reading/);
+assert.match(printed.html,/One Card &middot; Playing cards &middot; Classic reading &middot;/);
+assert.match(printed.html,/&lt;img src=x&gt; &amp; focus/);
+assert.match(printed.html,/<strong>Focus — Ace of Hearts \(Reversed\)<\/strong>/);
+assert.match(printed.html,/<li>Take one small step\.<\/li>/);
+assert.doesNotMatch(printed.html,/<(?:img|canvas|button)\b|Private draft reflection/);
+printed=null;
+run('state.readingInProgress=true;printReading()');
+assert.equal(printed,null,'An in-progress reading must not print stale results');
+console.log('print document and Android handoff regressions passed');

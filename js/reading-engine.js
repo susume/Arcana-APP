@@ -686,7 +686,7 @@ function renderReading(text){
   // Markdown rendering — process lists properly
   content.innerHTML=renderSafeMarkdown(text);
   enhanceReadingOutput();
-  renderReadingInfographicPanel(content);
+  renderReadingInfographicPanel(document.getElementById('reading-image-export'));
 
   setReadingReadyState(true);
   renderEntitlementsUI();
@@ -754,44 +754,72 @@ function escapeReadingHtml(value){
     .replace(/'/g,'&#039;');
 }
 
-function renderReadingInfographicPanel(content){
+function renderReadingInfographicPanel(host){
+  if(!host)return;
+  host.replaceChildren();
   const model=state.readingInfographic||buildInfographicFromCurrentState();
   if(!model||!model.cards.length)return;
 
-  const panel=document.createElement('section');
+  const panel=document.createElement('details');
   panel.id='reading-infographic-panel';
-  panel.className='reading-section';
-  panel.style.marginTop='24px';
+  panel.className='reading-infographic-preview';
   panel.innerHTML=`
-    <h3>Shareable Reading Infographic</h3>
-    <p style="margin-bottom:14px">A visual summary made from the confirmed cards and the reading above. Card names and orientations come from your reviewed spread.</p>
-    <div style="border:1px solid rgba(205,169,92,.42);border-radius:8px;overflow:hidden;background:#f6f0df;box-shadow:0 18px 50px rgba(0,0,0,.22)">
-      <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading" style="display:block;width:100%;height:auto"></canvas>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
-      <button type="button" id="download-reading-infographic" class="btn btn-primary">Download PNG</button>
-      <button type="button" id="redraw-reading-infographic" class="btn">Redraw</button>
-      <span id="reading-infographic-status" role="status" aria-live="polite" style="font-size:12px;opacity:.78">Building infographic…</span>
+    <summary>Reading infographic <span class="optional-label">PNG</span></summary>
+    <div class="reading-infographic-body">
+      <p>A visual summary of your confirmed cards and reading.</p>
+      <div class="reading-infographic-frame" hidden>
+        <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading"></canvas>
+      </div>
+      <div class="reading-infographic-tools">
+        <button type="button" id="download-reading-infographic" class="btn btn-primary" disabled>Download PNG</button>
+        <button type="button" id="redraw-reading-infographic" class="btn">Refresh preview</button>
+      </div>
+      <p id="reading-infographic-status" role="status"></p>
     </div>`;
-  content.appendChild(panel);
+  host.appendChild(panel);
 
   const canvas=panel.querySelector('#reading-infographic-canvas');
+  const frame=canvas.parentElement;
   const status=panel.querySelector('#reading-infographic-status');
   const downloadButton=panel.querySelector('#download-reading-infographic');
   const redrawButton=panel.querySelector('#redraw-reading-infographic');
-
-  drawReadingInfographic(canvas,model)
-    .then(()=>{status.textContent='Ready to download.';})
-    .catch(error=>{status.textContent=`Preview could not be completed: ${error.message}`;});
-
-  downloadButton.addEventListener('click',()=>downloadReadingInfographic(canvas,model,status));
-  redrawButton.addEventListener('click',async()=>{
-    status.textContent='Redrawing…';
+  let started=false;
+  let busy=false;
+  async function renderPreview(){
+    if(busy)return;
+    started=true;
+    busy=true;
+    downloadButton.disabled=true;
+    redrawButton.setAttribute('aria-disabled','true');
+    status.textContent='Building infographic…';
     try{
       await drawReadingInfographic(canvas,model);
+      frame.hidden=false;
+      downloadButton.disabled=false;
       status.textContent='Ready to download.';
     }catch(error){
-      status.textContent=`Redraw failed: ${error.message}`;
+      frame.hidden=true;
+      status.textContent=`Preview could not be completed: ${error.message}`;
+    }finally{
+      busy=false;
+      redrawButton.removeAttribute('aria-disabled');
+    }
+  }
+  panel.addEventListener('toggle',()=>{
+    if(panel.open&&!started)renderPreview();
+  });
+  redrawButton.addEventListener('click',renderPreview);
+  downloadButton.addEventListener('click',async()=>{
+    if(busy)return;
+    busy=true;
+    downloadButton.setAttribute('aria-disabled','true');
+    redrawButton.setAttribute('aria-disabled','true');
+    try{
+      await downloadReadingInfographic(canvas,model,status);
+    }finally{
+      busy=false;
+      downloadButton.removeAttribute('aria-disabled');
+      redrawButton.removeAttribute('aria-disabled');
     }
   });
 }
@@ -1404,11 +1432,17 @@ async function downloadReadingInfographic(canvas,model,statusElement){
     }
     if(!blob)throw new Error('The image could not be exported.');
 
+    const spreadSlug=String(model.spreadName||'reading').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'reading';
+    const filename=`arcana-${spreadSlug}-${model.generatedDate}.png`;
+    if(globalThis.arcanaAndroid?.saveFile){
+      const saved=await arcanaAndroid.saveFile(blob,filename);
+      if(statusElement)statusElement.textContent=saved?'PNG saved.':'Save canceled.';
+      return;
+    }
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
-    const spreadSlug=String(model.spreadName||'reading').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'reading';
     link.href=url;
-    link.download=`arcana-${spreadSlug}-${model.generatedDate}.png`;
+    link.download=filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -1420,6 +1454,11 @@ async function downloadReadingInfographic(canvas,model,statusElement){
       await drawReadingInfographic(canvas,model,{skipImages:true});
       const safeBlob=await canvasToPngBlob(canvas);
       if(!safeBlob)throw error;
+      if(globalThis.arcanaAndroid?.saveFile){
+        const saved=await arcanaAndroid.saveFile(safeBlob,`arcana-reading-${model.generatedDate}.png`);
+        if(statusElement)statusElement.textContent=saved?'PNG saved.':'Save canceled.';
+        return;
+      }
       const url=URL.createObjectURL(safeBlob);
       const link=document.createElement('a');
       link.href=url;

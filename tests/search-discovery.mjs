@@ -45,7 +45,10 @@ for (const file of files) {
     const target = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
     await access(path.join(root, target));
     if (url.hash && target.endsWith('.html')) {
-      assert.ok((await read(target)).includes('id="' + decodeURIComponent(url.hash.slice(1)) + '"'), file + ' has a missing anchor: ' + match[1]);
+      const fragment = decodeURIComponent(url.hash.slice(1));
+      const targetHtml = await read(target);
+      const journalRoute = target === 'index.html' && fragment === 'history' && targetHtml.includes('id="screen-history"');
+      assert.ok(journalRoute || targetHtml.includes('id="' + fragment + '"'), file + ' has a missing anchor: ' + match[1]);
     }
   }
   for (const page of infoPages) {
@@ -111,6 +114,7 @@ for (const [hasHomepage, protocol] of [[true, 'https:'], [false, 'https:'], [tru
 // Pre-rendering exposes buttons before startup finishes on slow connections.
 // Keep those actions disabled until spreads and the rest of the UI are ready.
 const homepageButtons = [...main.matchAll(/<button\b[^>]*>/g)];
+assert.match(main, /<a href="#history">Journal<\/a>/, 'The homepage Journal link must open saved readings.');
 assert.ok(homepageButtons.length);
 for (const [tag] of homepageButtons) assert.match(tag, /disabled data-app-startup/);
 const buttons = homepageButtons.map(() => ({ disabled: true, removeAttribute() {} }));

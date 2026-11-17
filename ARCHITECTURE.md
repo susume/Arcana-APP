@@ -69,6 +69,14 @@ The static frontend can be deployed independently. AI and premium services
 depend on runtime endpoint configuration in `js/config.js` and Worker
 environment bindings/secrets.
 
+The Android build packages these same screens into a Capacitor WebView at the
+app-owned `https://www.arcanaguide.com` origin. `npm run android:sync` stages the
+public assets and the Android purchase controls, then copies them into the
+native project. Journal data is local to each installation. Android uses
+system file dialogs for backups and infographics, Android printing, and
+device text-to-speech. See [android/README.md](android/README.md) for build
+and release steps.
+
 ## 4. Product and visual direction
 
 The current theme is **Quiet Atelier**, selected by `data-theme="atelier"` on
@@ -286,6 +294,8 @@ Key functions in `js/ui.js`:
 - `navigate()` and `goScreen()` activate screens and update the hash.
 - `updateDots()` and `updateProgressEstimate()` update guided progress.
 - `ensureRitualUtilities()` installs shared shell utilities, including Journal.
+- The homepage Journal link opens `#history`, including when a saved draft
+  exists. The legacy `#journal` section anchor still opens the homepage offer.
 
 `js/app.js`:
 
@@ -345,8 +355,9 @@ tips are expandable, and manual entry includes a searchable, suit-aware picker.
 ```text
 Homepage
   -> quick workspace
-  -> choose the layout used
-  -> identify a photo or enter cards by hand
+  -> choose the layout used, then the deck and photo (if using photo recognition)
+  -> optionally add a question or life stage
+  -> identify the photo or enter cards by hand
   -> review cards and correct missing or uncertain positions
   -> choose AI or Classic
   -> shared reading and save screen
@@ -626,7 +637,8 @@ two-pathways, and relationship spreads—to visual card positions. Unknown layou
 use a grid fallback.
 
 The structured reading pipeline also renders a downloadable infographic in
-`js/reading-engine.js`. It selects an adaptive template from the active spread:
+`js/reading-engine.js` when the user opens its preview under Share or print.
+It selects an adaptive template from the active spread:
 a featured card for one-card readings, a three-column sequence for Past / Present /
 Future, a balanced two-column grid for six-card and Celtic Cross readings, a
 quarter-by-quarter timeline for yearly readings, paired comparison rows for Two
@@ -637,9 +649,11 @@ height for wrapped text.
 
 ### Printing
 
-`printReading()` prepares a print view and coordinates cleanup through
-`afterprint`. Theme changes must preserve print-specific readability and hide
-non-print controls.
+`buildPrintableReading()` formats the completed, safely rendered narrative as
+a paper document with the spread, mode, date, and optional question. It avoids
+copying the app's journal reflection, canvas, or controls. `printReading()` sends
+the same HTML to the Android print bridge or to a browser frame cleaned up
+through `afterprint`.
 
 ### Narration
 
@@ -672,6 +686,18 @@ activation endpoint when configured or the Worker/proxy base otherwise.
 After successful verification, the browser stores premium state in
 `arcana_subscription`. This local state controls the UI, but its source of truth
 at activation time is the Worker/Gumroad response.
+
+Android sells one non-consumable item, `arcana_premium_lifetime`. The native
+Play Billing bridge supplies the localized price and retrieves Google Play
+ownership. The Worker verifies the purchase and acknowledges a completed
+order before the app unlocks the existing Premium features. Reopening the app
+or choosing **Restore purchases** checks ownership with the same Play
+account. Android keeps the resulting entitlement in memory for the session.
+
+Internal Android builds can exchange a tester code for a signed pass at
+`/api/android/tester`. The app keeps the pass locally and revalidates it with
+the Worker on start and resume. The Worker holds the tester code digest in its
+secret bindings.
 
 ## 17. Cloudflare Worker services
 
@@ -748,7 +774,7 @@ treated as private.
 `templates/welcome.html` and its embedded counterpart implement the current
 homepage:
 
-- Ritual navigation to How It Works, Premium, and Journal sections
+- Ritual navigation to homepage sections and the saved Journal
 - Guided and quick-upload calls to action
 - Image-led physical-card hero
 - Four-step reading journey

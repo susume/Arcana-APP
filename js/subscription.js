@@ -203,14 +203,14 @@ async function submitSettingsActivationKey(){
 
 function thoughtfulLoadingHtml(statusId){
   return `<div class="loading thoughtful-loading">
-    <p>Analyzing your reading...</p>
+    <p class="reading-loading-title">Preparing your reading…</p>
     <ul>
       <li>Examining card positions...</li>
       <li>Interpreting symbolism...</li>
       <li>Looking for recurring themes...</li>
       <li>Preparing guidance...</li>
     </ul>
-    <p id="${statusId}" style="font-size:11px;color:var(--muted);margin-top:4px"></p>
+    <p class="reading-loading-status" id="${statusId}" role="status"></p>
   </div>`;
 }
 

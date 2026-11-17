@@ -6543,6 +6543,28 @@ html[data-theme="atelier"] body .ritual-screen .orient.reversed { background: #e
     html[data-theme="atelier"] body #screen-reading #reading-content {
       margin-block: 16px 24px !important; overflow-wrap: anywhere;
     }
+    html[data-theme="atelier"] body #screen-reading .thoughtful-loading {
+      max-width: 440px !important; margin-inline: auto !important;
+      padding: 16px 0 !important; text-align: left;
+    }
+    html[data-theme="atelier"] body #screen-reading .thoughtful-loading p {
+      color: var(--ink) !important; opacity: 1; animation: none !important;
+    }
+    html[data-theme="atelier"] body #screen-reading .reading-loading-title {
+      font: 700 19px/1.4 var(--font-body) !important;
+    }
+    html[data-theme="atelier"] body #screen-reading .thoughtful-loading ul {
+      margin: 12px 0 !important; gap: 6px;
+    }
+    html[data-theme="atelier"] body #screen-reading .thoughtful-loading li {
+      background: #edf0e3 !important; border: 1px solid var(--line) !important;
+      color: var(--ink) !important; box-shadow: none !important; backdrop-filter: none;
+      font: 500 16px/1.45 var(--font-body) !important;
+      padding: 10px 12px !important; animation: none !important;
+    }
+    html[data-theme="atelier"] body #screen-reading .reading-loading-status {
+      font: 500 14px/1.5 var(--font-body) !important;
+    }
     html[data-theme="atelier"] body #screen-reading .reading-section {
       padding: 16px 0 !important; margin: 0 !important;
     }

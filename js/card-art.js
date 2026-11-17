@@ -3,6 +3,7 @@
 // https://commons.wikimedia.org/wiki/File:English_pattern_playing_cards_deck.svg
 const CARD_ART_BASE_URL = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 const CARD_ART_UPLOAD_BASE_URL = 'https://upload.wikimedia.org/wikipedia/commons/';
+const CARD_ART_THUMB_BASE_URL = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
 
 const CARD_ART_MAJOR_FILES = {
   0: 'RWS Tarot 00 Fool.jpg',
@@ -200,15 +201,21 @@ function md5(value) {
   return md51(String(value)).map(rhex).join('');
 }
 
-function getCardArtUrl(card, width = 180) {
+function getCardArtUrl(card, width = 180, { forCanvas = false } = {}) {
   const fileName = getCardArtFile(card);
   if (!fileName) return '';
   const normalized = fileName.replace(/\s+/g, '_');
-  const requestedWidth = Math.max(64, Math.min(1200, Math.round(Number(width) || 180)));
-  const hash = md5(normalized);
   const encoded = encodeURIComponent(normalized);
-  if (requestedWidth < 600) return `${CARD_ART_BASE_URL}${encoded}?width=${requestedWidth}`;
-  return `${CARD_ART_UPLOAD_BASE_URL}${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
+  const requestedWidth = Math.max(64, Math.min(1200, Math.round(Number(width) || 180)));
+  if (!forCanvas && requestedWidth < 600) return `${CARD_ART_BASE_URL}${encoded}?width=${requestedWidth}`;
+  const hash = md5(normalized);
+  const uploadPath = `${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
+  if (forCanvas) {
+    // The public thumbnails allow canvas access. The Commons redirects do not.
+    const extension = fileName.endsWith('.svg') ? '.png' : '';
+    return `${CARD_ART_THUMB_BASE_URL}${uploadPath}/250px-${encoded}${extension}`;
+  }
+  return `${CARD_ART_UPLOAD_BASE_URL}${uploadPath}`;
 }
 
 function renderCardFallback(card) {

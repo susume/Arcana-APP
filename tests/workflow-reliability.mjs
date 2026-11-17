@@ -213,3 +213,21 @@ printed=null;
 run('state.readingInProgress=true;printReading()');
 assert.equal(printed,null,'An in-progress reading must not print stale results');
 console.log('print document and Android handoff regressions passed');
+
+// A native save error must keep the preview and report the error once.
+const exportStatus={textContent:''};
+const png={type:'image/png'};
+const canvas={toBlob(callback){callback(png);}};
+let saveAttempts=0;
+let redraws=0;
+context.drawReadingInfographic=async()=>{redraws++;};
+context.arcanaAndroid.saveFile=async blob=>{
+  assert.equal(blob,png);
+  saveAttempts++;
+  throw new Error('Choose another folder.');
+};
+await context.downloadReadingInfographic(canvas,{spreadName:'One Card',generatedDate:'2026-11-17'},exportStatus);
+assert.equal(saveAttempts,1);
+assert.equal(redraws,0);
+assert.equal(exportStatus.textContent,'Download failed: Choose another folder.');
+console.log('infographic save failure regression passed');

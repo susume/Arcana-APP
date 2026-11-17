@@ -579,7 +579,7 @@ function getSharePayload(){
         positionName:position?position.name:'',
         name:entry.name,
         orientation:entry.orientation||'upright',
-        artUrl:card&&typeof getCardArtUrl==='function'?getCardArtUrl(card,320):'',
+        artUrl:typeof getCardArtUrl==='function'?getCardArtUrl(card,250,{forCanvas:true}):'',
         system:card&&card.system?card.system:'',
         suit:card&&card.suit?card.suit:'',
         arcana:card&&card.arcana?card.arcana:'',

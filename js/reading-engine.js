@@ -642,7 +642,7 @@ function buildInfographicModel(readingPackage){
       orientation:item.orientation,
       headline:cleanInfographicHeadline(item.headline,item.positionName,item.cardName),
       message:item.interpretation,
-      artUrl:resolveInfographicCardArtUrl(item.cardName,item.orientation)
+      artUrl:resolveInfographicCardArtUrl(item.cardName)
     })),
     advice:readingPackage.guidance.slice(0,4),
     closingMessage:readingPackage.closingMessage,
@@ -652,33 +652,10 @@ function buildInfographicModel(readingPackage){
   };
 }
 
-function resolveInfographicCardArtUrl(cardName,orientation){
-  const card=currentCards.find(c=>c.name.toLowerCase()===String(cardName).toLowerCase());
-  if(card){
-    const direct=card.imageUrl||card.imageURL||card.artUrl||card.artURL||card.image||card.src;
-    if(typeof direct==='string'&&direct.trim())return direct.trim();
-  }
-
-  const helperNames=[
-    'getCardArtUrl',
-    'getCardImageUrl',
-    'getCardArtworkUrl',
-    'cardArtUrlFor',
-    'buildCardArtUrl'
-  ];
-  const runtime=typeof window!=='undefined'?window:globalThis;
-  for(const name of helperNames){
-    const helper=runtime[name];
-    if(typeof helper!=='function')continue;
-    try{
-      const value=helper(card||cardName,orientation,state.cardSystem);
-      if(typeof value==='string'&&value.trim())return value.trim();
-      if(value&&typeof value.src==='string')return value.src;
-    }catch(_e){
-      // The installed helper may use a different signature; try the next one.
-    }
-  }
-  return '';
+function resolveInfographicCardArtUrl(cardName){
+  const name=String(cardName).toLowerCase();
+  const card=currentCards.find(item=>item.name.toLowerCase()===name);
+  return typeof getCardArtUrl==='function'?getCardArtUrl(card,250,{forCanvas:true}):'';
 }
 
 function renderReading(text){
@@ -1269,6 +1246,7 @@ function loadCanvasImage(src){
   return new Promise((resolve,reject)=>{
     const image=new Image();
     if(!String(src).startsWith('data:')&&!String(src).startsWith('blob:'))image.crossOrigin='anonymous';
+    image.referrerPolicy='no-referrer';
     image.onload=()=>resolve(image);
     image.onerror=()=>reject(new Error('Card artwork could not be loaded.'));
     image.src=src;
@@ -1426,7 +1404,8 @@ async function downloadReadingInfographic(canvas,model,statusElement){
   if(statusElement)statusElement.textContent='Preparing PNG…';
   try{
     let blob=await canvasToPngBlob(canvas);
-    if(!blob){
+    const useFallback=!blob;
+    if(useFallback){
       await drawReadingInfographic(canvas,model,{skipImages:true});
       blob=await canvasToPngBlob(canvas);
     }
@@ -1447,30 +1426,9 @@ async function downloadReadingInfographic(canvas,model,statusElement){
     link.click();
     link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
-    if(statusElement)statusElement.textContent='PNG downloaded.';
+    if(statusElement)statusElement.textContent=useFallback?'PNG downloaded with the built-in card design.':'PNG downloaded.';
   }catch(error){
-    // Cross-origin artwork can taint a canvas on some hosts. Redraw with the built-in card backs and retry once.
-    try{
-      await drawReadingInfographic(canvas,model,{skipImages:true});
-      const safeBlob=await canvasToPngBlob(canvas);
-      if(!safeBlob)throw error;
-      if(globalThis.arcanaAndroid?.saveFile){
-        const saved=await arcanaAndroid.saveFile(safeBlob,`arcana-reading-${model.generatedDate}.png`);
-        if(statusElement)statusElement.textContent=saved?'PNG saved.':'Save canceled.';
-        return;
-      }
-      const url=URL.createObjectURL(safeBlob);
-      const link=document.createElement('a');
-      link.href=url;
-      link.download=`arcana-reading-${model.generatedDate}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
-      if(statusElement)statusElement.textContent='PNG downloaded with the built-in card design.';
-    }catch(finalError){
-      if(statusElement)statusElement.textContent=`Download failed: ${finalError.message}`;
-    }
+    if(statusElement)statusElement.textContent=`Download failed: ${error.message}`;
   }
 }
 

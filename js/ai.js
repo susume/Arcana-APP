@@ -19,7 +19,7 @@ async function fetchAIWithTimeout(resource,init,timeoutMs=AI_REQUEST_TIMEOUT_MS)
 }
 
 function hasAIConfiguration(){
-  return !!(getSavedGeminiKey() || getGoogleApiKey() || getAIProxyUrl());
+  return !!(getDirectGeminiKey() || getAIProxyUrl());
 }
 
 function requireAIConfiguration(){
@@ -28,13 +28,18 @@ function requireAIConfiguration(){
 }
 
 function requireGoogleApiKey(){
-  const key=getSavedGeminiKey() || getGoogleApiKey();
+  const key=getDirectGeminiKey();
   if(!key)throw new Error('Open Settings and add your Gemini API key.');
   return key;
 }
 
 function getSavedGeminiKey(){
   return loadSettings().geminiKey || '';
+}
+
+function getDirectGeminiKey(key){
+  if(globalThis.document?.documentElement?.hasAttribute?.('data-google-play-release'))return '';
+  return key || getSavedGeminiKey() || getGoogleApiKey();
 }
 
 async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
@@ -45,7 +50,7 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
     parts.push({inline_data:{mime_type:mime,data:base64}});
   }
   const body=JSON.stringify({contents:[{parts}]});
-  apiKey=apiKey || getSavedGeminiKey() || getGoogleApiKey();
+  apiKey=getDirectGeminiKey(apiKey);
 
   if(apiKey){
     const directHeaders={'Content-Type':'application/json','x-goog-api-key':apiKey};

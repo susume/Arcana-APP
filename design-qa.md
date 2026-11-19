@@ -343,3 +343,26 @@ final result: passed within the documented verification scope
   setting. The actual file chooser was reached, but Chrome blocked `setFiles`;
   the previous live artwork is still in place. Details:
   [`docs/qa/2026-11-04/gumroad-artwork.md`](docs/qa/2026-11-04/gumroad-artwork.md).
+
+## Mobile reading workspace and print template — 2026-11-17
+
+1. Quick setup. Layout precedes the deck and photo, and the optional question
+   and life stage share one disclosure. The actions stay in the page flow.
+   Premium labels sit beside the card counts. At 320px and 390px there was
+   no horizontal overflow; the desktop setup uses two columns.
+2. Card entry and review. A bundled test photo produced a preview and enabled
+   Identify cards. Manual entry retained a playing-card deck and the reversed
+   Ace of Hearts reached the Classic reading. The advanced-spread upgrade
+   dialog still opened, and Escape returned focus to the opening option.
+3. Reading and journal. The 390px Premium test fixture showed the reflection
+   label at 16px with no clipping. A sample reflection saved with its reading.
+   Free results put Save reading ahead of the journal upgrade offer.
+4. Exports. The share dialog opened and returned focus on Escape. The
+   infographic stayed collapsed until requested, then downloaded successfully.
+   The print template rendered one Classic card on one A4 page and all 21
+   Romany positions on four Letter pages. It includes the reading text and
+   optional question but omits the reflection draft and app controls.
+
+Verification used local browser data and fictional readings. No photo or
+reading was sent to Gemini during browser QA. Android print handoff is covered
+by the workflow regression; the handset print dialog was not exercised.

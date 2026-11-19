@@ -36,6 +36,7 @@ function findMedia(text) {
 
 function androidHtml(source) {
   const html = source
+    .replace(/<!-- play:direct-gemini -->([\s\S]*?)<!-- \/play:direct-gemini -->/g, (_section, content) => testerBuild ? content : '')
     .replace(/<!-- play:([\w-]+) -->[\s\S]*?<!-- \/play:\1 -->/g, (_section, name) => {
       if (!(name in replacements)) throw new Error(`Unknown Android content block ${name}.`);
       usedReplacements.add(name);
@@ -60,8 +61,12 @@ async function stageFile(relative) {
   let content = await readFile(source, 'utf8');
   if (relative.endsWith('.html')) {
     content = androidHtml(content);
-    if (testerBuild && relative === 'index.html') {
-      content = content.replace('<html ', '<html data-tester-access ');
+    if (relative === 'index.html') {
+      const mode = testerBuild ? 'data-tester-access' : 'data-google-play-release';
+      content = content.replace('<html ', `<html ${mode} `);
+    }
+    if (!testerBuild) {
+      content = content.replace(/<option>(?:Child|Teen)<\/option>/g, '');
     }
     if (/gumroad|\$10\b|\$20\b|<!-- \/?play:/i.test(content)) {
       throw new Error(`Web checkout copy remains in the Android version of ${relative}.`);

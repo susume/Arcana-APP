@@ -1,4 +1,4 @@
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
 const RETRYABLE_GEMINI_STATUSES = [429, 500, 502, 503, 504];
 const MAX_MODEL_ATTEMPTS = 2;
 const MAX_AI_BODY_BYTES = 5_500_000;
@@ -20,6 +20,8 @@ const ARCANA_GUMROAD_SELLER_ID = 'dNW90VHgyFlXSIHD7Xr6Sw==';
 // Approved founder entitlement; only the digest belongs in server code.
 const ARCANA_FOUNDER_LICENSE_HASH = '64fe0c8a6456a665f33b31bb1df11a29b244a4c3d9dc4875590fa1dcb90c81ee';
 const DEFAULT_ALLOWED_ORIGINS = ['https://www.arcanaguide.com', 'https://arcanaguide.com'];
+const ANDROID_TEST_ACCESS = { label: 'tester', prefix: 'ARCANA-TEST-', secret: 'ARCANA_ANDROID_TESTER_CODE_HASH', source: 'android-tester', passField: 'testerPass' };
+const ANDROID_REVIEW_ACCESS = { label: 'review', prefix: 'ARCANA-REVIEW-', secret: 'ARCANA_ANDROID_REVIEW_CODE_HASH', source: 'android-review', passField: 'reviewPass' };
 const localRateBuckets = new Map();
 let playAuthorization;
 
@@ -281,36 +283,37 @@ async function handlePlay(request, env, origin, verify) {
   }
 }
 
-async function handleAndroidTester(request, env, origin) {
+async function handleAndroidAccess(request, env, origin, access) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
   const body = await parseBody(request, 2_048).catch(() => null);
   const code = typeof body?.code === 'string' ? normalizeLicenseKey(body.code) : '';
-  const testerPass = typeof body?.testerPass === 'string' ? body.testerPass : '';
-  if ((!code && !testerPass) || (code && testerPass) || code.length > 128 || testerPass.length > 512) {
-    return json({ error: 'Enter a valid tester code.' }, 400, origin);
+  const pass = typeof body?.[access.passField] === 'string' ? body[access.passField] : '';
+  if ((!code && !pass) || (code && pass) || code.length > 128 || pass.length > 512) {
+    return json({ error: `Enter a valid ${access.label} code.` }, 400, origin);
   }
-  const action = code ? 'android-tester-code' : 'android-tester-restore';
+  const action = `${access.source}-${code ? 'code' : 'restore'}`;
   if (await isRateLimited(request, env, action, code ? 15 : 60, 60_000)) {
-    return json({ error: 'Too many tester access attempts. Try again shortly.' }, 429, origin);
+    return json({ error: `Too many ${access.label} access attempts. Try again shortly.` }, 429, origin);
   }
-  const codeHash = String(env.ARCANA_ANDROID_TESTER_CODE_HASH || '').trim().toLowerCase();
+  const unavailable = `Android ${access.label} access is unavailable.`;
+  const codeHash = String(env[access.secret] || '').trim().toLowerCase();
   if (!/^[a-f0-9]{64}$/.test(codeHash)) {
-    return json({ error: 'Android tester access is unavailable.' }, testerPass ? 410 : 503, origin);
+    return json({ error: unavailable }, pass ? 410 : 503, origin);
   }
   if (!env.ARCANA_ENTITLEMENT_SECRET) {
-    return json({ error: 'Android tester access is unavailable.' }, 503, origin);
+    return json({ error: unavailable }, 503, origin);
   }
-  if (code && (!code.startsWith('ARCANA-TEST-') || !constantTimeEqual(await licenseHash(code), codeHash))) {
-    return json({ error: 'That tester code was not recognized.' }, 403, origin);
+  if (code && (!code.startsWith(access.prefix) || !constantTimeEqual(await licenseHash(code), codeHash))) {
+    return json({ error: `That ${access.label} code was not recognized.` }, 403, origin);
   }
 
-  // Derive a separate signing secret so rotating the tester code revokes saved passes.
-  const signingSecret = JSON.stringify(['android-tester', env.ARCANA_ENTITLEMENT_SECRET, codeHash]);
-  const issuedPass = await signEntitlement({ source: 'android-tester', packageName: PLAY_PACKAGE }, signingSecret);
-  if (testerPass && !constantTimeEqual(testerPass, issuedPass)) {
-    return json({ error: 'This tester pass is no longer valid.' }, 403, origin);
+  // Each access type has its own signing scope, and rotating its code revokes its passes.
+  const signingSecret = JSON.stringify([access.source, env.ARCANA_ENTITLEMENT_SECRET, codeHash]);
+  const issuedPass = await signEntitlement({ source: access.source, packageName: PLAY_PACKAGE }, signingSecret);
+  if (pass && !constantTimeEqual(pass, issuedPass)) {
+    return json({ error: `This ${access.label} pass is no longer valid.` }, 403, origin);
   }
-  return json({ active: true, testerPass: issuedPass }, 200, origin);
+  return json({ active: true, [access.passField]: issuedPass }, 200, origin);
 }
 
 async function handleReadingReport(request, env, origin) {
@@ -553,7 +556,8 @@ export default {
     if (url.pathname === '/api/gumroad/webhook') return handleGumroadWebhook(request, env, origin);
     if (url.pathname === '/api/play/status') return handlePlay(request, env, origin, false);
     if (url.pathname === '/api/play/verify') return handlePlay(request, env, origin, true);
-    if (url.pathname === '/api/android/tester') return handleAndroidTester(request, env, origin);
+    if (url.pathname === '/api/android/tester') return handleAndroidAccess(request, env, origin, ANDROID_TEST_ACCESS);
+    if (url.pathname === '/api/android/review') return handleAndroidAccess(request, env, origin, ANDROID_REVIEW_ACCESS);
     if (url.pathname === '/api/reading-report') return handleReadingReport(request, env, origin);
     if (url.pathname === '/' || url.pathname === '/api/ai') return handleAiProxy(request, env, origin);
     return json({ error: 'Not found.' }, 404, origin);

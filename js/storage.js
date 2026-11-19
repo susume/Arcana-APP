@@ -1,7 +1,7 @@
 // ===== AUTO-SAVE =====
 const AUTOSAVE_TTL_MS=60*60*1000;
 const AUTOSAVE_VERSION=2;
-const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal','arcana_settings','arcana_usage','arcana_subscription','arcana_temp_cache','arcana_android_tester_pass'];
+const ARCANA_STORAGE_KEYS=['arcana_autosave','arcana_readings','arcana-journal','arcana_settings','arcana_usage','arcana_subscription','arcana_temp_cache','arcana_android_tester_pass','arcana_android_review_pass'];
 const FREE_READING_ARCHIVE_LIMIT=3;
 const PREMIUM_READING_ARCHIVE_LIMIT=50;
 const JOURNAL_ARCHIVE_LIMIT=50;

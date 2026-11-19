@@ -118,6 +118,24 @@ try {
   assert.equal((await tester(pass, env)).code, 410);
   assert.equal((await call('/api/activate', { licenseKey: testerCode }, testerEnv)).code, 403);
 
+  const reviewCode = 'ARCANA-REVIEW-ABCDEF01-23456789-ABCDEF01-23456789';
+  const reviewHash = createHash('sha256').update(reviewCode).digest('hex');
+  const reviewEnv = { ...testerEnv, ARCANA_ANDROID_REVIEW_CODE_HASH: reviewHash };
+  const review = (body, bindings = reviewEnv) => call('/api/android/review', body, bindings);
+  assert.equal((await review({ code: reviewCode }, testerEnv)).code, 503);
+  assert.equal((await review({ code: testerCode })).code, 403);
+  assert.equal((await tester({ code: reviewCode }, reviewEnv)).code, 403);
+  const reviewAccess = await review({ code: reviewCode.toLowerCase() });
+  assert.equal(reviewAccess.code, 200);
+  const reviewPass = reviewAccess.body.reviewPass;
+  assert.match(reviewPass, /^v1\./);
+  assert.equal(JSON.parse(Buffer.from(reviewPass.split('.')[1], 'base64url')).source, 'android-review');
+  assert.deepEqual(await review({ reviewPass }), reviewAccess);
+  assert.equal((await tester({ testerPass: reviewPass }, reviewEnv)).code, 403);
+  assert.equal((await review({ reviewPass: pass.testerPass })).code, 403);
+  assert.equal((await review({ reviewPass }, { ...reviewEnv, ARCANA_ANDROID_REVIEW_CODE_HASH: 'f'.repeat(64) })).code, 403);
+  assert.doesNotMatch(JSON.stringify(reviewAccess.body), new RegExp(reviewHash + '|' + reviewCode));
+
   assert.equal((await call('/api/reading-report', { reason: 'unsupported', reading: 'Text' })).code, 400);
   assert.equal((await call('/api/reading-report', { reason: 'unsafe', reading: 'Text', journal: 'private' })).code, 201);
   assert.equal(reports.length, 1);

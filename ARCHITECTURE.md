@@ -662,7 +662,7 @@ stored in settings, and reading markdown is reduced to narration-friendly text.
 
 ## 16. Premium and monetization
 
-Arcana Premium is a one-time **pay-what-you-want lifetime unlock**, with a
+On the web, Arcana Premium is a one-time **pay-what-you-want lifetime unlock**, with a
 **$10 minimum** and **$20 suggested contribution**. Every contribution amount
 unlocks the same Premium features. Pricing is configured on Gumroad; the app
 displays the offer on the homepage, in Settings, and in the upgrade modal.
@@ -687,22 +687,31 @@ After successful verification, the browser stores premium state in
 `arcana_subscription`. This local state controls the UI, but its source of truth
 at activation time is the Worker/Gumroad response.
 
-Android sells one non-consumable item, `arcana_premium_lifetime`. The native
-Play Billing bridge supplies the localized price and retrieves Google Play
-ownership. The Worker verifies the purchase and acknowledges a completed
-order before the app unlocks the existing Premium features. Reopening the app
-or choosing **Restore purchases** checks ownership with the same Play
-account. Android keeps the resulting entitlement in memory for the session.
+The Android app (`com.arcanaguide.app`) uses Google Play Billing for the
+non-consumable `arcana_premium_lifetime` product. `PlayBillingPlugin.java`
+retrieves the localized Play price and ownership. `android/web/android.js`
+enables checkout when Play returns an offer and the Worker's status endpoint
+confirms it can authenticate with Google. The Worker verifies ownership and
+acknowledges a completed order before the app unlocks Premium. The app checks
+ownership again on launch, resume, and **Restore purchases**. It keeps the
+signed purchase entitlement in memory. See the
+[Google Play release handoff](docs/google-play-handoff.md) for the current
+rollout and verification status.
 
 Internal Android builds can exchange a tester code for a signed pass at
 `/api/android/tester`. The app keeps the pass locally and revalidates it with
 the Worker on start and resume. The Worker holds the tester code digest in its
 secret bindings.
 
+Public Android builds use `/api/android/review` and a separate review code
+digest for Google Play reviewer access. The app revalidates reviewer passes
+with the Worker. Public builds route AI through Arcana's hosted Gemini project.
+See [Google Play disclosures](docs/google-play-disclosures.md) for data flows.
+
 ## 17. Cloudflare Worker services
 
 `server/cloudflare-worker.js` handles exact-origin CORS, request parsing, JSON
-responses, rate limits, upstream timeouts, and three service paths.
+responses, rate limits, and upstream timeouts for the routes below.
 
 ### `POST /api/activate`
 
@@ -723,13 +732,23 @@ responses, rate limits, upstream timeouts, and three service paths.
 - Stores only minimal hashed sale/refund metadata in `ARCANA_LICENSES`
 - Does not store browser reading or journal data
 
+### Android routes
+
+| Route | Behavior |
+|---|---|
+| `POST /api/play/status` | Obtains or reuses a Google OAuth access token and returns readiness. Purchase lookup and acknowledgement happen on `/api/play/verify`. |
+| `POST /api/play/verify` | Checks the submitted token with the Google Play Developer API for the Arcana package and product. Acknowledges completed purchases before returning a signed Premium entitlement. Pending and inactive purchases receive no entitlement. The Worker uses the raw purchase token for the API calls and keeps only its hash in the signed entitlement. |
+| `POST /api/android/tester` and `POST /api/android/review` | Check the code against the corresponding Worker secret, issue a signed access pass, and revalidate saved passes. Updating the relevant digest revokes its earlier passes. |
+| `POST /api/reading-report` | Stores the reading text, reason, and report time in `ARCANA_REPORTS` for 90 days after an explicit submission. |
+
 ### AI proxy route
 
 Other accepted POST traffic is handled by the Gemini proxy path. It requires the
 Worker secret `GOOGLE_API_KEY`, validates prompt and image size/type, applies
 route rate limits and upstream timeouts, forwards a Gemini request, and applies
-model fallback/retry behavior. Browser and Worker model order is centralized on
-`gemini-3.6-flash`, `gemini-3.1-flash-lite`, and `gemini-2.5-flash`.
+model fallback/retry behavior. The browser and Worker prefer
+`gemini-3.6-flash`. The Worker also tries `gemini-3.5-flash` before falling back
+to `gemini-3.1-flash-lite` and `gemini-2.5-flash`.
 
 Expected Worker configuration:
 
@@ -740,6 +759,10 @@ Expected Worker configuration:
 | `GUMROAD_SELLER_ID` | optional seller override |
 | `GUMROAD_WEBHOOK_SECRET` | required shared webhook verification secret |
 | `ARCANA_ENTITLEMENT_SECRET` | required HMAC secret used for entitlement tokens |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Cloudflare secret containing the dedicated Play service account JSON for purchase lookup and acknowledgement |
+| `ARCANA_ANDROID_TESTER_CODE_HASH` | secret digest for internal tester access |
+| `ARCANA_ANDROID_REVIEW_CODE_HASH` | secret digest for Play reviewer access |
+| `ARCANA_REPORTS` | KV namespace for user-submitted Android AI reading reports |
 | `ARCANA_ALLOWED_ORIGINS` | optional comma-separated exact browser origins |
 | `ARCANA_RATE_LIMITER` | recommended Cloudflare rate-limiting binding |
 | `ARCANA_LICENSES` | required for webhook idempotency and license status records |

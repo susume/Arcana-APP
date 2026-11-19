@@ -4,10 +4,14 @@ globalThis.arcanaAndroid = (() => {
   const device = plugins?.ArcanaDevice;
   const app = plugins?.App;
   const testerBuild = document.documentElement.hasAttribute('data-tester-access');
-  const testerPassKey = 'arcana_android_tester_pass';
-  let testerActive = false;
-  let testerBusy = false;
-  let testerNotice = '';
+  const accessKind = testerBuild ? 'tester' : 'review';
+  const accessTitle = testerBuild ? 'Tester access' : 'Google Play review access';
+  const accessCodeLabel = testerBuild ? 'Tester code' : 'Review code';
+  const passField = `${accessKind}Pass`;
+  const accessPassKey = `arcana_android_${accessKind}_pass`;
+  let accessActive = false;
+  let accessBusy = false;
+  let accessNotice = '';
   let entitlement = '';
   let ownedToken = '';
   let price = '';
@@ -41,7 +45,7 @@ globalThis.arcanaAndroid = (() => {
   }
 
   function renderPurchaseControls() {
-    const label = entitlement ? 'Premium active through Google Play.' : testerActive ? '' : notice;
+    const label = entitlement ? 'Premium active through Google Play.' : accessActive ? '' : notice;
     document.querySelectorAll('[data-play-purchase]').forEach(surface => {
       if (!surface.hasChildNodes()) {
         surface.innerHTML = `
@@ -50,122 +54,118 @@ globalThis.arcanaAndroid = (() => {
             <button type="button" class="btn btn-sm" data-play-restore onclick="arcanaAndroid.restore()">Restore purchases</button>
           </div>
           <p class="settings-note" role="status" data-play-notice></p>`;
-        if (testerBuild) {
-          surface.insertAdjacentHTML('beforeend', `
-            <details class="flow-details activation-box" data-tester-access-panel>
-              <summary>Tester access</summary>
-              <form data-tester-activate>
-                <label>Tester code
-                  <input type="text" name="code" required maxlength="128" autocomplete="off" autocapitalize="characters" spellcheck="false">
-                </label>
-                <button type="submit" class="btn btn-primary btn-sm">Activate Premium</button>
-              </form>
-              <p class="activation-status" data-tester-status role="status"></p>
-              <button type="button" class="btn btn-sm" data-tester-end hidden>End tester access</button>
-            </details>`);
-          surface.querySelector('[data-tester-activate]').addEventListener('submit', activateTester);
-          surface.querySelector('[data-tester-end]').addEventListener('click', endTesterAccess);
-        }
+        surface.insertAdjacentHTML('beforeend', `
+          <details class="flow-details activation-box" data-${accessKind}-access-panel>
+            <summary>${accessTitle}</summary>
+            <form data-${accessKind}-activate>
+              <label>${accessCodeLabel}
+                <input type="${testerBuild ? 'text' : 'password'}" name="code" required maxlength="128" autocomplete="off" autocapitalize="characters" spellcheck="false">
+              </label>
+              <button type="submit" class="btn btn-primary btn-sm">Activate Premium</button>
+            </form>
+            <p class="activation-status" data-${accessKind}-status role="status"></p>
+            <button type="button" class="btn btn-sm" data-${accessKind}-end hidden>End ${accessKind} access</button>
+          </details>`);
+        surface.querySelector(`[data-${accessKind}-activate]`).addEventListener('submit', activateAccess);
+        surface.querySelector(`[data-${accessKind}-end]`).addEventListener('click', endAccess);
       }
       const purchase = surface.querySelector('[data-play-buy]');
-      purchase.hidden = !!entitlement || testerActive || pending;
+      purchase.hidden = !!entitlement || accessActive || pending;
       purchase.disabled = !checkoutReady || !!refreshTask || paymentOpen;
       purchase.textContent = price ? 'Unlock Premium · ' + price : 'Unlock Premium';
       surface.querySelector('[data-play-restore]').disabled = !billing || !!refreshTask || paymentOpen;
       surface.querySelector('[data-play-notice]').textContent = label;
-      if (testerBuild) {
-        const form = surface.querySelector('[data-tester-activate]');
-        form.hidden = testerActive;
-        form.querySelector('button').disabled = testerBusy;
-        const end = surface.querySelector('[data-tester-end]');
-        end.hidden = !testerActive;
-        end.disabled = testerBusy;
-        surface.querySelector('[data-tester-status]').textContent = testerNotice;
-      }
+      const form = surface.querySelector(`[data-${accessKind}-activate]`);
+      form.hidden = accessActive;
+      form.querySelector('button').disabled = accessBusy;
+      const end = surface.querySelector(`[data-${accessKind}-end]`);
+      end.hidden = !accessActive;
+      end.disabled = accessBusy;
+      surface.querySelector(`[data-${accessKind}-status]`).textContent = accessNotice;
     });
   }
 
-  function setTesterAccess(active) {
-    const wasPremium = !!entitlement || testerActive;
-    testerActive = active;
-    if (wasPremium !== (!!entitlement || testerActive)
+  function setAccess(active) {
+    const wasPremium = !!entitlement || accessActive;
+    accessActive = active;
+    if (wasPremium !== (!!entitlement || accessActive)
         && document.getElementById('screen-history')?.classList.contains('active')) {
       renderHistory();
     }
   }
 
-  async function verifyTesterAccess(credentials) {
-    if (testerBusy) return false;
-    testerBusy = true;
-    testerNotice = 'Verifying tester access…';
+  async function verifyAccess(credentials) {
+    if (accessBusy) return false;
+    accessBusy = true;
+    accessNotice = `Verifying ${accessKind} access…`;
     renderPurchaseControls();
     try {
-      const result = await workerRequest('/api/android/tester', credentials);
-      if (result.active !== true || typeof result.testerPass !== 'string' || !result.testerPass) {
-        throw new Error('Invalid tester response.');
+      const result = await workerRequest(`/api/android/${accessKind}`, credentials);
+      const pass = result[passField];
+      if (result.active !== true || typeof pass !== 'string' || !pass) {
+        throw new Error('Invalid access response.');
       }
-      setTesterAccess(true);
-      testerNotice = 'Premium activated for testing.';
+      setAccess(true);
+      accessNotice = testerBuild ? 'Premium activated for testing.' : 'Premium activated for Google Play review.';
       if (credentials.code) {
         try {
-          localStorage.setItem(testerPassKey, result.testerPass);
+          localStorage.setItem(accessPassKey, pass);
         } catch {
-          testerNotice = 'Premium activated for this session. This device could not save your tester pass.';
+          accessNotice = `Premium activated for this session. This device could not save your ${accessKind} pass.`;
         }
       }
       return true;
     } catch (error) {
       if (error.status === 403 || error.status === 410 || error.status === 400) {
-        if (credentials.testerPass) {
-          setTesterAccess(false);
-          try { localStorage.removeItem(testerPassKey); } catch {}
+        if (credentials[passField]) {
+          setAccess(false);
+          try { localStorage.removeItem(accessPassKey); } catch {}
         }
-        testerNotice = credentials.code
-          ? 'That tester code was not recognized.'
-          : 'Your tester pass has ended. Enter the current tester code.';
+        accessNotice = credentials.code
+          ? `That ${accessKind} code was not recognized.`
+          : `Your ${accessKind} pass has ended. Enter the current ${accessKind} code.`;
       } else if (error.status === 404 || error.status === 503) {
-        testerNotice = 'Tester access is unavailable. Check with the test organizer.';
+        accessNotice = testerBuild ? 'Tester access is unavailable. Check with the test organizer.' : 'Google Play review access is temporarily unavailable.';
       } else if (error.status === 429) {
-        testerNotice = 'Too many attempts. Try again shortly.';
+        accessNotice = 'Too many attempts. Try again shortly.';
       } else {
-        testerNotice = 'Could not verify tester access. Check your connection and try again.';
+        accessNotice = `Could not verify ${accessKind} access. Check your connection and try again.`;
       }
       return false;
     } finally {
-      testerBusy = false;
+      accessBusy = false;
       renderEntitlementsUI();
     }
   }
 
-  async function activateTester(event) {
+  async function activateAccess(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const input = form.elements.code;
-    if (await verifyTesterAccess({ code: input.value.trim() })) {
+    if (await verifyAccess({ code: input.value.trim() })) {
       form.reset();
-      form.closest('[data-tester-access-panel]')?.querySelector('[data-tester-end]').focus();
+      form.closest(`[data-${accessKind}-access-panel]`)?.querySelector(`[data-${accessKind}-end]`).focus();
     }
   }
 
-  function restoreTesterAccess() {
-    if (!testerBuild) return;
-    let testerPass;
-    try { testerPass = localStorage.getItem(testerPassKey); } catch {}
-    if (testerPass) void verifyTesterAccess({ testerPass });
+  function restoreAccess() {
+    let pass;
+    try { pass = localStorage.getItem(accessPassKey); } catch {}
+    if (pass) void verifyAccess({ [passField]: pass });
   }
 
-  function endTesterAccess(event) {
+  function endAccess(event) {
     try {
-      localStorage.removeItem(testerPassKey);
+      localStorage.removeItem(accessPassKey);
     } catch {
-      testerNotice = 'Could not clear the saved pass. Try again.';
+      accessNotice = 'Could not clear the saved pass. Try again.';
       renderPurchaseControls();
       return;
     }
-    setTesterAccess(false);
-    testerNotice = 'Tester access ended on this device.';
+    setAccess(false);
+    accessNotice = `${accessTitle} ended on this device.`;
     renderEntitlementsUI();
-    event.currentTarget.closest('[data-tester-access-panel]')?.querySelector('input').focus();
+    event.currentTarget.closest(`[data-${accessKind}-access-panel]`)?.querySelector('input').focus();
   }
 
   function upgradeMarkup(title) {
@@ -269,7 +269,7 @@ globalThis.arcanaAndroid = (() => {
   }
 
   async function buy() {
-    if (!checkoutReady || refreshTask || paymentOpen || pending || entitlement || testerActive) return;
+    if (!checkoutReady || refreshTask || paymentOpen || pending || entitlement || accessActive) return;
     paymentOpen = true;
     notice = 'Opening Google Play…';
     renderPurchaseControls();
@@ -312,7 +312,7 @@ globalThis.arcanaAndroid = (() => {
     billing?.addListener('purchaseResult', onPurchaseResult);
     app?.addListener('resume', () => {
       if (!paymentOpen) void refreshPurchases();
-      restoreTesterAccess();
+      restoreAccess();
     });
     if (new URLSearchParams(location.search).get('play') === 'ready') {
       const url = new URL(location.href);
@@ -322,8 +322,8 @@ globalThis.arcanaAndroid = (() => {
       document.getElementById('settings-premium-details').open = true;
     }
     void refreshPurchases();
-    restoreTesterAccess();
-    if (testerBuild) window.addEventListener('online', restoreTesterAccess);
+    restoreAccess();
+    window.addEventListener('online', restoreAccess);
   }
 
   if (document.body === null) {
@@ -429,7 +429,7 @@ globalThis.arcanaAndroid = (() => {
   }
 
   return {
-    isPremium: () => !!entitlement || testerActive, renderPurchaseControls, upgradeMarkup, start, buy, restore, renderReporting,
+    isPremium: () => !!entitlement || accessActive, renderPurchaseControls, upgradeMarkup, start, buy, restore, renderReporting,
     saveFile: device ? saveFile : null,
     print: device ? (html, title) => device.print({ html, title }) : null,
     printPage: device ? title => device.print({ title, currentPage: true }) : null,

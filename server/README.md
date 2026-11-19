@@ -78,3 +78,8 @@ the user leaves is processed when the app next checks Play ownership.
 digest disables the tester endpoint. Rotating the digest invalidates the old
 code and its passes. See [Android tester setup](../android/README.md) for the
 internal build and code-generation commands.
+
+The public Android app exchanges Google Play review codes at
+`POST /api/android/review`. Its digest is `ARCANA_ANDROID_REVIEW_CODE_HASH`, and
+the Worker signs review passes separately with `ARCANA_ENTITLEMENT_SECRET`.
+See [public review setup](../android/README.md#prepare-public-review-access-and-disclosures).

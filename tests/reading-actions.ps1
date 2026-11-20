@@ -66,7 +66,7 @@ Assert-Contains $readingEngine "id:'sequence',variant:'compact'" 'Expected a thr
 Assert-NotContains $readingEngine 'Reflection · ${card.action}' 'Expected repetitive per-card focus actions to be omitted from the infographic.'
 Assert-Contains $readingEngine 'const labelWidth=Math.min(labelMax' 'Expected position labels to use bounded pills sized for each template.'
 Assert-NotContains $readingEngine 'const badgeSize=58' 'Expected the clipped circular position badge to be removed.'
-Assert-Contains $readingEngine 'Do not invent, rename, omit, or change the orientation of any card.' 'Expected reading guidance to respect every recorded orientation.'
+Assert-Contains $readingEngine 'honor the confirmed name and orientation' 'Expected reading guidance to respect every recorded orientation.'
 Assert-NotContains $readingEngine 'retains its meaning regardless of orientation' 'Expected Celtic Cross guidance not to erase recorded orientation.'
 Assert-Contains $ui 'function replaceIdentifiedSpreadCards(spread,identified)' 'Expected a shared helper to replace only active spread identification state.'
 Assert-Contains $ui 'const allowedPositions=new Set(spread.positions.map(pos=>String(pos.id)))' 'Expected replacement to derive the current spread position allow-list.'

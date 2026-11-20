@@ -201,7 +201,21 @@ function md5(value) {
   return md51(String(value)).map(rhex).join('');
 }
 
+const BUNDLED_CANVAS_ART = {
+  'Two of Pentacles': 'assets/samples/celtic-cross/cards/TwP.webp',
+  'Two of Swords': 'assets/samples/celtic-cross/cards/TwS.webp',
+  'Six of Cups': 'assets/samples/celtic-cross/cards/SiC.webp',
+  'Eight of Pentacles': 'assets/samples/celtic-cross/cards/EiP.webp',
+  'The Star': 'assets/samples/celtic-cross/cards/Star.webp',
+  'Page of Wands': 'assets/samples/celtic-cross/cards/PaW.webp',
+  'The Hermit': 'assets/samples/celtic-cross/cards/Her.webp',
+  'Three of Pentacles': 'assets/samples/celtic-cross/cards/ThP.webp',
+  'Seven of Cups': 'assets/samples/celtic-cross/cards/SeC.webp',
+  'Temperance': 'assets/samples/celtic-cross/cards/Tem.webp'
+};
+
 function getCardArtUrl(card, width = 180, { forCanvas = false } = {}) {
+  if (forCanvas && card?.system === 'tarot' && Object.hasOwn(BUNDLED_CANVAS_ART, card.name)) return BUNDLED_CANVAS_ART[card.name];
   const fileName = getCardArtFile(card);
   if (!fileName) return '';
   const normalized = fileName.replace(/\s+/g, '_');

@@ -38,11 +38,34 @@ The server-side `ARCANA_FOUNDER_LICENSE_HASH` variable can override the approved
 digest for rotation. Setting it to an empty value disables founder activation.
 Never put an activation key or digest allow-list in browser JavaScript.
 
-For dashboard deployments, replace the existing Worker's code with
-`server/cloudflare-worker.js` and publish it to the configured Worker URL.
-Retain its existing secret and KV bindings. A local frontend rebuild does not
-publish the Worker; until it is updated, the live service continues using the
-old Gumroad-only activation path.
+## Hosted AI rollout
+
+The web client exchanges its signed Gumroad activation receipt for a 15-minute
+hosted AI session. Android receives the same session from Play purchase
+verification or the existing reviewer and tester verification flows. The new
+`POST /api/ai/v2` endpoint requires that session before it forwards any content.
+
+Deploy the shared Worker with the Durable Object binding and SQLite migration in
+`server/wrangler.jsonc`. Add the existing production KV and rate-limit bindings
+to the deployment configuration before using it to update the live Worker.
+Retain the deployed Worker secrets. The file in this repository defines only
+the new binding and serves as the local Worker configuration.
+
+| Variable | Purpose |
+| --- | --- |
+| `ARCANA_AI_MONTHLY_BUDGET_USD` | Monthly ceiling for estimated Gemini model charges in USD. Hosted AI stays unavailable until a positive ceiling is set. |
+| `ARCANA_AI_PLAN_START` | UTC instant at which the new 30-request allowance applies to Gumroad sales. |
+| `ARCANA_PLAY_AI_PLAN_START` | UTC instant at which the new 30-request allowance applies to completed Play purchases. |
+| `ARCANA_AI_LEGACY_UNTIL` | Optional UTC expiry for legacy app compatibility. The old endpoints require a signed session after this instant. |
+
+Configure each cutoff when its purchase offer changes. Purchases before the
+relevant cutoff retain their previous allowance. The allowance resets at the
+start of each UTC calendar month. The meter reserves one request and estimated
+spend before the Gemini call, rejects duplicate request IDs, and reconciles
+the spend when Gemini returns token counts. A request with an unknown outcome
+keeps its reservation. The application sends no poster artwork or poster
+rendering work to Gemini. Metrics record operation, model, token counts and
+finish reason without logging prompts, card photos, or purchase credentials.
 
 ## Google Play purchases and Android reading reports
 

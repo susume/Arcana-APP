@@ -1,9 +1,11 @@
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
-const RETRYABLE_GEMINI_STATUSES = [429, 500, 502, 503, 504];
-const MAX_MODEL_ATTEMPTS = 2;
 const MAX_AI_BODY_BYTES = 5_500_000;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const MAX_PROMPT_CHARS = 16_000;
+const HOSTED_AI_LIMIT = 30;
+const HOSTED_TOKEN_SECONDS = 15 * 60;
+const AI_OPERATIONS = new Set(['interpret', 'identify', 'compare']);
+const FLASH_LITE = 'gemini-3.1-flash-lite';
+const FLASH = 'gemini-3.6-flash';
 const MAX_ACTIVATE_BODY_BYTES = 32 * 1024;
 const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
 const AI_UPSTREAM_TIMEOUT_MS = 20_000;
@@ -37,7 +39,7 @@ function isAllowedOrigin(origin, env) {
 function corsHeaders(origin) {
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Arcana-Webhook-Secret',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Arcana-Webhook-Secret',
     'Access-Control-Max-Age': '600',
     'Vary': 'Origin'
   };
@@ -54,17 +56,6 @@ function json(data, status = 200, origin = null) {
       ...corsHeaders(origin)
     }
   });
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function retryDelayMs(status, attempt, responseText) {
-  const retryDelay = String(responseText || '').match(/retryDelay[^\d]*(\d+)s?/i);
-  if (retryDelay) return Math.min((Number(retryDelay[1]) + 1) * 1000, 4000);
-  if (status === 429) return 700 * (attempt + 1);
-  return 450 * (attempt + 1);
 }
 
 function bodyError(message) {
@@ -136,6 +127,59 @@ async function signEntitlement(payload, secret) {
   );
   const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(encodedPayload));
   return `v1.${encodedPayload}.${base64Url(new Uint8Array(signature))}`;
+}
+
+function decodeBase64Url(value) {
+  return Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), character => character.charCodeAt(0));
+}
+
+async function readSignedEntitlement(token, secret) {
+  if (!secret || typeof token !== 'string' || token.length > 2048) return null;
+  const match = /^v1\.([\w-]+)\.([\w-]+)$/.exec(token);
+  if (!match) return null;
+  const [, encoded, signature] = match;
+  try {
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+    const valid = await crypto.subtle.verify('HMAC', key, decodeBase64Url(signature), new TextEncoder().encode(encoded));
+    return valid ? JSON.parse(new TextDecoder().decode(decodeBase64Url(encoded))) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function hostedSession(env, subject, purchasedAt, unlimited = false) {
+  const start = Date.parse(subject.startsWith('play:') ? env.ARCANA_PLAY_AI_PLAN_START : env.ARCANA_AI_PLAN_START);
+  const purchased = Date.parse(purchasedAt);
+  const legacy = unlimited || !Number.isFinite(start) || (Number.isFinite(purchased) && purchased < start);
+  const expiresAt = Math.floor(Date.now() / 1000) + HOSTED_TOKEN_SECONDS;
+  const limit = legacy ? null : HOSTED_AI_LIMIT;
+  const aiToken = await signEntitlement({ scope: 'hosted-ai', sub: subject, exp: expiresAt, limit }, env.ARCANA_ENTITLEMENT_SECRET);
+  return { aiToken, aiTokenExpiresAt: expiresAt, aiMonthlyLimit: limit };
+}
+
+async function handleHostedSession(request, env, origin) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
+  if (await isRateLimited(request, env, 'ai-session', 30, 60_000)) return json({ error: 'Too many session requests.' }, 429, origin);
+  if (!env.ARCANA_LICENSES || !env.ARCANA_ENTITLEMENT_SECRET) return json({ error: 'Premium verification is unavailable.' }, 503, origin);
+  const body = await parseBody(request, 4096).catch(() => null);
+  const receipt = await readSignedEntitlement(body?.entitlementToken, env.ARCANA_ENTITLEMENT_SECRET);
+  const productId = String(env.GUMROAD_PRODUCT_ID || ARCANA_GUMROAD_PRODUCT_ID);
+  if (receipt?.tier !== 'premium' || receipt.productId !== productId || !/^[a-f0-9]{64}$/.test(receipt.licenseHash || '')) {
+    return json({ error: 'Activate Premium to use hosted AI.' }, 401, origin);
+  }
+  if (receipt.source === 'founder') {
+    const founderHash = String(env.ARCANA_FOUNDER_LICENSE_HASH ?? ARCANA_FOUNDER_LICENSE_HASH).trim().toLowerCase();
+    if (!constantTimeEqual(receipt.licenseHash, founderHash)) return json({ error: 'Premium activation is no longer valid.' }, 403, origin);
+    return json(await hostedSession(env, `founder:${receipt.licenseHash}`, null, true), 200, origin);
+  }
+  const license = await env.ARCANA_LICENSES.get(`license:${receipt.licenseHash}`, 'json');
+  if (!license) {
+    return json({ error: 'Re-enter your original activation key once in Settings → Premium Access.', code: 'reactivation_required' }, 409, origin);
+  }
+  if (license.active !== true || license.productId !== productId) {
+    return json({ error: 'This Premium license is no longer active.' }, 403, origin);
+  }
+  return json(await hostedSession(env, `gumroad:${receipt.licenseHash}`, license.purchasedAt || receipt.purchasedAt || receipt.issuedAt), 200, origin);
 }
 
 async function fetchWithTimeout(resource, init, timeoutMs) {
@@ -261,11 +305,12 @@ async function handlePlay(request, env, origin, verify) {
       return json({ status: 'inactive' }, 200, origin);
     }
 
+    const purchaseHash = await licenseHash(purchaseToken);
     const entitlementToken = await signEntitlement({
       source: 'google-play',
       tier: 'premium',
       productId: PLAY_PRODUCT,
-      purchaseHash: await licenseHash(purchaseToken),
+      purchaseHash,
       iat: Math.floor(Date.now() / 1000)
     }, env.ARCANA_ENTITLEMENT_SECRET);
     if (purchase.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING') {
@@ -277,7 +322,8 @@ async function handlePlay(request, env, origin, verify) {
     } else if (purchase.acknowledgementState !== 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED') {
       throw new Error('Unknown Google Play acknowledgement state.');
     }
-    return json({ status: 'active', entitlementToken }, 200, origin);
+    const ai = await hostedSession(env, `play:${purchaseHash}`, purchase.purchaseCompletionTime);
+    return json({ status: 'active', entitlementToken, ...ai }, 200, origin);
   } catch {
     return json({ error: 'Google Play purchase verification is unavailable. Please try again.' }, 503, origin);
   }
@@ -313,7 +359,8 @@ async function handleAndroidAccess(request, env, origin, access) {
   if (pass && !constantTimeEqual(pass, issuedPass)) {
     return json({ error: `This ${access.label} pass is no longer valid.` }, 403, origin);
   }
-  return json({ active: true, [access.passField]: issuedPass }, 200, origin);
+  const ai = await hostedSession(env, `${access.source}:${codeHash}`, null, true);
+  return json({ active: true, [access.passField]: issuedPass, ...ai }, 200, origin);
 }
 
 async function handleReadingReport(request, env, origin) {
@@ -409,9 +456,11 @@ async function handleActivate(request, env, origin) {
   }
 
   const activatedAt = new Date().toISOString();
+  const purchasedAt = String(purchase.sale_timestamp || purchase.created_at || '');
   const record = {
     source: 'gumroad',
     activatedAt,
+    purchasedAt,
     purchaseId: String(purchase.id || ''),
     productId: String(productId),
     licenseHash: licenseIdentifier,
@@ -423,9 +472,11 @@ async function handleActivate(request, env, origin) {
 
   const entitlementToken = await signEntitlement({
     tier: 'premium',
+    source: 'gumroad',
     productId: String(productId),
     purchaseId: String(purchase.id || ''),
     licenseHash: licenseIdentifier,
+    purchasedAt,
     issuedAt: activatedAt
   }, env.ARCANA_ENTITLEMENT_SECRET);
   return json({ isPremium: true, source: 'gumroad', activatedAt, entitlementToken }, 200, origin);
@@ -467,6 +518,8 @@ async function handleGumroadWebhook(request, env, origin) {
 
   const receivedAt = new Date().toISOString();
   const identifier = await licenseHash(licenseKey);
+  const licenseKeyId = `license:${identifier}`;
+  const priorLicense = await env.ARCANA_LICENSES.get(licenseKeyId, 'json');
   const eventRecord = {
     receivedAt,
     saleId,
@@ -476,22 +529,90 @@ async function handleGumroadWebhook(request, env, origin) {
     active,
     event: eventType
   };
-  await env.ARCANA_LICENSES.put(eventKey, JSON.stringify(eventRecord));
-  await env.ARCANA_LICENSES.put(`license:${identifier}`, JSON.stringify({
+  await env.ARCANA_LICENSES.put(licenseKeyId, JSON.stringify({
     source: 'gumroad-webhook',
     receivedAt,
     saleId,
     productId,
+    purchasedAt: String(payload.sale_timestamp || payload.created_at || priorLicense?.purchasedAt || ''),
     licenseHash: identifier,
-    active
+    active: active && priorLicense?.active !== false
   }));
+  await env.ARCANA_LICENSES.put(eventKey, JSON.stringify(eventRecord));
   return json({ ok: true }, 200, origin);
 }
 
-async function handleAiProxy(request, env, origin) {
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, origin);
-  if (await isRateLimited(request, env, 'ai', 20, 60 * 1000)) return json({ error: 'Too many AI requests. Please try again later.' }, 429, origin);
-  if (!env.GOOGLE_API_KEY) return json({ error: 'AI service is not configured.' }, 503, origin);
+
+function hostedModel(operation, cardCount) {
+  const simple = operation === 'interpret' && cardCount <= 3;
+  const model = simple ? FLASH_LITE : FLASH;
+  const thinkingLevel = operation === 'interpret' && !simple ? 'LOW' : 'MINIMAL';
+  const maxOutputTokens = operation === 'identify' ? 1152
+    : operation === 'compare' ? 1024 : Math.min(4096, 800 + 140 * cardCount);
+  const generationConfig = { maxOutputTokens, thinkingConfig: { thinkingLevel } };
+  if (operation !== 'compare') generationConfig.responseMimeType = 'application/json';
+  return { model, generationConfig };
+}
+
+function tokenRates(model, now) {
+  // Nano-USD per token, including thinking at the output rate.
+  if (model === FLASH_LITE) return [250, 1500];
+  return now < Date.UTC(2027, 0, 1) ? [750, 3750] : [1500, 7500];
+}
+
+export class HostedUsage {
+  constructor(state) {
+    this.storage = state.storage;
+  }
+
+  async fetch(request) {
+    const { action, subject, id, limit, reserve, budget, actual, expiresAt } = await request.json();
+    if (action === 'reserve' && !await this.storage.getAlarm()) await this.storage.setAlarm(expiresAt);
+    return this.storage.transaction(async tx => {
+      const spent = await tx.get('spent') || 0;
+      const requestKey = 'request:' + subject + ':' + id;
+      const previous = await tx.get(requestKey);
+      if (action === 'settle') {
+        if (typeof previous === 'number') {
+          await tx.put('spent', spent + actual - previous);
+          await tx.put(requestKey, true);
+        }
+        return Response.json({ ok: true });
+      }
+      const usageKey = 'usage:' + subject;
+      const used = limit === null ? 0 : (await tx.get(usageKey) || 0);
+      const remaining = limit === null ? null : Math.max(0, limit - used);
+      if (previous !== undefined) return Response.json({ code: 'duplicate', remaining }, { status: 409 });
+      if (remaining === 0) return Response.json({ code: 'monthly_limit', remaining }, { status: 429 });
+      if (spent + reserve > budget) return Response.json({ code: 'service_limit', remaining }, { status: 503 });
+      await tx.put('spent', spent + reserve);
+      await tx.put(requestKey, reserve);
+      if (limit !== null) await tx.put(usageKey, used + 1);
+      return Response.json({ remaining: remaining === null ? null : remaining - 1 });
+    });
+  }
+
+  async alarm() {
+    await this.storage.deleteAll();
+  }
+}
+
+async function handleAiProxy(request, env, origin, legacyRoute) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, origin);
+  const token = request.headers.get('Authorization')?.match(/^Bearer (v1\.[\w.-]+)$/i)?.[1];
+  const now = Date.now();
+  const legacy = legacyRoute && !token && now < Date.parse(env.ARCANA_AI_LEGACY_UNTIL);
+  const identity = legacy
+    ? { sub: await licenseHash(clientKey(request, 'legacy-ai')), limit: 30 }
+    : await readSignedEntitlement(token, env.ARCANA_ENTITLEMENT_SECRET);
+  if (!identity || (!legacy && (identity.scope !== 'hosted-ai' || !Number.isSafeInteger(identity.exp) || identity.exp * 1000 <= now))) {
+    return json({ error: 'Activate Premium with the current version of Arcana to use hosted AI.', code: 'premium_required' }, 401, origin);
+  }
+  if (await isRateLimited(request, env, 'ai', 20, 60_000)) return json({ error: 'Too many AI requests. Please try again later.' }, 429, origin);
+  const budget = Math.round(Number(env.ARCANA_AI_MONTHLY_BUDGET_USD) * 1e9);
+  if (!env.GOOGLE_API_KEY || !env.ARCANA_HOSTED_USAGE || !Number.isSafeInteger(budget) || budget <= 0) {
+    return json({ error: 'Hosted AI is temporarily unavailable. You can use Classic Reading.' }, 503, origin);
+  }
 
   let payload;
   try {
@@ -499,50 +620,84 @@ async function handleAiProxy(request, env, origin) {
   } catch (error) {
     return json({ error: error.code === 'BODY_TOO_LARGE' ? 'AI request is too large.' : 'Invalid JSON body.' }, error.code === 'BODY_TOO_LARGE' ? 413 : 400, origin);
   }
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return json({ error: 'Invalid JSON body.' }, 400, origin);
-
-  const prompt = String(payload.prompt || '').trim();
-  if (!prompt) return json({ error: 'Missing prompt.' }, 400, origin);
+  const prompt = typeof payload?.prompt === 'string' ? payload.prompt.trim() : '';
+  const operation = legacy ? (payload?.imageData ? 'identify' : 'interpret') : payload?.operation;
+  const requestId = legacy ? crypto.randomUUID() : payload?.requestId;
+  const cardCount = legacy ? 21 : payload?.cardCount;
+  if (!prompt || !AI_OPERATIONS.has(operation) || typeof requestId !== 'string' || !/^[a-f0-9-]{36}$/i.test(requestId)
+    || (operation === 'interpret' && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 21))) {
+    return json({ error: 'Invalid AI operation.' }, 400, origin);
+  }
   if (prompt.length > MAX_PROMPT_CHARS) return json({ error: 'Prompt is too long.' }, 413, origin);
 
   const parts = [{ text: prompt }];
-  if (payload.imageData) {
+  if (operation === 'identify') {
     const image = parseImageData(payload.imageData);
     if (!image) return json({ error: 'Image must be a valid JPEG, PNG, or WebP under 4 MB.' }, 400, origin);
     parts.push({ inline_data: { mime_type: image.mime, data: image.base64 } });
+  } else if (payload.imageData) {
+    return json({ error: 'Only card identification accepts photos.' }, 400, origin);
   }
 
-  const body = JSON.stringify({ contents: [{ parts }] });
-  for (const model of GEMINI_MODELS) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(env.GOOGLE_API_KEY)}`;
-    for (let attempt = 0; attempt < MAX_MODEL_ATTEMPTS; attempt += 1) {
-      let response;
-      try {
-        response = await fetchWithTimeout(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body
-        }, AI_UPSTREAM_TIMEOUT_MS);
-      } catch {
-        response = null;
-      }
-      if (response && response.ok) {
-        const text = await response.text();
-        try {
-          const data = JSON.parse(text);
-          return json({ text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.' }, 200, origin);
-        } catch {
-          return json({ error: 'AI returned an invalid response.' }, 502, origin);
-        }
-      }
-      const status = response ? response.status : 503;
-      const upstreamText = response ? await response.text().catch(() => '') : '';
-      if (status === 400) break;
-      if (!RETRYABLE_GEMINI_STATUSES.includes(status)) break;
-      if (attempt < MAX_MODEL_ATTEMPTS - 1) await sleep(retryDelayMs(status, attempt, upstreamText));
-    }
+  const { model, generationConfig } = hostedModel(operation, cardCount);
+  if (legacy) delete generationConfig.responseMimeType;
+  const [inputRate, outputRate] = tokenRates(model, now);
+  const inputReserve = new TextEncoder().encode(prompt).length + 256 + (operation === 'identify' ? 16_384 : 0);
+  const reserve = inputReserve * inputRate + generationConfig.maxOutputTokens * outputRate;
+  const month = new Date(now).toISOString().slice(0, 7);
+  const expiresAt = Date.UTC(Number(month.slice(0, 4)), Number(month.slice(-2)), 2);
+  const meter = env.ARCANA_HOSTED_USAGE.get(env.ARCANA_HOSTED_USAGE.idFromName(month));
+  const metering = { subject: identity.sub, id: requestId, limit: identity.limit, reserve, budget, expiresAt };
+  const meterRequest = (action, extra) => meter.fetch(new Request('https://meter.internal/', {
+    method: 'POST',
+    body: JSON.stringify({ ...metering, action, ...extra })
+  }));
+  let admission;
+  let allowance;
+  try {
+    admission = await meterRequest('reserve');
+    allowance = await admission.json();
+  } catch {
+    return json({ error: 'Could not check your hosted AI allowance.' }, 503, origin);
   }
-  return json({ error: 'Arcana AI is temporarily unavailable. Please try again or use Classic Reading.' }, 503, origin);
+  if (!admission.ok) {
+    const messages = {
+      duplicate: 'This AI request has already been submitted.',
+      monthly_limit: 'You have used this month’s hosted AI allowance. Classic readings and poster exports are still available.',
+      service_limit: 'Hosted AI has reached its service budget. You can continue with Classic Reading.'
+    };
+    return json({ ...allowance, error: messages[allowance.code] || 'Hosted AI is unavailable.' }, admission.status, origin);
+  }
+
+  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent';
+  try {
+    const response = await fetchWithTimeout(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GOOGLE_API_KEY },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig })
+    }, AI_UPSTREAM_TIMEOUT_MS);
+    const data = await response.json().catch(() => null);
+    const usage = data?.usageMetadata;
+    if (Number.isSafeInteger(usage?.promptTokenCount)) {
+      const output = (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0);
+      const actual = usage.promptTokenCount * inputRate + output * outputRate;
+      console.info(JSON.stringify({
+        event: 'arcana-hosted-ai', operation, model: data.modelVersion || model,
+        inputTokens: usage.promptTokenCount, outputTokens: usage.candidatesTokenCount || 0,
+        thinkingTokens: usage.thoughtsTokenCount || 0, attempts: 1,
+        finishReason: data.candidates?.[0]?.finishReason
+      }));
+      await meterRequest('settle', { actual }).catch(() => {});
+    }
+    const candidate = data?.candidates?.[0];
+    const text = candidate?.content?.parts?.filter(part => !part.thought).map(part => part.text || '').join('');
+    if (response.ok && text && candidate.finishReason !== 'MAX_TOKENS') {
+      return json({ ...allowance, text }, 200, origin);
+    }
+  } catch {
+    // Keep the reservation if the outcome is unknown and avoid a second paid attempt.
+  }
+  return json({ ...allowance, error: 'Arcana AI could not finish this request. You can continue with Classic Reading.' }, 503, origin);
 }
 
 export default {
@@ -559,7 +714,9 @@ export default {
     if (url.pathname === '/api/android/tester') return handleAndroidAccess(request, env, origin, ANDROID_TEST_ACCESS);
     if (url.pathname === '/api/android/review') return handleAndroidAccess(request, env, origin, ANDROID_REVIEW_ACCESS);
     if (url.pathname === '/api/reading-report') return handleReadingReport(request, env, origin);
-    if (url.pathname === '/' || url.pathname === '/api/ai') return handleAiProxy(request, env, origin);
+    if (url.pathname === '/api/ai/session') return handleHostedSession(request, env, origin);
+    if (url.pathname === '/api/ai/v2') return handleAiProxy(request, env, origin, false);
+    if (url.pathname === '/' || url.pathname === '/api/ai') return handleAiProxy(request, env, origin, true);
     return json({ error: 'Not found.' }, 404, origin);
   }
 };

@@ -13,6 +13,9 @@ globalThis.arcanaAndroid = (() => {
   let accessBusy = false;
   let accessNotice = '';
   let entitlement = '';
+  let purchaseAiSession;
+  let accessAiSession;
+  let accessPass = '';
   let ownedToken = '';
   let price = '';
   let pending = false;
@@ -88,6 +91,10 @@ globalThis.arcanaAndroid = (() => {
   function setAccess(active) {
     const wasPremium = !!entitlement || accessActive;
     accessActive = active;
+    if (!active) {
+      accessPass = '';
+      accessAiSession = null;
+    }
     if (wasPremium !== (!!entitlement || accessActive)
         && document.getElementById('screen-history')?.classList.contains('active')) {
       renderHistory();
@@ -106,6 +113,8 @@ globalThis.arcanaAndroid = (() => {
         throw new Error('Invalid access response.');
       }
       setAccess(true);
+      accessPass = pass;
+      accessAiSession = result;
       accessNotice = testerBuild ? 'Premium activated for testing.' : 'Premium activated for Google Play review.';
       if (credentials.code) {
         try {
@@ -173,13 +182,14 @@ globalThis.arcanaAndroid = (() => {
       <button type="button" class="close-btn" onclick="closeModal('modal-upgrade')" aria-label="Close upgrade dialog">&times;</button>
       <h2>${title}</h2>
       <p class="upgrade-note">Unlock Premium with one payment through Google Play.</p>
+      <div data-play-purchase></div>
+      <p class="upgrade-note">Already purchased? Use the same Google Play account to restore Premium.</p>
       <ul class="upgrade-benefits">
-        <li>Unlimited readings and five advanced spreads</li>
+        <li>Unlimited Classic readings, every spread, and personalized poster downloads</li>
+        <li>30 hosted AI requests per month for new purchases</li>
         <li>Journal tools and up to 50 saved readings</li>
         <li>Voice narration and reading comparison</li>
       </ul>
-      <div data-play-purchase></div>
-      <p class="upgrade-note">To restore a purchase, use the Google Play account you bought it with.</p>
     </div>`;
   }
 
@@ -189,7 +199,10 @@ globalThis.arcanaAndroid = (() => {
     try {
       const owned = ownership || await billing.getOwnership();
       const token = owned.purchaseToken || '';
-      if (token !== ownedToken) entitlement = '';
+      if (token !== ownedToken) {
+        entitlement = '';
+        purchaseAiSession = null;
+      }
       ownedToken = token;
       pending = owned.pending === true;
       if (token) {
@@ -197,6 +210,7 @@ globalThis.arcanaAndroid = (() => {
         renderPurchaseControls();
         const verified = await workerRequest('/api/play/verify', { purchaseToken: token });
         entitlement = verified.status === 'active' ? verified.entitlementToken || '' : '';
+        purchaseAiSession = entitlement ? verified : null;
         pending = verified.status === 'pending';
         if (!pending && !entitlement) {
           notice = 'Google Play could not confirm an active Premium purchase.';
@@ -227,6 +241,23 @@ globalThis.arcanaAndroid = (() => {
         ? 'Could not verify your purchase. Reconnect and try Restore purchases.'
         : 'Purchases are unavailable. Check your connection and open Arcana from Google Play.';
     }
+  }
+
+  async function getHostedAiSession() {
+    if (isHostedAiSessionCurrent(purchaseAiSession)) return purchaseAiSession;
+    if (isHostedAiSessionCurrent(accessAiSession)) return accessAiSession;
+    if (accessActive && accessPass) {
+      const currentPass = accessPass;
+      const result = await workerRequest(`/api/android/${accessKind}`, { [passField]: currentPass });
+      if (accessActive && accessPass === currentPass && isHostedAiSessionCurrent(result)) {
+        accessAiSession = result;
+        return accessAiSession;
+      }
+    } else {
+      await refreshPurchases();
+      if (isHostedAiSessionCurrent(purchaseAiSession)) return purchaseAiSession;
+    }
+    throw new Error('Premium could not be verified. Try Restore purchases in Premium Access.');
   }
 
   async function refreshPurchases({ explicit = false, ownership } = {}) {
@@ -429,7 +460,7 @@ globalThis.arcanaAndroid = (() => {
   }
 
   return {
-    isPremium: () => !!entitlement || accessActive, renderPurchaseControls, upgradeMarkup, start, buy, restore, renderReporting,
+    isPremium: () => !!entitlement || accessActive, getHostedAiSession, renderPurchaseControls, upgradeMarkup, start, buy, restore, renderReporting,
     saveFile: device ? saveFile : null,
     print: device ? (html, title) => device.print({ html, title }) : null,
     printPage: device ? title => device.print({ title, currentPage: true }) : null,

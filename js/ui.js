@@ -66,6 +66,7 @@ function resolveScreenPrerequisite(id){
   if(!VALID_SCREEN_IDS.has(id))return 'screen-welcome';
   if(id==='screen-welcome')return id;
   if(id==='screen-history')return id;
+  if(!isPremium()&&(id==='screen-quick'||state.mode==='quick')&&!(id==='screen-reading'&&state.narrative))return 'screen-welcome';
   if(id==='screen-quick')return state.mode==='quick'?id:'screen-welcome';
   if(state.mode==='quick'){
     if(!['screen-card-entry','screen-overview','screen-reading'].includes(id))return 'screen-welcome';
@@ -78,6 +79,7 @@ function resolveScreenPrerequisite(id){
   if(state.mode!=='guided')return 'screen-welcome';
   if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
   if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
+  if(!isPremium()&&state.spreadId!==FREE_SPREAD_ID&&['screen-reflection','screen-card-entry','screen-overview'].includes(id))return 'screen-spread';
   if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
   return id;
 }
@@ -95,6 +97,7 @@ function goScreen(id, fromRouter){
   if(previous==='screen-reading'&&previous!==id){
     readingRequestVersion++;
     state.readingInProgress=false;
+    cancelAIRequest();
   }
   const nextHash='#'+routeForScreen(id);
   if(!fromRouter && location.hash !== nextHash) location.hash = nextHash;
@@ -196,6 +199,7 @@ function startGuided(){
   goScreen('screen-concerns');
 }
 function startQuick(){
+  if(!requestPremiumFeature('photo-ai'))return;
   readingRequestVersion++;
   state.readingInProgress=false;
   state.readingPackage=null;
@@ -325,6 +329,7 @@ function renderSpreads(){
   });
 }
 function selectSpread(id,el){
+  if(!requestReadingAccess(id))return;
   state.spreadId=id;
   document.querySelectorAll('.spread-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
   el.classList.add('selected');
@@ -348,6 +353,7 @@ function buildCustomPositions(){
 }
 function confirmSpread(alreadyDrawn=false){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
+  if(!requestReadingAccess(state.spreadId))return;
   saveReaderContext('reader-life-stage');
   if(alreadyDrawn===true){skipPreparation();return;}
   state.preparationSkipped=false;
@@ -355,9 +361,10 @@ function confirmSpread(alreadyDrawn=false){
 }
 function skipPreparation(){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
+  if(!requestReadingAccess(state.spreadId))return;
   state.preparationSkipped=true;
   state.guidedStep=0;
-  state.cardEntryTab='tab-upload';
+  state.cardEntryTab=isPremium()?'tab-upload':'tab-manual';
   goScreen('screen-card-entry');
 }
 function backFromCardEntry(){
@@ -371,7 +378,7 @@ function saveReaderContext(lifeStageId){
 
 // ===== READING TYPE SELECTION =====
 function selectReadingType(id, el){
-  if(PREMIUM_SPREAD_IDS.includes(id) && !requestPremiumFeature('advanced-spreads')) return;
+  if(!requestReadingAccess(id))return;
   if(state.spreadId&&state.spreadId!==id&&hasSelectedReadingCards()){
     if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
     clearSelectedReadingCards();
@@ -689,7 +696,7 @@ function showShareModal(data){
     <h3 id="share-title">Share Your Spread</h3>
     <label class="share-label" for="share-comment">Comment</label>
     <textarea id="share-comment" maxlength="180" placeholder="The cards found me at the right moment." oninput="updateSharePreview()"></textarea>
-    <canvas id="share-canvas" width="600" height="800"></canvas>
+    ${premiumFeature('poster')?'<canvas id="share-canvas" width="600" height="800" role="img" aria-label="Preview of your shared spread"></canvas>':''}
     <div class="share-platforms">
       <button class="btn btn-sm" onclick="openSocialShare('facebook')">Facebook</button>
       <button class="btn btn-sm" onclick="openSocialShare('line')">LINE</button>
@@ -1041,6 +1048,7 @@ function switchTab(tabId,btn){
   btn.tabIndex=0;
 }
 function selectCardEntryTab(tabId,btn){
+  if(tabId!=='tab-manual'&&!requestPremiumFeature('photo-ai'))return;
   switchTab(tabId,btn);
   autoSaveState();
 }
@@ -1060,15 +1068,18 @@ function buildCardEntry(){
   const spread=getSpread();
   if(!spread)return;
   const quick=state.mode==='quick';
+  const manualOnly=quick||!isPremium();
   const tabs=document.querySelector('#screen-card-entry .tab-bar');
   const description=document.getElementById('card-entry-description');
-  if(tabs)tabs.hidden=quick;
-  if(description)description.textContent=quick
+  if(tabs)tabs.hidden=manualOnly;
+  const jumper=document.getElementById('jumper-options');
+  if(jumper)jumper.hidden=!isPremium();
+  if(description)description.textContent=manualOnly
     ?'Choose the physical card you placed in each position.'
     :'Draw from your physical deck, upload your spread, or enter the cards by hand.';
-  if(!quick)buildGuidedDraw(spread);
+  if(!manualOnly)buildGuidedDraw(spread);
   buildManualEntries(spread);
-  const tabId=quick?'tab-manual':state.cardEntryTab||(state.preparationSkipped?'tab-upload':'tab-guided');
+  const tabId=manualOnly?'tab-manual':state.cardEntryTab||(state.preparationSkipped?'tab-upload':'tab-guided');
   const tab=document.querySelector(`.tab-btn[aria-controls="${tabId}"]`);
   if(tab)switchTab(tabId,tab);
 }
@@ -1637,6 +1648,7 @@ function enterQuickCardsManually(){
 }
 
 async function processUpload(file,zoneId,btnId,inputId){
+  if(!requestPremiumFeature('photo-ai'))return;
   const version=++photoUploadVersion;
   cancelPhotoIdentification();
   try{
@@ -1690,6 +1702,7 @@ function identifyCards(){
 }
 
 function quickRead(){
+  if(!requestPremiumFeature('photo-ai'))return;
   if(!quickHasPhoto()||!state.quickSpreadId)return;
   const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
   if(!spread)return;
@@ -1700,6 +1713,7 @@ function quickRead(){
 }
 
 async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
+  if(!requestPremiumFeature('photo-ai'))return;
   if(activePhotoIdentification)return;
   const spread=getSpread();
   const button=document.getElementById(btnId);
@@ -1750,7 +1764,8 @@ async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
   }catch(error){
     if(version!==photoIdentificationVersion||requestVersion!==readingRequestVersion)return;
     const noCards=error.message?.startsWith('No valid cards');
-    const message=noCards?'No valid cards were identified. Try a clear photo taken directly above the spread.'
+    const message=['monthly_limit','service_limit','reactivation_required'].includes(error.code)?error.message
+      :noCards?'No valid cards were identified. Try a clear photo taken directly above the spread.'
       :'Gemini couldn’t check this photo. Try another photo or enter your cards manually.';
     renderPhotoRecovery(zoneId,resultId,inputId,message);
   }finally{
@@ -1902,6 +1917,7 @@ function renderOverview(){
 
 function selectReviewMode(mode){
   if(mode!=='classic'&&mode!=='ai')return;
+  if(!requestReadingAccess(state.spreadId,mode))return;
   state.reviewModeChoice=mode;
   updateReviewMode(getSpreadReview());
 }
@@ -1917,6 +1933,7 @@ function reviewPrerequisite(review){
 }
 
 function updateReviewMode(review){
+  if(!isPremium())state.reviewModeChoice='classic';
   const mode=state.reviewModeChoice;
   const detail=document.getElementById('review-mode-detail');
   const action=document.getElementById('review-generate');
@@ -1934,6 +1951,7 @@ function updateReviewMode(review){
 }
 
 function submitReviewedReading(){
+  if(!requestReadingAccess(state.spreadId,state.reviewModeChoice))return;
   const review=getSpreadReview();
   if(reviewPrerequisite(review))return;
   const mode=state.reviewModeChoice;

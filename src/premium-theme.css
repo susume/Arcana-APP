@@ -5562,6 +5562,7 @@ html[data-theme="atelier"] body .ritual-screen .tab-bar {
   padding: 5px !important;
   border: 0 !important;
   border-radius: 5px !important; }
+html[data-theme="atelier"] body .ritual-screen .tab-bar[hidden] { display: none !important; }
 html[data-theme="atelier"] body .ritual-screen .tab-btn {
   color: var(--ink-soft) !important;
   background: none !important;

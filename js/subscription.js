@@ -1,8 +1,14 @@
 // ===== PREMIUM / ENTITLEMENTS =====
 const FREE_DAILY_READING_LIMIT = 1;
+const FREE_SPREAD_ID = 'one-card';
+const HOSTED_AI_MONTHLY_LIMIT = 30;
+const PAID_FEATURES = new Set(['journal', 'voice', 'advanced-spreads', 'comparison', 'unlimited', 'ai-reading', 'photo-ai', 'poster']);
 const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship'];
 let sessionUsage={};
 let usagePersisted=true;
+let webAiSession=null;
+let webAiSessionTask=null;
+let hostedAiAllowance=null;
 
 function todayKey(){
   const d = new Date();
@@ -32,7 +38,50 @@ function saveSubscription(sub){
 
 function isPremium(){
   if(globalThis.arcanaAndroid)return arcanaAndroid.isPremium();
-  return getSubscription().tier === 'premium';
+  const subscription=getSubscription();
+  return subscription.tier==='premium' && !!subscription.entitlementToken;
+}
+
+function isHostedAiSessionCurrent(session){
+  return !!session?.aiToken && session.aiTokenExpiresAt*1000>Date.now()+30_000;
+}
+
+async function getHostedAiSession(){
+  if(globalThis.arcanaAndroid)return arcanaAndroid.getHostedAiSession();
+  const receipt=getSubscription().entitlementToken;
+  if(!receipt)throw new Error('Activate Premium to use hosted AI.');
+  if(webAiSession?.receipt===receipt&&isHostedAiSessionCurrent(webAiSession))return webAiSession;
+  if(webAiSessionTask?.receipt===receipt)return webAiSessionTask.promise;
+  const task={receipt,promise:null};
+  task.promise=(async()=>{
+    const response=await fetchAIWithTimeout(getAIProxyUrl().replace(/\/$/,'')+'/api/ai/session',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entitlementToken:receipt})
+    });
+    const session=await response.json().catch(()=>({}));
+    if(!response.ok||!session.aiToken){
+      if([401,403].includes(response.status)&&getSubscription().entitlementToken===receipt){
+        writeStoredJson('arcana_subscription',{tier:'free'});
+        renderEntitlementsUI();
+      }
+      const error=new Error(session.error||'Could not verify Premium. Try again shortly.');
+      error.code=session.code;
+      throw error;
+    }
+    if(getSubscription().entitlementToken!==receipt)throw new Error('Your Premium activation changed. Try again.');
+    webAiSession={...session,receipt};
+    return webAiSession;
+  })().finally(()=>{if(webAiSessionTask===task)webAiSessionTask=null;});
+  webAiSessionTask=task;
+  return task.promise;
+}
+
+function updateHostedAiAllowance(session, remaining){
+  const month=new Date().toISOString().slice(0,7);
+  if(hostedAiAllowance?.token===session.aiToken&&hostedAiAllowance.month===month&&remaining!==null){
+    remaining=Math.min(hostedAiAllowance.remaining,remaining);
+  }
+  hostedAiAllowance={token:session.aiToken,month,limit:session.aiMonthlyLimit,remaining};
+  renderEntitlementsUI();
 }
 
 async function activatePremiumKey(key){
@@ -46,18 +95,22 @@ async function activatePremiumKey(key){
     body:JSON.stringify({licenseKey:clean})
   });
   const data = await resp.json().catch(()=>({}));
-  if(!resp.ok || !data.isPremium) throw new Error(data.error || 'That activation key was not recognized.');
+  if(!resp.ok || !data.isPremium || !data.entitlementToken) throw new Error(data.error || 'That activation key was not recognized.');
   saveSubscription({
     tier:'premium',
     entitlementToken:String(data.entitlementToken||''),
     source:data.source||'gumroad',
     activatedAt:data.activatedAt||new Date().toISOString()
   });
+  webAiSession=null;
+  hostedAiAllowance=null;
   return true;
 }
 
 function deactivatePremium(){
   if(!writeStoredJson('arcana_subscription',{tier:'free'},'Premium activation could not be removed. Browser storage is unavailable.'))return false;
+  webAiSession=null;
+  hostedAiAllowance=null;
   renderEntitlementsUI();
   showToast('Premium deactivated on this browser.');
   return true;
@@ -102,7 +155,12 @@ function recordCompletedReading(){
 }
 
 function premiumFeature(name){
-  return isPremium() || !['journal', 'voice', 'advanced-spreads', 'comparison', 'unlimited'].includes(name);
+  return isPremium() || !PAID_FEATURES.has(name);
+}
+
+function requestReadingAccess(spreadId, mode='classic'){
+  if(spreadId!==FREE_SPREAD_ID&&!requestPremiumFeature('advanced-spreads'))return false;
+  return mode!=='ai' || requestPremiumFeature('ai-reading');
 }
 
 function requestPremiumFeature(name){
@@ -119,7 +177,10 @@ function featureTitle(reason){
     'voice':'Voice narration is Premium',
     'advanced-spreads':'Advanced spreads are Premium',
     'comparison':'Reading comparison is Premium',
-    'unlimited':'Unlimited readings are Premium'
+    'unlimited':'Unlimited Classic readings are Premium',
+    'ai-reading':'AI readings are Premium',
+    'photo-ai':'AI photo identification is Premium',
+    'poster':'Personalized poster downloads are Premium'
   };
   return titles[reason] || 'Upgrade to Premium';
 }
@@ -140,19 +201,8 @@ function showUpgradeModal(reason){
       <div class="plan-pill">Premium lifetime unlock from $10</div>
       <h2>${featureTitle(reason)}</h2>
       <p class="upgrade-price">$10 minimum &middot; $20 suggested &middot; one payment</p>
-      <p class="upgrade-note">Free includes one complete AI-assisted reading each day. Keep your ritual going with Premium.</p>
+      <p class="upgrade-note">Free includes one manual, one-card Classic reading each day.</p>
       ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $10</button>`:''}
-      <p class="upgrade-note">Lifetime access. No recurring Arcana subscription.</p>
-      <ul class="upgrade-benefits">
-        <li>Unlimited readings and five advanced spreads</li>
-        <li>Journal tools and up to 50 saved readings</li>
-        <li>Voice narration and reading comparison</li>
-      </ul>
-      <details class="flow-details purchase-details">
-        <summary>Pricing and purchase details</summary>
-        <p class="upgrade-note">Pay what you want. $10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
-        <p class="upgrade-note">Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
-      </details>
       <details class="flow-details activation-box">
         <summary>Already purchased? Activate Premium</summary>
         <p class="upgrade-note">Your Gumroad receipt includes the license key.</p>
@@ -160,6 +210,15 @@ function showUpgradeModal(reason){
         <input id="activation-key-input" type="text" placeholder="Paste your activation key" autocomplete="off" spellcheck="false">
         <button type="button" class="btn btn-primary btn-sm" onclick="submitActivationKey()">Activate Premium</button>
         <p id="activation-status" class="activation-status" aria-live="polite"></p>
+      </details>
+      <ul class="upgrade-benefits">
+        <li>Unlimited Classic readings, every spread, and personalized poster downloads</li>
+        <li>${HOSTED_AI_MONTHLY_LIMIT} hosted AI requests per month for new purchases</li>
+        <li>Journal, voice narration, comparison, and up to 50 saved readings</li>
+      </ul>
+      <details class="flow-details purchase-details">
+        <summary>Pricing and purchase details</summary>
+        <p class="upgrade-note">One payment with a $10 minimum and $20 suggested. All sales are final except where applicable law or Gumroad&rsquo;s policies require a refund.</p>
       </details>
     </div>`;
   globalThis.arcanaAndroid?.renderPurchaseControls();
@@ -230,10 +289,21 @@ function renderEntitlementsUI(){
       ? (globalThis.arcanaAndroid ? 'Premium active' : 'Premium active on this browser')
       : 'Free plan active';
   }
+  const allowance=document.getElementById('hosted-ai-allowance-status');
+  if(allowance){
+    const usage=hostedAiAllowance?.month===new Date().toISOString().slice(0,7)?hostedAiAllowance:null;
+    allowance.hidden=!premium||!usage;
+    allowance.textContent=usage?.remaining===null?'Hosted AI is active with your existing purchase terms.'
+      :usage?`${usage.remaining} of ${usage.limit} hosted AI requests left this month (UTC).`:'';
+  }
   const deactivateButton=document.getElementById('deactivate-premium');
   if(deactivateButton)deactivateButton.hidden=!premium;
   if(typeof updateArchiveStatus==='function')updateArchiveStatus();
   if(typeof renderReadingSaveStatus==='function'&&document.getElementById('screen-reading')?.classList.contains('reading-ready'))renderReadingSaveStatus();
+  const poster=document.getElementById('reading-image-export');
+  if(poster?.dataset?.posterPremium!==undefined&&poster.dataset.posterPremium!==String(premium)&&typeof renderReadingInfographicPanel==='function'){
+    renderReadingInfographicPanel(poster);
+  }
 
   document.querySelectorAll('[data-premium-feature]').forEach(el => {
     const feature = el.dataset.premiumFeature;

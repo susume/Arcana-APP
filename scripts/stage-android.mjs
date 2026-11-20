@@ -9,8 +9,8 @@ const testerBuild = process.argv.includes('--tester-access');
 const replacements = {
   'home-offer': '<p class="homepage-monetization-copy">Unlock Premium with one payment through Google Play.</p>',
   'home-button': 'Explore Premium',
-  'faq-price': 'Arcana includes one free reading per day. Premium is a one-time purchase through Google Play that unlocks the full app.',
-  'settings-purchase': `<p class="settings-note">Unlimited readings, up to 50 saved readings, advanced spreads, journal tools, narration, and comparison.</p>
+  'faq-price': 'Arcana includes one free reading per day with one manually entered card and built-in Classic meanings. Premium is a one-time purchase through Google Play. New purchases include 30 hosted AI requests each month.',
+  'settings-purchase': `<p class="settings-note">All spreads, unlimited Classic readings, personalized posters, and 30 hosted AI requests each month for new purchases.</p>
       <div data-play-purchase></div>`,
   'pricing-offer': '<h2 id="premium-plan">Premium lifetime unlock</h2><p>Buy Premium once through Google Play. Open Premium Access to see the price in your currency.</p>',
   'pricing-buy': '<p><a class="btn btn-primary public-cta" href="index.html?play=ready">Open Premium Access</a></p>',
@@ -36,6 +36,7 @@ function findMedia(text) {
 
 function androidHtml(source) {
   const html = source
+    .replaceAll("Premium includes hosted AI. Browser users with Premium can also use their own Gemini key in Settings.", "Premium includes hosted AI without a Gemini key.")
     .replace(/<!-- play:direct-gemini -->([\s\S]*?)<!-- \/play:direct-gemini -->/g, (_section, content) => testerBuild ? content : '')
     .replace(/<!-- play:([\w-]+) -->[\s\S]*?<!-- \/play:\1 -->/g, (_section, name) => {
       if (!(name in replacements)) throw new Error(`Unknown Android content block ${name}.`);

@@ -10,7 +10,7 @@ async function generateReading(mode=state.reviewModeChoice){
     return;
   }
   if(mode!=='ai'&&mode!=='classic')return;
-  if(PREMIUM_SPREAD_IDS.includes(state.spreadId)&&!requestPremiumFeature('advanced-spreads'))return;
+  if(!requestReadingAccess(state.spreadId,mode))return;
   if(!canGenerateReading()){
     showUpgradeModal('daily-limit');
     return;
@@ -20,8 +20,8 @@ async function generateReading(mode=state.reviewModeChoice){
     return;
   }
   state.cards=Object.fromEntries(review.positions.filter(item=>item.entry).map(({position,entry})=>[position.id,entry]));
-  state.droppedCard=review.drop?.entry||null;
-  state.hasDroppedCard=!!review.drop;
+  state.droppedCard=isPremium()?review.drop?.entry||null:null;
+  state.hasDroppedCard=!!state.droppedCard;
   state.narrative='';
   state.readingPackage=null;
   state.readingInfographic=null;
@@ -50,7 +50,8 @@ async function generateReading(mode=state.reviewModeChoice){
       const notice=document.createElement('p');
       notice.className='reading-mode-notice';
       notice.setAttribute('role','status');
-      notice.textContent='Gemini couldn’t complete the reading. Here’s your Classic reading.';
+      notice.textContent=['monthly_limit','service_limit','reactivation_required'].includes(e.code)
+        ?`${e.message} Here’s your Classic reading.`:'Gemini couldn’t complete the reading. Here’s your Classic reading.';
       content.insertAdjacentElement('afterbegin',notice);
     }
   }else{
@@ -78,6 +79,7 @@ function highlightReadingBtn(mode){
 }
 
 function requestReadingMode(mode){
+  if(!requestReadingAccess(state.spreadId,mode))return;
   if(mode==='ai'){
     if(state.readingMode==='ai'&&state.narrative)return;
     openConfirmDialog('Switch to an AI reading?',AI_READING_DISCLOSURE,()=>switchReadingMode('ai'),'Start AI reading',false,false);
@@ -87,6 +89,7 @@ function requestReadingMode(mode){
 }
 
 async function switchReadingMode(mode){
+  if(!requestReadingAccess(state.spreadId,mode))return;
   const review=getSpreadReview();
   if(!review.filled||review.uncertain){
     showToast('Review your cards before starting another reading.');
@@ -239,9 +242,9 @@ function buildAIReadingPrompt(settings){
       const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
       const kws=card?card.keywords.join(', '):'';
       const meaning=card?(entry.orientation==='reversed'?card.reversed:card.upright):'';
-      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: ${entry.name} (${entry.orientation}). Keywords: ${kws}. Reference meaning: ${meaning}\n`;
-    }else{
-      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: (no card entered)\n`;
+      const label=displayLabel!==pos.name?` (${displayLabel})`:'';
+      const reference=meaning||kws;
+      cardLines+=`${pos.id}. ${pos.name}${label} [${pos.description}]: ${entry.name} (${entry.orientation}). ${reference}\n`;
     }
   });
 
@@ -271,15 +274,15 @@ function buildAIReadingPrompt(settings){
   return `${systemInstructions.role}
 ${systemInstructions.naming}
 
-Create one coherent, useful reading from the supplied cards. Interpret the spread as a developing story rather than repeating dictionary meanings. Be specific about tensions, turning points, support, and practical choices. Avoid vague filler such as "trust your intuition" unless you explain what the reader can actually notice or do. Keep all statements reflective and non-deterministic.
+Connect the confirmed cards into a reflective reading. Explain specific tensions and practical choices. Avoid repetition, filler, and deterministic claims.
 
-Return ONLY one valid JSON object. Do not use markdown fences, commentary, or text before or after the JSON.
+Return one JSON object only.
 
 Required JSON schema:
 {
   "title": "A concise title for this reading",
-  "quickSummary": "A 2-3 sentence reading-at-a-glance summary",
-  "mainMessage": "A focused paragraph explaining the central movement of the spread",
+  "quickSummary": "A short overview for the reading and poster",
+  "mainMessage": "One paragraph explaining the central movement",
   "keyThemes": [
     {"title":"2-5 word theme","message":"One concise explanatory sentence"}
   ],
@@ -287,24 +290,19 @@ Required JSON schema:
     {
       "position":"Use the exact supplied position ID",
       "headline":"A short, memorable message for this position",
-      "interpretation":"1-3 specific sentences connecting the card to this exact position",
-      "action":"One realistic action or reflection focus"
+      "interpretation":"One or two sentences relating the card to its position",
+      "action":"One specific action or reflection focus"
     }
   ],
-  "patterns": ["2-5 concise observations about card interactions, suits, numbers, reversals, court cards, or Major Arcana"],
-  "guidance": ["3-5 practical, non-alarming next steps"],
+  "patterns": ["Up to three distinct patterns supported by the cards"],
+  "guidance": ["Up to three practical next steps"],
   "reflectionQuestions": ["2-3 useful journal questions"],
-  "closingMessage": "One reassuring closing sentence suitable for the bottom of an infographic"
+  "closingMessage": "One reassuring closing sentence"
 }
 
 Quality requirements:
-- Include one positions item for every entered spread card, in the supplied position order.
-- Do not invent, rename, omit, or change the orientation of any card.
-- For every positions item, explicitly interpret what that spread position represents and how this card behaves through that lens.
-- Make connections across cards. Identify phases, contrasts, repetitions, and turning points.
-- For long spreads, keep each position concise enough to scan.
-- keyThemes must contain exactly 3 items.
-- Keep each headline under 55 characters, each action under 110 characters, and each infographic-friendly interpretation under 260 characters.
+- Include each supplied position ID exactly once in order. Interpret its meaning and honor the confirmed name and orientation.
+- Return exactly 3 keyThemes. Limits per position: headline 55 characters, interpretation 260, action 110.
 - Use the language of the reader's concern or question when clear. Otherwise use the interface locale: ${getReadingLocale()}.
 - Current local date: ${getLocalDateContext()}. For a yearly spread, position 1 is the current month and the supplied display labels are authoritative.
 - Pattern analysis should cover ${systemInstructions.pattern} where relevant.
@@ -328,7 +326,9 @@ async function generateAIReading(settings,statusElement){
     buildAIReadingPrompt(settings),
     null,
     null,
-    statusElement||document.getElementById('ai-status')
+    statusElement||document.getElementById('ai-status'),
+    'interpret',
+    Math.max(1,Object.keys(state.cards).length)
   );
   if(requestVersion!==readingRequestVersion)return '';
   const readingPackage=parseAIReadingPackage(raw);
@@ -734,8 +734,22 @@ function escapeReadingHtml(value){
 function renderReadingInfographicPanel(host){
   if(!host)return;
   host.replaceChildren();
+  const premium=premiumFeature('poster');
+  host.dataset.posterPremium=String(premium);
+  if(!premium){
+    host.innerHTML=`<div class="reading-infographic-body">
+      <h3 class="reading-tool-heading">Your reading keepsake</h3>
+      <p>Premium includes a personalized print-ready poster.</p>
+      <div class="reading-infographic-tools">
+        <button type="button" class="btn btn-primary" onclick="requestPremiumFeature('poster')">Unlock poster downloads</button>
+        <a class="btn" href="sample-reading.html#keepsake">View a sample poster</a>
+      </div>
+    </div>`;
+    return;
+  }
   const model=state.readingInfographic||buildInfographicFromCurrentState();
   if(!model||!model.cards.length)return;
+  const photo=state.uploadedImage;
 
   const panel=document.createElement('details');
   panel.id='reading-infographic-panel';
@@ -744,6 +758,7 @@ function renderReadingInfographicPanel(host){
     <summary>Reading infographic <span class="optional-label">PNG</span></summary>
     <div class="reading-infographic-body">
       <p>A visual summary of your confirmed cards and reading.</p>
+      ${photo?'<label><input type="checkbox" id="poster-include-photo"> Include my spread photo</label>':''}
       <div class="reading-infographic-frame" hidden>
         <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading"></canvas>
       </div>
@@ -760,17 +775,20 @@ function renderReadingInfographicPanel(host){
   const status=panel.querySelector('#reading-infographic-status');
   const downloadButton=panel.querySelector('#download-reading-infographic');
   const redrawButton=panel.querySelector('#redraw-reading-infographic');
+  const photoChoice=panel.querySelector('#poster-include-photo');
   let started=false;
   let busy=false;
   async function renderPreview(){
+    if(!requestPremiumFeature('poster'))return;
     if(busy)return;
     started=true;
     busy=true;
     downloadButton.disabled=true;
+    if(photoChoice)photoChoice.disabled=true;
     redrawButton.setAttribute('aria-disabled','true');
     status.textContent='Building infographic…';
     try{
-      await drawReadingInfographic(canvas,model);
+      await drawReadingInfographic(canvas,model,{photo:photoChoice?.checked?photo:null});
       frame.hidden=false;
       downloadButton.disabled=false;
       status.textContent='Ready to download.';
@@ -779,6 +797,7 @@ function renderReadingInfographicPanel(host){
       status.textContent=`Preview could not be completed: ${error.message}`;
     }finally{
       busy=false;
+      if(photoChoice)photoChoice.disabled=false;
       redrawButton.removeAttribute('aria-disabled');
     }
   }
@@ -786,15 +805,18 @@ function renderReadingInfographicPanel(host){
     if(panel.open&&!started)renderPreview();
   });
   redrawButton.addEventListener('click',renderPreview);
+  photoChoice?.addEventListener('change',renderPreview);
   downloadButton.addEventListener('click',async()=>{
     if(busy)return;
     busy=true;
+    if(photoChoice)photoChoice.disabled=true;
     downloadButton.setAttribute('aria-disabled','true');
     redrawButton.setAttribute('aria-disabled','true');
     try{
-      await downloadReadingInfographic(canvas,model,status);
+      await downloadReadingInfographic(canvas,model,status,photoChoice?.checked?photo:null);
     }finally{
       busy=false;
+      if(photoChoice)photoChoice.disabled=false;
       downloadButton.removeAttribute('aria-disabled');
       redrawButton.removeAttribute('aria-disabled');
     }
@@ -915,10 +937,12 @@ async function drawReadingInfographic(canvas,model,options={}){
   const width=1200;
   const sidePadding=54;
   const headerHeight=440;
+  const photo=options.photo?await loadCanvasImage(options.photo).catch(()=>null):null;
+  const photoHeight=photo?430:0;
   const adviceHeight=430;
   const footerHeight=215;
-  const bodyHeadingTop=headerHeight+30;
-  const bodyLayout=buildInfographicBodyLayout(model,width,headerHeight+112);
+  const bodyHeadingTop=headerHeight+photoHeight+30;
+  const bodyLayout=buildInfographicBodyLayout(model,width,headerHeight+photoHeight+112);
   const adviceTop=bodyLayout.contentBottom+30;
   const height=Math.max(1500,adviceTop+adviceHeight+footerHeight+80);
 
@@ -954,6 +978,11 @@ async function drawReadingInfographic(canvas,model,options={}){
     for(let x=(y/14)%2?7:0;x<width;x+=18){ctx.fillRect(x,y,1,1);}
   }
   ctx.restore();
+  if(photo){
+    const scale=Math.min((width-sidePadding*2)/photo.width,(photoHeight-40)/photo.height);
+    const photoWidth=photo.width*scale;
+    ctx.drawImage(photo,(width-photoWidth)/2,headerHeight+20,photoWidth,photo.height*scale);
+  }
 
   drawInfographicBodyHeading(ctx,bodyLayout.template,sidePadding,bodyHeadingTop,width-sidePadding*2,palette);
   bodyLayout.rowHeaders.forEach(row=>drawInfographicRowLabel(ctx,row.label,row.x,row.y,row.width,palette));
@@ -1400,13 +1429,14 @@ function wrapCanvasText(ctx,text,maxWidth,maxLines){
   return lines;
 }
 
-async function downloadReadingInfographic(canvas,model,statusElement){
+async function downloadReadingInfographic(canvas,model,statusElement,photo=null){
+  if(!requestPremiumFeature('poster'))return;
   if(statusElement)statusElement.textContent='Preparing PNG…';
   try{
     let blob=await canvasToPngBlob(canvas);
     const useFallback=!blob;
     if(useFallback){
-      await drawReadingInfographic(canvas,model,{skipImages:true});
+      await drawReadingInfographic(canvas,model,{skipImages:true,photo});
       blob=await canvasToPngBlob(canvas);
     }
     if(!blob)throw new Error('The image could not be exported.');

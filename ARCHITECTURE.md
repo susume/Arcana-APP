@@ -637,8 +637,10 @@ two-pathways, and relationship spreads—to visual card positions. Unknown layou
 use a grid fallback.
 
 The structured reading pipeline also renders a downloadable infographic in
-`js/reading-engine.js` when the user opens its preview under Share or print.
-It selects an adaptive template from the active spread:
+`js/reading-engine.js` for Premium. It uses the saved reading, confirmed cards,
+existing artwork, and an optional spread photo. The renderer runs locally
+without an AI call. Free readers can view a public sample and share or print
+their reading text. The infographic selects a template from the active spread:
 a featured card for one-card readings, a three-column sequence for Past / Present /
 Future, a balanced two-column grid for six-card and Celtic Cross readings, a
 quarter-by-quarter timeline for yearly readings, paired comparison rows for Two
@@ -678,6 +680,12 @@ required by applicable law or Gumroad's policies.
 - Activation forms
 - Premium UI rendering
 - Narration and comparison entry points
+
+Free includes one manually entered, one-card Classic reading per local day
+and up to three saved readings. Premium opens every spread, unlimited Classic
+readings, AI photo identification and interpretation, and poster exports. New
+purchases get 30 hosted operations per UTC calendar month. Earlier purchases
+keep their existing allowance. Reading comparison runs locally.
 
 The browser does not contain an activation allow-list. `activatePremiumKey()`
 posts the entered key to `getActivationApiUrl()`, which uses an explicit
@@ -743,12 +751,14 @@ responses, rate limits, and upstream timeouts for the routes below.
 
 ### AI proxy route
 
-Other accepted POST traffic is handled by the Gemini proxy path. It requires the
-Worker secret `GOOGLE_API_KEY`, validates prompt and image size/type, applies
-route rate limits and upstream timeouts, forwards a Gemini request, and applies
-model fallback/retry behavior. The browser and Worker prefer
-`gemini-3.6-flash`. The Worker also tries `gemini-3.5-flash` before falling back
-to `gemini-3.1-flash-lite` and `gemini-2.5-flash`.
+`POST /api/ai/v2` requires a signed 15-minute session issued from a verified
+Gumroad activation, Google Play purchase, or Android review or tester pass.
+A Durable Object deduplicates request IDs and reserves the allowance and
+estimated spend before Gemini runs. The Worker uses Flash-Lite for short
+interpretations and Flash for longer readings and photo identification, with
+output and thinking limits. It records token counts without reading content.
+See [Worker rollout configuration](server/README.md) for purchase cutoffs,
+legacy Android compatibility, and the project spend ceiling.
 
 Expected Worker configuration:
 

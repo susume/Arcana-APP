@@ -71,7 +71,7 @@ assert.match(sitemap, /xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9"/
 assert.deepEqual([...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]).sort(), canonicals.sort());
 assert.match(await read('robots.txt'), /Sitemap: https:\/\/www.arcanaguide.com\/sitemap.xml/);
 const llms = await read('llms.txt');
-assert.match(llms, /Hosted AI is available without a user-supplied API key/);
+assert.match(llms, /Premium includes hosted AI without a user-supplied API key/);
 assert.doesNotMatch(llms, /AI features require a user-supplied|\/templates\//);
 for (const url of canonicals) assert.ok(llms.includes(url), 'llms.txt must point to the complete public pages');
 

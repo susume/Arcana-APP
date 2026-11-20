@@ -46,6 +46,17 @@ storageFails=false;
 data.set('arcana-journal','{}');assert.equal(run("readStoredJson('arcana-journal',[]).length"),0,'Malformed archive data must normalize to an empty archive');
 
 const renders=[];let resolveAI,rejectAI;let completions=0;
+const upgrades=[];
+context.showUpgradeModal=feature=>upgrades.push(feature);
+assert.equal(run("requestReadingAccess('one-card','classic')"),true);
+assert.equal(run("requestReadingAccess('three-card','classic')"),false);
+assert.equal(run("requestReadingAccess('one-card','ai')"),false);
+run('startQuick()');
+assert.deepEqual(upgrades,['advanced-spreads','ai-reading','photo-ai']);
+run("renderReadingInfographicPanel(document.getElementById('reading-image-export'))");
+assert.match(getNode('reading-image-export').innerHTML,/sample-reading\.html#keepsake/);
+assert.doesNotMatch(getNode('reading-image-export').innerHTML,/<canvas/);
+data.set('arcana_subscription',JSON.stringify({tier:'premium',entitlementToken:'verified-fixture'}));
 context.canGenerateReading=()=>true;context.recordCompletedReading=()=>{completions++;};
 context.requireAIConfiguration=()=>{};context.thoughtfulLoadingHtml=()=>'';
 context.SPREADS.push({id:'one-card',layout:'row',cardCount:1,name:'One Card',positions:[{id:1,name:'Focus',description:'Focus'}]});
@@ -220,6 +231,7 @@ const png={type:'image/png'};
 const canvas={toBlob(callback){callback(png);}};
 let saveAttempts=0;
 let redraws=0;
+context.arcanaAndroid.isPremium=()=>true;
 context.drawReadingInfographic=async()=>{redraws++;};
 context.arcanaAndroid.saveFile=async blob=>{
   assert.equal(blob,png);

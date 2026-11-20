@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f4f0e7">
   <link rel="icon" type="image/png" href="assets/brand/arcana-guide-icon.png">
-  <title>Arcana Guide - Free AI Tarot Reading With Your Own Cards</title>
-  <meta name="description" content="Read your own tarot or playing cards with Arcana Guide. Upload a spread or enter cards by hand. One free reading daily; lifetime Premium from $10 USD.">
+  <title>Arcana Guide - Read Your Own Tarot or Playing Cards</title>
+  <meta name="description" content="Read your own tarot or playing cards with Arcana Guide. Start with a free one-card Classic reading daily. Premium includes AI-assisted readings and personalized posters.">
   <link rel="canonical" href="https://www.arcanaguide.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Arcana Guide">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Arcana Guide - AI Tarot Reading With Your Own Cards">
-  <meta property="og:description" content="Your real cards, a reflective reading, and a place to keep your insight. One free reading daily; lifetime Premium from $10 USD.">
+  <meta property="og:description" content="Your real cards, a reflective reading, and a place to keep your insight. Start with a daily free one-card Classic reading.">
   <meta property="og:url" content="https://www.arcanaguide.com/">
   <meta property="og:image" content="https://www.arcanaguide.com/assets/homepage/atelier/personal-insight.webp">
   <meta property="og:image:width" content="1448">
@@ -20,7 +20,7 @@
   <meta property="og:image:alt" content="Three botanical tarot cards on a sunlit linen reading table">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Arcana Guide - AI Tarot Reading With Your Own Cards">
-  <meta name="twitter:description" content="Read your own physical cards with AI or classic meanings. Start with one free reading per day.">
+  <meta name="twitter:description" content="Start with a free one-card Classic reading. Premium includes hosted AI, larger spreads, and personalized posters.">
   <meta name="twitter:image" content="https://www.arcanaguide.com/assets/homepage/atelier/personal-insight.webp">
   <meta name="twitter:image:alt" content="Three botanical tarot cards on a sunlit linen reading table">
   <link rel="stylesheet" href="css/main.css">
@@ -94,7 +94,7 @@
             "name": "Is Arcana Guide free?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features."
+              "text": "Arcana includes one free reading per day with one manually entered card and built-in Classic meanings. Premium unlocks every spread, AI, and personalized posters with one payment ($10 USD minimum, $20 suggested). New purchases include 30 hosted AI requests each month."
             }
           },
           {
@@ -102,7 +102,7 @@
             "name": "Do I need my own Gemini API key?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection."
+              "text": "Premium includes hosted AI. Browser users with Premium can also use their own Gemini key in Settings."
             }
           },
           {
@@ -155,13 +155,13 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
           Guide me through a spread
         </button>
-        <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+        <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
           My cards are already laid out
         </button>
       </div>
       <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
-      <p class="ritual-trust-note">One free reading per day. No account needed.</p>
+      <p class="ritual-trust-note">One free one-card Classic reading per day. No account needed.</p>
     </div>
 
     <div class="ritual-hero-visual" aria-hidden="true">
@@ -275,7 +275,7 @@
     <div class="journal-copy" id="premium">
       <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
       <h3 id="journal-title">Keep your journey going.</h3>
-      <p>Get unlimited readings, a Premium journal, deeper spreads, narration, and reading comparisons.</p>
+      <p>Unlock every spread, unlimited Classic readings, AI photo identification and interpretation, personalized poster downloads, and journal tools. New purchases include 30 hosted AI requests each month.</p>
       <!-- play:home-offer -->
       <p class="homepage-monetization-copy">Premium lifetime unlock. Pay what you want, starting at $10.</p>
       <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
@@ -295,8 +295,8 @@
     </div>
     <dl class="public-answer-grid">
       <div><dt>What is Arcana Guide?</dt><dd>Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation.</dd></div>
-      <div><dt>Is Arcana Guide free?</dt><dd><!-- play:faq-price -->Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.<!-- /play:faq-price --></dd></div>
-      <div><dt>Do I need my own Gemini API key?</dt><dd>No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection.</dd></div>
+      <div><dt>Is Arcana Guide free?</dt><dd><!-- play:faq-price -->Arcana includes one free reading per day with one manually entered card and built-in Classic meanings. Premium unlocks every spread, AI, and personalized posters with one payment ($10 USD minimum, $20 suggested). New purchases include 30 hosted AI requests each month.<!-- /play:faq-price --></dd></div>
+      <div><dt>Do I need my own Gemini API key?</dt><dd>Premium includes hosted AI. Browser users with Premium can also use their own Gemini key in Settings.</dd></div>
       <div><dt>Where are my readings saved?</dt><dd>Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy.</dd></div>
     </dl>
     <p class="public-more"><a href="faq.html">Read all frequently asked questions</a></p>
@@ -311,7 +311,7 @@
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
         Start a Free Reading
       </button>
-      <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+      <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
         Upload a Spread
       </button>
@@ -362,13 +362,13 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
           Guide me through a spread
         </button>
-        <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+        <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
           My cards are already laid out
         </button>
       </div>
       <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
-      <p class="ritual-trust-note">One free reading per day. No account needed.</p>
+      <p class="ritual-trust-note">One free one-card Classic reading per day. No account needed.</p>
     </div>
 
     <div class="ritual-hero-visual" aria-hidden="true">
@@ -482,7 +482,7 @@
     <div class="journal-copy" id="premium">
       <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
       <h3 id="journal-title">Keep your journey going.</h3>
-      <p>Get unlimited readings, a Premium journal, deeper spreads, narration, and reading comparisons.</p>
+      <p>Unlock every spread, unlimited Classic readings, AI photo identification and interpretation, personalized poster downloads, and journal tools. New purchases include 30 hosted AI requests each month.</p>
       <!-- play:home-offer -->
       <p class="homepage-monetization-copy">Premium lifetime unlock. Pay what you want, starting at $10.</p>
       <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
@@ -502,8 +502,8 @@
     </div>
     <dl class="public-answer-grid">
       <div><dt>What is Arcana Guide?</dt><dd>Arcana Guide is a browser-based AI tarot reading app for physical tarot or playing cards. Choose a spread, draw your own cards, upload a photo or enter the cards manually, and receive a reflective interpretation.</dd></div>
-      <div><dt>Is Arcana Guide free?</dt><dd><!-- play:faq-price -->Arcana includes one free reading per day. Premium is a lifetime unlock with a $10 USD minimum and $20 suggested contribution. Every contribution at or above $10 unlocks the same Premium features.<!-- /play:faq-price --></dd></div>
-      <div><dt>Do I need my own Gemini API key?</dt><dd>No. Arcana offers hosted AI, so you can start without your own API key. An optional Gemini key can be added in Settings for direct requests to Google. AI features need an internet connection.</dd></div>
+      <div><dt>Is Arcana Guide free?</dt><dd><!-- play:faq-price -->Arcana includes one free reading per day with one manually entered card and built-in Classic meanings. Premium unlocks every spread, AI, and personalized posters with one payment ($10 USD minimum, $20 suggested). New purchases include 30 hosted AI requests each month.<!-- /play:faq-price --></dd></div>
+      <div><dt>Do I need my own Gemini API key?</dt><dd>Premium includes hosted AI. Browser users with Premium can also use their own Gemini key in Settings.</dd></div>
       <div><dt>Where are my readings saved?</dt><dd>Saved readings, journal notes, settings, and Premium activation stay in this browser. They do not automatically sync to another device or an AI assistant's browser. Export a journal backup to keep a copy.</dd></div>
     </dl>
     <p class="public-more"><a href="faq.html">Read all frequently asked questions</a></p>
@@ -518,7 +518,7 @@
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
         Start a Free Reading
       </button>
-      <button class="btn ritual-secondary-cta" disabled data-app-startup onclick="startQuick()">
+      <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
         Upload a Spread
       </button>
@@ -588,20 +588,19 @@
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
   <h2>Choose your spread</h2>
-  <p class="onboard compact-onboard">Start small: one card for a daily focus, three for context, or six for a deeper look.</p>
+  <p class="onboard compact-onboard">Start with a free one-card Classic reading. Premium opens more spreads.</p>
   <div class="reading-choices" id="reading-choices">
     <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('one-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
       <p>Best for a daily card reading, a simple yes-or-no feeling, or one clear question.</p>
       <span class="rc-time">~1 minute</span>
     </button>
-    <button type="button" class="reading-choice-card recommended" aria-pressed="false" onclick="selectReadingType('three-card',this)">
+    <button type="button" class="reading-choice-card recommended" aria-pressed="false" data-premium-feature="advanced-spreads" onclick="selectReadingType('three-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
-      <span class="badge" style="margin-bottom:6px">Recommended</span>
       <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
       <span class="rc-time">~3 minutes</span>
     </button>
-    <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('six-card',this)">
+    <button type="button" class="reading-choice-card" aria-pressed="false" data-premium-feature="advanced-spreads" onclick="selectReadingType('six-card',this)">
       <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
       <p>Best when a relationship, career question, or life decision needs more nuance.</p>
       <span class="rc-time">~5 minutes</span>
@@ -783,7 +782,7 @@
   <section class="review-mode" aria-labelledby="review-mode-heading">
     <h3 id="review-mode-heading">Choose your reading</h3>
     <div class="review-mode-options" role="group" aria-label="Reading type">
-      <button type="button" class="btn review-mode-option" data-reading-mode="ai" aria-pressed="false" onclick="selectReviewMode('ai')"><strong>AI reading</strong><span>Personalized interpretation from Gemini</span></button>
+      <button type="button" class="btn review-mode-option" data-premium-feature="ai-reading" data-reading-mode="ai" aria-pressed="false" onclick="selectReviewMode('ai')"><strong>AI reading</strong><span>Personalized interpretation from Gemini</span></button>
       <button type="button" class="btn review-mode-option" data-reading-mode="classic" aria-pressed="false" onclick="selectReviewMode('classic')"><strong>Classic reading</strong><span>Built-in card meanings on this device</span></button>
     </div>
     <p class="review-mode-detail" id="review-mode-detail" role="status"></p>
@@ -802,7 +801,7 @@
   <div class="step-dots" id="dots-reading"></div>
   <h2 class="reading-page-title">Your card reading</h2>
   <div class="reading-toggle no-print" role="group" aria-label="Reading options">
-    <button class="btn btn-sm" id="btn-ai-read" onclick="requestReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
+    <button class="btn btn-sm" id="btn-ai-read" data-premium-feature="ai-reading" onclick="requestReadingMode('ai')"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg> AI Reading</button>
     <button class="btn btn-sm" id="btn-classic-read" onclick="switchReadingMode('classic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.4C10.4 5 7.6 4.5 4.6 5v13.4c3-.5 5.8 0 7.4 1.4M12 6.4c1.6-1.4 4.4-1.9 7.4-1.4v13.4c-3-.5-5.8 0-7.4 1.4M12 6.4V20"></path></svg> Classic Reading</button>
     <button class="btn btn-sm" onclick="narrateReading()" data-premium-feature="voice">Voice</button>
   </div>
@@ -959,9 +958,10 @@
     </section>
     <details class="flow-details settings-section" id="settings-premium-details">
       <summary>Premium Access <span id="premium-settings-status" class="settings-status">Free plan active</span></summary>
+      <p id="hosted-ai-allowance-status" class="settings-note" role="status" hidden></p>
       <!-- play:settings-purchase -->
       <p class="settings-note">Premium is a one-time lifetime unlock. Pay what you want, starting at $10. $20 suggested; every price unlocks the same Premium features.</p>
-      <p class="settings-note">Unlimited readings, up to 50 saved readings, advanced spreads, journal tools, narration, and comparison.</p>
+      <p class="settings-note">All spreads, unlimited Classic readings, personalized posters, and 30 hosted AI requests each month for new purchases.</p>
       <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $10</button></div>
       <details class="flow-details activation-box">
         <summary>Already purchased? Activate Premium</summary>

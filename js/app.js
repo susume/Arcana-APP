@@ -29,6 +29,7 @@ async function initApp(){
     s.appendChild(d);
   }
   currentCards=getCards();
+  let route=location.hash.slice(1);
   // Auto-restore
   const saved=restoreState();
   const savedState=saved&&saved.state?saved.state:null;
@@ -73,15 +74,14 @@ async function initApp(){
     syncUploadDeckSelectors();
     if(state.mode==='quick'){
       document.getElementById('quick-concern').value=concerns.join(', ');
-      document.getElementById('quick-question').open=concerns.length>0;
+      document.getElementById('quick-question').open=concerns.length>0||!!state.readerLifeStage;
       if(!state.spreadId)state.spreadId=state.quickSpreadId;
     }
-    const savedRoute=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
-    if(!openHomepageSection(location.hash.slice(1)))goScreen(screenForRoute(savedRoute),true);
-  }else{
-    const route=location.hash.slice(1)||'welcome';
-    if(!openHomepageSection(route))goScreen(screenForRoute(route),true);
+    if(!homepageSections.has(route)&&screenForRoute(route)!=='screen-history'){
+      route=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
+    }
   }
+  if(!openHomepageSection(route))goScreen(screenForRoute(route||'welcome'),true);
   document.querySelectorAll('.modal-overlay').forEach(m=>{
     m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)});
   });
@@ -104,10 +104,11 @@ async function initApp(){
       openConfirmDialog('Start a new reading?', 'You have a reading in progress. Starting a new reading replaces that draft.', startGuided, 'Start new reading', false, false);
     }else startGuided();
   }
+  window.addEventListener('hashchange',()=>{
+    const route=location.hash.slice(1);
+    if(!openHomepageSection(route))goScreen(screenForRoute(route),true);
+  });
+  globalThis.arcanaAndroid?.start();
 }
 
-window.addEventListener('hashchange',()=>{
-  const route=location.hash.slice(1);
-  if(!openHomepageSection(route))goScreen(screenForRoute(route),true);
-});
 initApp();

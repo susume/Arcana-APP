@@ -167,13 +167,13 @@ function seedSpread(context,{id,name,cardCount,layout}) {
   seedRomany(context);
   const prompt = context.buildAIReadingPrompt({ readingStyle: 'intuitive', readingTone: 'warm' });
 
-  assert.match(prompt, /Return ONLY one valid JSON object/);
+  assert.match(prompt, /Return one JSON object only/);
   assert.match(prompt, /"quickSummary"/);
   assert.match(prompt, /"mainMessage"/);
   assert.match(prompt, /"guidance"/);
   assert.match(prompt, /LAYOUT: 7 columns of 3 cards each/);
-  assert.match(prompt, /Include one positions item for every entered spread card/);
-  assert.match(prompt, /Do not invent, rename, omit, or change the orientation of any card/);
+  assert.match(prompt, /Include each supplied position ID exactly once in order/);
+  assert.match(prompt, /honor the confirmed name and orientation/);
   assert.match(prompt, /This is reflective guidance, not medical, legal, financial, mental-health, or crisis advice/);
   assert.doesNotMatch(prompt, /Generate a complete reading/);
   assert.doesNotMatch(prompt, /Position-by-Position/);
@@ -206,8 +206,8 @@ function seedSpread(context,{id,name,cardCount,layout}) {
     const fallback = context.generateClassicReading();
 
     assert.match(prompt, promptPattern);
-    assert.match(prompt, /Include one positions item for every entered spread card/);
-    assert.match(prompt, /Do not invent, rename, omit, or change the orientation of any card/);
+    assert.match(prompt, /Include each supplied position ID exactly once in order/);
+    assert.match(prompt, /honor the confirmed name and orientation/);
     assert.match(fallback, /## Position-by-Position/);
     assert.match(fallback, /## Practical Guidance/);
   });

@@ -66,6 +66,7 @@ function resolveScreenPrerequisite(id){
   if(!VALID_SCREEN_IDS.has(id))return 'screen-welcome';
   if(id==='screen-welcome')return id;
   if(id==='screen-history')return id;
+  if(!isPremium()&&(id==='screen-quick'||state.mode==='quick')&&!(id==='screen-reading'&&state.narrative))return 'screen-welcome';
   if(id==='screen-quick')return state.mode==='quick'?id:'screen-welcome';
   if(state.mode==='quick'){
     if(!['screen-card-entry','screen-overview','screen-reading'].includes(id))return 'screen-welcome';
@@ -78,6 +79,7 @@ function resolveScreenPrerequisite(id){
   if(state.mode!=='guided')return 'screen-welcome';
   if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
   if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
+  if(!isPremium()&&state.spreadId!==FREE_SPREAD_ID&&['screen-reflection','screen-card-entry','screen-overview'].includes(id))return 'screen-spread';
   if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
   return id;
 }
@@ -95,6 +97,7 @@ function goScreen(id, fromRouter){
   if(previous==='screen-reading'&&previous!==id){
     readingRequestVersion++;
     state.readingInProgress=false;
+    cancelAIRequest();
   }
   const nextHash='#'+routeForScreen(id);
   if(!fromRouter && location.hash !== nextHash) location.hash = nextHash;
@@ -196,6 +199,7 @@ function startGuided(){
   goScreen('screen-concerns');
 }
 function startQuick(){
+  if(!requestPremiumFeature('photo-ai'))return;
   readingRequestVersion++;
   state.readingInProgress=false;
   state.readingPackage=null;
@@ -325,6 +329,7 @@ function renderSpreads(){
   });
 }
 function selectSpread(id,el){
+  if(!requestReadingAccess(id))return;
   state.spreadId=id;
   document.querySelectorAll('.spread-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
   el.classList.add('selected');
@@ -348,6 +353,7 @@ function buildCustomPositions(){
 }
 function confirmSpread(alreadyDrawn=false){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
+  if(!requestReadingAccess(state.spreadId))return;
   saveReaderContext('reader-life-stage');
   if(alreadyDrawn===true){skipPreparation();return;}
   state.preparationSkipped=false;
@@ -355,9 +361,10 @@ function confirmSpread(alreadyDrawn=false){
 }
 function skipPreparation(){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
+  if(!requestReadingAccess(state.spreadId))return;
   state.preparationSkipped=true;
   state.guidedStep=0;
-  state.cardEntryTab='tab-upload';
+  state.cardEntryTab=isPremium()?'tab-upload':'tab-manual';
   goScreen('screen-card-entry');
 }
 function backFromCardEntry(){
@@ -371,7 +378,7 @@ function saveReaderContext(lifeStageId){
 
 // ===== READING TYPE SELECTION =====
 function selectReadingType(id, el){
-  if(PREMIUM_SPREAD_IDS.includes(id) && !requestPremiumFeature('advanced-spreads')) return;
+  if(!requestReadingAccess(id))return;
   if(state.spreadId&&state.spreadId!==id&&hasSelectedReadingCards()){
     if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
     clearSelectedReadingCards();
@@ -579,7 +586,7 @@ function getSharePayload(){
         positionName:position?position.name:'',
         name:entry.name,
         orientation:entry.orientation||'upright',
-        artUrl:card&&typeof getCardArtUrl==='function'?getCardArtUrl(card,320):'',
+        artUrl:typeof getCardArtUrl==='function'?getCardArtUrl(card,250,{forCanvas:true}):'',
         system:card&&card.system?card.system:'',
         suit:card&&card.suit?card.suit:'',
         arcana:card&&card.arcana?card.arcana:'',
@@ -593,38 +600,76 @@ function shareReading(){
   showShareModal(getSharePayload());
 }
 
+function buildPrintableReading(){
+  const narrative=state.narrative?.trim();
+  if(!narrative||state.readingInProgress)return null;
+  const spread=getReadingSpread();
+  const saved=getSavedCurrentReading();
+  const title=saved?.title||(state.readingMode==='ai'&&state.readingPackage?.title)||spread?.name||'Your card reading';
+  const date=new Date(saved?.date||Date.now());
+  const meta=[
+    title===spread?.name?'':spread?.name,
+    state.cardSystem==='tarot'?'Tarot':'Playing cards',
+    state.readingMode==='ai'?'AI reading':'Classic reading',
+    Number.isNaN(date.getTime())?'':date.toLocaleDateString(getReadingLocale(),{dateStyle:'long'})
+  ].filter(Boolean).map(escapeHtml).join(' &middot; ');
+  const questions=(state.concerns||[]).filter(Boolean);
+  const focus=questions.length
+    ?`<section class="print-focus"><h2>Question or focus</h2>${questions.map(question=>`<p>${escapeHtml(question)}</p>`).join('')}</section>`
+    :'';
+  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(title)} | Arcana Guide</title><style>
+    @page{margin:14mm}
+    *{box-sizing:border-box}
+    body{margin:0;color:#202522;background:#fff;font:11pt/1.4 Georgia,'Times New Roman',serif;overflow-wrap:anywhere}
+    .print-heading{border-top:2pt solid #29483b;border-bottom:.6pt solid #949b94;padding:3.5mm 0;margin-bottom:4mm;break-inside:avoid}
+    .print-brand,.print-meta,.print-focus h2{font:600 9pt/1.4 Arial,sans-serif;color:#3f5449}
+    .print-brand,.print-focus h2{text-transform:uppercase;letter-spacing:.1em}
+    h1{font-size:23pt;line-height:1.12;margin:1.5mm 0}
+    .print-heading p,.print-focus p{margin:0}
+    .print-focus{border-left:1.5pt solid #607660;padding-left:3mm;margin-bottom:4mm}
+    .print-focus h2{margin:0 0 1mm;break-after:avoid}
+    .print-focus p + p{margin-top:1.5mm}
+    .reading-section{margin:0 0 3.5mm}
+    .reading-section h3{font-size:13.5pt;line-height:1.24;color:#29483b;margin:0 0 1.5mm;break-after:avoid}
+    .reading-section p,.reading-section li{margin:0 0 1mm;orphans:3;widows:3}
+    .reading-section p:has(>strong:only-of-type + br:only-of-type){break-after:avoid}
+    .reading-section ul{margin:0;padding-left:5mm;list-style:disc;break-inside:avoid}
+  </style></head><body><main>
+    <header class="print-heading">
+      <p class="print-brand">Arcana Guide</p>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="print-meta">${meta}</p>
+    </header>
+    ${focus}
+    ${renderSafeMarkdown(narrative)}
+  </main></body></html>`;
+  return {html,title};
+}
+
 function printReading(){
-  const source=[document.getElementById('reading-content'),document.getElementById('quick-reading-content')]
-    .find(el=>el&&el.innerText.trim());
-  if(!source || !source.innerText.trim()){
+  const printable=buildPrintableReading();
+  if(!printable){
     showToast('No reading text is ready to print.');
     return;
   }
-  const spread=getReadingSpread();
-  const title=spread?spread.name:'Arcana Reading';
-  document.querySelectorAll('.print-frame').forEach(el=>el.remove());
+  const {html,title}=printable;
+  if(globalThis.arcanaAndroid?.print){
+    arcanaAndroid.print(html,title).catch(()=>showToast('Printing could not start.'));
+    return;
+  }
+  if(document.querySelector('.print-frame'))return;
+  const trigger=document.activeElement;
   const frame=document.createElement('iframe');
   frame.className='print-frame';
+  frame.title='Printable card reading';
+  frame.tabIndex=-1;
   frame.setAttribute('aria-hidden','true');
-  frame.srcdoc=`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>
-    @page{margin:14mm}
-    *{box-sizing:border-box}
-    body{margin:0;color:#111;background:#fff;font-family:Georgia,'Times New Roman',serif}
-    .print-reading-frame{border:1.5px solid #222;padding:16px;overflow:visible}
-    h1{font-family:Georgia,'Times New Roman',serif;font-size:20pt;line-height:1.2;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #999}
-    .reading-summary-card,.journal-section,.no-print{display:none!important}
-    .reading-section{display:block;break-inside:auto;page-break-inside:auto;margin:0 0 14px;padding:0;overflow:visible}
-    .reading-section h3{display:block;color:#111;border-bottom:1px solid #ccc;font-size:16pt;line-height:1.25;margin:0 0 8px;padding:0 0 5px}
-    .reading-section h3::before{display:none!important}
-    .reading-section p,.reading-section li{color:#222;font-size:11.5pt;line-height:1.48;margin:0 0 7px;overflow:visible}
-    .reading-section ul{padding-left:18px;list-style:disc}
-    .reading-section li{padding-left:0}
-    .reading-section li::before{display:none!important}
-    strong{font-weight:700} em{font-style:italic}
-  </style></head><body><main class="print-reading-frame"><h1>${escapeHtml(title)}</h1>${source.innerHTML}</main></body></html>`;
+  frame.srcdoc=html;
   const cleanup=()=>{
+    if(!frame.isConnected)return;
     frame.remove();
     window.removeEventListener('afterprint',cleanup);
+    trigger?.focus({preventScroll:true});
   };
   window.addEventListener('afterprint',cleanup);
   frame.onload=()=>{
@@ -651,7 +696,7 @@ function showShareModal(data){
     <h3 id="share-title">Share Your Spread</h3>
     <label class="share-label" for="share-comment">Comment</label>
     <textarea id="share-comment" maxlength="180" placeholder="The cards found me at the right moment." oninput="updateSharePreview()"></textarea>
-    <canvas id="share-canvas" width="600" height="800"></canvas>
+    ${premiumFeature('poster')?'<canvas id="share-canvas" width="600" height="800" role="img" aria-label="Preview of your shared spread"></canvas>':''}
     <div class="share-platforms">
       <button class="btn btn-sm" onclick="openSocialShare('facebook')">Facebook</button>
       <button class="btn btn-sm" onclick="openSocialShare('line')">LINE</button>
@@ -1003,6 +1048,7 @@ function switchTab(tabId,btn){
   btn.tabIndex=0;
 }
 function selectCardEntryTab(tabId,btn){
+  if(tabId!=='tab-manual'&&!requestPremiumFeature('photo-ai'))return;
   switchTab(tabId,btn);
   autoSaveState();
 }
@@ -1022,15 +1068,18 @@ function buildCardEntry(){
   const spread=getSpread();
   if(!spread)return;
   const quick=state.mode==='quick';
+  const manualOnly=quick||!isPremium();
   const tabs=document.querySelector('#screen-card-entry .tab-bar');
   const description=document.getElementById('card-entry-description');
-  if(tabs)tabs.hidden=quick;
-  if(description)description.textContent=quick
+  if(tabs)tabs.hidden=manualOnly;
+  const jumper=document.getElementById('jumper-options');
+  if(jumper)jumper.hidden=!isPremium();
+  if(description)description.textContent=manualOnly
     ?'Choose the physical card you placed in each position.'
     :'Draw from your physical deck, upload your spread, or enter the cards by hand.';
-  if(!quick)buildGuidedDraw(spread);
+  if(!manualOnly)buildGuidedDraw(spread);
   buildManualEntries(spread);
-  const tabId=quick?'tab-manual':state.cardEntryTab||(state.preparationSkipped?'tab-upload':'tab-guided');
+  const tabId=manualOnly?'tab-manual':state.cardEntryTab||(state.preparationSkipped?'tab-upload':'tab-guided');
   const tab=document.querySelector(`.tab-btn[aria-controls="${tabId}"]`);
   if(tab)switchTab(tabId,tab);
 }
@@ -1518,10 +1567,9 @@ function updateQuickGoBtn(){
   button.disabled=busy;
   button.setAttribute('aria-disabled',String(busy||!hasPhoto||!hasSpread));
   button.textContent=busy?'Identifying cards…':'Identify cards';
-  status.textContent=busy?'Checking the photo for your cards.':!hasPhoto&&!hasSpread
-    ?'Add a photo and choose your layout to continue.'
-    :!hasPhoto?'Add your spread photo to identify the cards.'
-    :!hasSpread?'Choose the layout you used in your photo.'
+  status.textContent=busy?'Checking the photo for your cards.':!hasSpread
+    ?'Choose a layout to get started.'
+    :!hasPhoto?'Add a photo for automatic identification, or enter your cards by hand.'
     :'Identification sends your photo and layout to Gemini.';
 }
 
@@ -1562,21 +1610,24 @@ function renderQuickSpreads(){
     const spread=SPREADS.find(item=>item.id===id);
     if(!spread)continue;
     const primary=id==='one-card'||id==='three-card';
-    const locked=PREMIUM_SPREAD_IDS.includes(id)&&!isPremium();
+    const advanced=PREMIUM_SPREAD_IDS.includes(id);
     const selected=state.quickSpreadId===id;
     const card=document.createElement('button');
     const title=id==='one-card'?'One Card':id==='three-card'?'Past · Present · Future':spread.name;
     card.type='button';
     card.className='spread-card qs-card'+(selected?' selected':'');
     card.dataset.spreadId=id;
-    if(PREMIUM_SPREAD_IDS.includes(id))card.dataset.premiumFeature='advanced-spreads';
+    if(advanced)card.dataset.premiumFeature='advanced-spreads';
     card.setAttribute('aria-pressed',String(selected));
     card.onclick=()=>{
-      if(PREMIUM_SPREAD_IDS.includes(id)&&!requestPremiumFeature('advanced-spreads'))return;
+      if(advanced&&!requestPremiumFeature('advanced-spreads'))return;
       selectQuickSpread(id);
     };
-    card.innerHTML='<h4>'+escapeHtml(title)+'</h4><span class="count">'+spread.cardCount+
-      (spread.cardCount===1?' card':' cards')+(locked?' · Premium':'')+'</span>';
+    card.innerHTML='<span class="quick-layout-mark" aria-hidden="true"></span>'+
+      '<span class="quick-layout-name">'+escapeHtml(title)+'</span>'+
+      '<span class="quick-layout-meta"><span class="count">'+spread.cardCount+
+      (spread.cardCount===1?' card':' cards')+'</span>'+
+      (advanced?'<span class="quick-layout-premium">Premium</span>':'')+'</span>';
     (primary?common:more).appendChild(card);
     if(!primary&&selected)document.getElementById('quick-more-layouts').open=true;
   }
@@ -1597,6 +1648,7 @@ function enterQuickCardsManually(){
 }
 
 async function processUpload(file,zoneId,btnId,inputId){
+  if(!requestPremiumFeature('photo-ai'))return;
   const version=++photoUploadVersion;
   cancelPhotoIdentification();
   try{
@@ -1650,6 +1702,7 @@ function identifyCards(){
 }
 
 function quickRead(){
+  if(!requestPremiumFeature('photo-ai'))return;
   if(!quickHasPhoto()||!state.quickSpreadId)return;
   const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
   if(!spread)return;
@@ -1660,6 +1713,7 @@ function quickRead(){
 }
 
 async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
+  if(!requestPremiumFeature('photo-ai'))return;
   if(activePhotoIdentification)return;
   const spread=getSpread();
   const button=document.getElementById(btnId);
@@ -1710,7 +1764,8 @@ async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
   }catch(error){
     if(version!==photoIdentificationVersion||requestVersion!==readingRequestVersion)return;
     const noCards=error.message?.startsWith('No valid cards');
-    const message=noCards?'No valid cards were identified. Try a clear photo taken directly above the spread.'
+    const message=['monthly_limit','service_limit','reactivation_required'].includes(error.code)?error.message
+      :noCards?'No valid cards were identified. Try a clear photo taken directly above the spread.'
       :'Gemini couldn’t check this photo. Try another photo or enter your cards manually.';
     renderPhotoRecovery(zoneId,resultId,inputId,message);
   }finally{
@@ -1862,6 +1917,7 @@ function renderOverview(){
 
 function selectReviewMode(mode){
   if(mode!=='classic'&&mode!=='ai')return;
+  if(!requestReadingAccess(state.spreadId,mode))return;
   state.reviewModeChoice=mode;
   updateReviewMode(getSpreadReview());
 }
@@ -1877,6 +1933,7 @@ function reviewPrerequisite(review){
 }
 
 function updateReviewMode(review){
+  if(!isPremium())state.reviewModeChoice='classic';
   const mode=state.reviewModeChoice;
   const detail=document.getElementById('review-mode-detail');
   const action=document.getElementById('review-generate');
@@ -1894,6 +1951,7 @@ function updateReviewMode(review){
 }
 
 function submitReviewedReading(){
+  if(!requestReadingAccess(state.spreadId,state.reviewModeChoice))return;
   const review=getSpreadReview();
   if(reviewPrerequisite(review))return;
   const mode=state.reviewModeChoice;
@@ -2255,7 +2313,10 @@ function clearSavedData(){
     closeModal('modal-settings');
     setTimeout(()=>location.reload(),300);
   };
-  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Clear Arcana data?','Download a backup first. This permanently removes saved readings, reflections, settings, usage, and this browser\'s Premium activation. Keep your purchase receipt to reactivate.',clear,'Clear data',true))return;
+  const description=globalThis.arcanaAndroid
+    ? 'Download a backup first. This permanently removes saved readings, reflections, settings, and usage from this device. You can restore Premium with the same Google Play account.'
+    : 'Download a backup first. This permanently removes saved readings, reflections, settings, usage, and this browser\'s Premium activation. Keep your purchase receipt to reactivate.';
+  if(typeof openConfirmDialog==='function'&&openConfirmDialog('Clear Arcana data?',description,clear,'Clear data',true))return;
   if(confirm('Delete saved readings and settings?'))clear();
 }
 function openModal(id){
@@ -2419,8 +2480,8 @@ function renderReadingSaveStatus(){
   if(!section)return;
   const premium=isPremium();
   const saved=getSavedCurrentReading();
-  section.hidden=!!saved;
-  document.getElementById('journal-premium-preview').hidden=premium;
+  section.hidden=!premium||!!saved;
+  document.getElementById('journal-premium-preview').hidden=premium||!!saved;
   document.getElementById('journal-composer').hidden=!premium;
   document.getElementById('journal-reflection-prompt').textContent=state.readingPackage?.reflectionQuestions?.[0]||'What do you want to remember about this reading?';
   document.getElementById('reading-monthly-offer').hidden=premium||(getUsage().monthlyCount||0)<3;

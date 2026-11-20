@@ -3,9 +3,11 @@ const GEMINI_MODELS=(typeof ARCANA_GEMINI_MODELS!=='undefined'&&Array.isArray(AR
   ? ARCANA_GEMINI_MODELS
   : ['gemini-3.6-flash','gemini-3.1-flash-lite','gemini-2.5-flash'];
 let activeAIController=null;
+let aiRequestEpoch=0;
 const AI_REQUEST_TIMEOUT_MS=30000;
 
 function cancelAIRequest(){
+  aiRequestEpoch++;
   if(activeAIController)activeAIController.abort();
   activeAIController=null;
 }
@@ -19,7 +21,7 @@ async function fetchAIWithTimeout(resource,init,timeoutMs=AI_REQUEST_TIMEOUT_MS)
 }
 
 function hasAIConfiguration(){
-  return !!(getSavedGeminiKey() || getGoogleApiKey() || getAIProxyUrl());
+  return !!(getDirectGeminiKey() || getAIProxyUrl());
 }
 
 function requireAIConfiguration(){
@@ -28,7 +30,7 @@ function requireAIConfiguration(){
 }
 
 function requireGoogleApiKey(){
-  const key=getSavedGeminiKey() || getGoogleApiKey();
+  const key=getDirectGeminiKey();
   if(!key)throw new Error('Open Settings and add your Gemini API key.');
   return key;
 }
@@ -37,7 +39,12 @@ function getSavedGeminiKey(){
   return loadSettings().geminiKey || '';
 }
 
-async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
+function getDirectGeminiKey(key){
+  if(globalThis.document?.documentElement?.hasAttribute?.('data-google-play-release'))return '';
+  return key || getSavedGeminiKey() || getGoogleApiKey();
+}
+
+async function callGemini(prompt,apiKey,imageData=null,statusEl=null,operation=imageData?'identify':'interpret',cardCount=1){
   const parts=[{text:prompt}];
   if(imageData){
     const base64=imageData.split(',')[1];
@@ -45,7 +52,7 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
     parts.push({inline_data:{mime_type:mime,data:base64}});
   }
   const body=JSON.stringify({contents:[{parts}]});
-  apiKey=apiKey || getSavedGeminiKey() || getGoogleApiKey();
+  apiKey=getDirectGeminiKey(apiKey);
 
   if(apiKey){
     const directHeaders={'Content-Type':'application/json','x-goog-api-key':apiKey};
@@ -95,14 +102,22 @@ async function callGemini(prompt,apiKey,imageData=null,statusEl=null){
 
   const proxyUrl=getAIProxyUrl();
   if(proxyUrl){
+    const epoch=aiRequestEpoch;
+    const session=await getHostedAiSession();
+    if(epoch!==aiRequestEpoch)throw new Error('The AI request was canceled.');
     if(statusEl)statusEl.textContent='Contacting Arcana AI...';
-    const resp=await fetchAIWithTimeout(proxyUrl,{
+    const resp=await fetchAIWithTimeout(proxyUrl.replace(/\/$/,'')+'/api/ai/v2',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt,imageData})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.aiToken},
+      body:JSON.stringify({prompt,imageData,operation,cardCount,requestId:crypto.randomUUID()})
     });
     const data=await resp.json().catch(()=>({}));
-    if(!resp.ok)throw new Error(data.error||'The AI service is temporarily unavailable. Please try again.');
+    if(Object.hasOwn(data,'remaining'))updateHostedAiAllowance(session,data.remaining);
+    if(!resp.ok){
+      const error=new Error(data.error||'The AI service is temporarily unavailable. Please try again.');
+      error.code=data.code;
+      throw error;
+    }
     return data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||'No response generated.';
   }
 

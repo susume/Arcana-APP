@@ -6,7 +6,7 @@ function createKv() {
   const data = new Map();
   return {
     data,
-    async get(key) { return data.get(key) || null; },
+    async get(key, type) { return type === 'json' ? JSON.parse(data.get(key) || 'null') : data.get(key) || null; },
     async put(key, value) { data.set(key, value); }
   };
 }

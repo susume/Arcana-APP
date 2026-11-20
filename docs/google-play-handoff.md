@@ -1,0 +1,19 @@
+# Arcana Guide Google Play handoff
+
+## Release status as of November 20, 2026
+
+- **Production** — Google Play shows **Changes in review** for Arcana Guide (`com.arcanaguide.app`) version `1.0.2` (`versionCode 3`). The submission targets adults 18 and over in 167 countries and regions. Managed publishing is off, so Play publishes after approval. [Publishing overview](https://play.google.com/console/u/0/developers/6752845458872470623/app/4973861156192596424/publishing)
+- **Availability** — The selection includes the U.K., Ireland, and other supported markets. It excludes Belarus, China, Cuba, Hong Kong, Iran, Macao, Myanmar, Russia, and the Rest of World catch-all based on Gemini's published availability. Saudi Arabia and the UAE were held for local review of rules on divination or sorcery. Review separate merchant requirements before enabling Premium sales in additional markets. [Play production countries](https://play.google.com/console/u/0/developers/6752845458872470623/app/4973861156192596424/tracks/production?tab=countryAvailability) · [Gemini regions](https://aistudio.google.com/docs/available-regions) · [Play country requirements](https://support.google.com/googleplay/android-developer/answer/6223646?hl=en)
+- **Gemini** — AI Studio showed Arcana on Paid Tier 1 with a ¥2,000 prepaid balance and auto-reload off. The production Worker's Gemini credential matched one masked key identifier in the paid Arcana project, and a synthetic AI request returned the expected text. [AI Studio Billing](https://aistudio.google.com/billing) · [Gemini API terms](https://ai.google.dev/gemini-api/terms)
+- **Premium** — The `arcana_premium_lifetime` product and its `lifetime` Buy option are active at AU$15.99, CA$13.99, NZ$20.99, and US$9.99. The dedicated Play Billing service account has financial data and order management access for Arcana Guide only. The live Worker's `/api/play/status` returned HTTP 200 with `{"ready":true}`, confirming Google OAuth authentication. [Play product](https://play.google.com/console/u/0/developers/6752845458872470623/app/4973861156192596424/one-time-products/sku/arcana_premium_lifetime) · [Worker setup](../server/README.md)
+- **Review and disclosures** — The public privacy policy is live. Play Console has private reviewer-access instructions and the completed Data safety declaration in the review submission. The live Worker verified reviewer access and accepted a synthetic reading report. [Privacy policy](https://www.arcanaguide.com/privacy.html) · [Data safety evidence](google-play-disclosures.md)
+
+## Remaining release work
+
+1. Check Publishing overview for Google's decision and confirm availability after approval.
+2. Use an Android device with a Play license tester to verify checkout, order acknowledgement, and **Settings → Premium Access → Restore purchases**. The internal track had no release when last checked. Reuse the uploaded build in the Play library if you need an internal release. The signed local artifact is `dist/play/arcana-guide-1.0.2-production.aab`. Export any local journal before replacing a debug build with the Play-signed build. [Google Play Billing testing](https://developer.android.com/google/play/billing/test) · [Android build and signing](../android/README.md)
+3. Rotate the Gemini key and store the replacement as a Cloudflare Secret. Verify a synthetic AI request after deploying the replacement. [Worker setup](../server/README.md)
+
+## Credentials
+
+Keep the service-account JSON in the Worker secret `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` and store any local backup outside the checkout. The signing and reviewer-code scripts store their credentials under `%LOCALAPPDATA%\ArcanaGuide`. The root `.gitignore` covers common Play key filenames, review-code files, the encrypted upload password, and Android build outputs. Keep the reviewer code in Play Console's private review instructions.

@@ -10,7 +10,7 @@ async function generateReading(mode=state.reviewModeChoice){
     return;
   }
   if(mode!=='ai'&&mode!=='classic')return;
-  if(PREMIUM_SPREAD_IDS.includes(state.spreadId)&&!requestPremiumFeature('advanced-spreads'))return;
+  if(!requestReadingAccess(state.spreadId,mode))return;
   if(!canGenerateReading()){
     showUpgradeModal('daily-limit');
     return;
@@ -20,8 +20,8 @@ async function generateReading(mode=state.reviewModeChoice){
     return;
   }
   state.cards=Object.fromEntries(review.positions.filter(item=>item.entry).map(({position,entry})=>[position.id,entry]));
-  state.droppedCard=review.drop?.entry||null;
-  state.hasDroppedCard=!!review.drop;
+  state.droppedCard=isPremium()?review.drop?.entry||null:null;
+  state.hasDroppedCard=!!state.droppedCard;
   state.narrative='';
   state.readingPackage=null;
   state.readingInfographic=null;
@@ -50,7 +50,8 @@ async function generateReading(mode=state.reviewModeChoice){
       const notice=document.createElement('p');
       notice.className='reading-mode-notice';
       notice.setAttribute('role','status');
-      notice.textContent='Gemini couldn’t complete the reading. Here’s your Classic reading.';
+      notice.textContent=['monthly_limit','service_limit','reactivation_required'].includes(e.code)
+        ?`${e.message} Here’s your Classic reading.`:'Gemini couldn’t complete the reading. Here’s your Classic reading.';
       content.insertAdjacentElement('afterbegin',notice);
     }
   }else{
@@ -78,6 +79,7 @@ function highlightReadingBtn(mode){
 }
 
 function requestReadingMode(mode){
+  if(!requestReadingAccess(state.spreadId,mode))return;
   if(mode==='ai'){
     if(state.readingMode==='ai'&&state.narrative)return;
     openConfirmDialog('Switch to an AI reading?',AI_READING_DISCLOSURE,()=>switchReadingMode('ai'),'Start AI reading',false,false);
@@ -87,6 +89,7 @@ function requestReadingMode(mode){
 }
 
 async function switchReadingMode(mode){
+  if(!requestReadingAccess(state.spreadId,mode))return;
   const review=getSpreadReview();
   if(!review.filled||review.uncertain){
     showToast('Review your cards before starting another reading.');
@@ -239,9 +242,9 @@ function buildAIReadingPrompt(settings){
       const card=currentCards.find(c=>c.name.toLowerCase()===entry.name.toLowerCase());
       const kws=card?card.keywords.join(', '):'';
       const meaning=card?(entry.orientation==='reversed'?card.reversed:card.upright):'';
-      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: ${entry.name} (${entry.orientation}). Keywords: ${kws}. Reference meaning: ${meaning}\n`;
-    }else{
-      cardLines+=`  ${pos.id}. Display label: ${displayLabel}. Position: ${pos.name} [${pos.description}]. Card: (no card entered)\n`;
+      const label=displayLabel!==pos.name?` (${displayLabel})`:'';
+      const reference=meaning||kws;
+      cardLines+=`${pos.id}. ${pos.name}${label} [${pos.description}]: ${entry.name} (${entry.orientation}). ${reference}\n`;
     }
   });
 
@@ -271,15 +274,15 @@ function buildAIReadingPrompt(settings){
   return `${systemInstructions.role}
 ${systemInstructions.naming}
 
-Create one coherent, useful reading from the supplied cards. Interpret the spread as a developing story rather than repeating dictionary meanings. Be specific about tensions, turning points, support, and practical choices. Avoid vague filler such as "trust your intuition" unless you explain what the reader can actually notice or do. Keep all statements reflective and non-deterministic.
+Connect the confirmed cards into a reflective reading. Explain specific tensions and practical choices. Avoid repetition, filler, and deterministic claims.
 
-Return ONLY one valid JSON object. Do not use markdown fences, commentary, or text before or after the JSON.
+Return one JSON object only.
 
 Required JSON schema:
 {
   "title": "A concise title for this reading",
-  "quickSummary": "A 2-3 sentence reading-at-a-glance summary",
-  "mainMessage": "A focused paragraph explaining the central movement of the spread",
+  "quickSummary": "A short overview for the reading and poster",
+  "mainMessage": "One paragraph explaining the central movement",
   "keyThemes": [
     {"title":"2-5 word theme","message":"One concise explanatory sentence"}
   ],
@@ -287,24 +290,19 @@ Required JSON schema:
     {
       "position":"Use the exact supplied position ID",
       "headline":"A short, memorable message for this position",
-      "interpretation":"1-3 specific sentences connecting the card to this exact position",
-      "action":"One realistic action or reflection focus"
+      "interpretation":"One or two sentences relating the card to its position",
+      "action":"One specific action or reflection focus"
     }
   ],
-  "patterns": ["2-5 concise observations about card interactions, suits, numbers, reversals, court cards, or Major Arcana"],
-  "guidance": ["3-5 practical, non-alarming next steps"],
+  "patterns": ["Up to three distinct patterns supported by the cards"],
+  "guidance": ["Up to three practical next steps"],
   "reflectionQuestions": ["2-3 useful journal questions"],
-  "closingMessage": "One reassuring closing sentence suitable for the bottom of an infographic"
+  "closingMessage": "One reassuring closing sentence"
 }
 
 Quality requirements:
-- Include one positions item for every entered spread card, in the supplied position order.
-- Do not invent, rename, omit, or change the orientation of any card.
-- For every positions item, explicitly interpret what that spread position represents and how this card behaves through that lens.
-- Make connections across cards. Identify phases, contrasts, repetitions, and turning points.
-- For long spreads, keep each position concise enough to scan.
-- keyThemes must contain exactly 3 items.
-- Keep each headline under 55 characters, each action under 110 characters, and each infographic-friendly interpretation under 260 characters.
+- Include each supplied position ID exactly once in order. Interpret its meaning and honor the confirmed name and orientation.
+- Return exactly 3 keyThemes. Limits per position: headline 55 characters, interpretation 260, action 110.
 - Use the language of the reader's concern or question when clear. Otherwise use the interface locale: ${getReadingLocale()}.
 - Current local date: ${getLocalDateContext()}. For a yearly spread, position 1 is the current month and the supplied display labels are authoritative.
 - Pattern analysis should cover ${systemInstructions.pattern} where relevant.
@@ -328,7 +326,9 @@ async function generateAIReading(settings,statusElement){
     buildAIReadingPrompt(settings),
     null,
     null,
-    statusElement||document.getElementById('ai-status')
+    statusElement||document.getElementById('ai-status'),
+    'interpret',
+    Math.max(1,Object.keys(state.cards).length)
   );
   if(requestVersion!==readingRequestVersion)return '';
   const readingPackage=parseAIReadingPackage(raw);
@@ -642,7 +642,7 @@ function buildInfographicModel(readingPackage){
       orientation:item.orientation,
       headline:cleanInfographicHeadline(item.headline,item.positionName,item.cardName),
       message:item.interpretation,
-      artUrl:resolveInfographicCardArtUrl(item.cardName,item.orientation)
+      artUrl:resolveInfographicCardArtUrl(item.cardName)
     })),
     advice:readingPackage.guidance.slice(0,4),
     closingMessage:readingPackage.closingMessage,
@@ -652,33 +652,10 @@ function buildInfographicModel(readingPackage){
   };
 }
 
-function resolveInfographicCardArtUrl(cardName,orientation){
-  const card=currentCards.find(c=>c.name.toLowerCase()===String(cardName).toLowerCase());
-  if(card){
-    const direct=card.imageUrl||card.imageURL||card.artUrl||card.artURL||card.image||card.src;
-    if(typeof direct==='string'&&direct.trim())return direct.trim();
-  }
-
-  const helperNames=[
-    'getCardArtUrl',
-    'getCardImageUrl',
-    'getCardArtworkUrl',
-    'cardArtUrlFor',
-    'buildCardArtUrl'
-  ];
-  const runtime=typeof window!=='undefined'?window:globalThis;
-  for(const name of helperNames){
-    const helper=runtime[name];
-    if(typeof helper!=='function')continue;
-    try{
-      const value=helper(card||cardName,orientation,state.cardSystem);
-      if(typeof value==='string'&&value.trim())return value.trim();
-      if(value&&typeof value.src==='string')return value.src;
-    }catch(_e){
-      // The installed helper may use a different signature; try the next one.
-    }
-  }
-  return '';
+function resolveInfographicCardArtUrl(cardName){
+  const name=String(cardName).toLowerCase();
+  const card=currentCards.find(item=>item.name.toLowerCase()===name);
+  return typeof getCardArtUrl==='function'?getCardArtUrl(card,250,{forCanvas:true}):'';
 }
 
 function renderReading(text){
@@ -686,7 +663,7 @@ function renderReading(text){
   // Markdown rendering — process lists properly
   content.innerHTML=renderSafeMarkdown(text);
   enhanceReadingOutput();
-  renderReadingInfographicPanel(content);
+  renderReadingInfographicPanel(document.getElementById('reading-image-export'));
 
   setReadingReadyState(true);
   renderEntitlementsUI();
@@ -754,44 +731,94 @@ function escapeReadingHtml(value){
     .replace(/'/g,'&#039;');
 }
 
-function renderReadingInfographicPanel(content){
+function renderReadingInfographicPanel(host){
+  if(!host)return;
+  host.replaceChildren();
+  const premium=premiumFeature('poster');
+  host.dataset.posterPremium=String(premium);
+  if(!premium){
+    host.innerHTML=`<div class="reading-infographic-body">
+      <h3 class="reading-tool-heading">Your reading keepsake</h3>
+      <p>Premium includes a personalized print-ready poster.</p>
+      <div class="reading-infographic-tools">
+        <button type="button" class="btn btn-primary" onclick="requestPremiumFeature('poster')">Unlock poster downloads</button>
+        <a class="btn" href="sample-reading.html#keepsake">View a sample poster</a>
+      </div>
+    </div>`;
+    return;
+  }
   const model=state.readingInfographic||buildInfographicFromCurrentState();
   if(!model||!model.cards.length)return;
+  const photo=state.uploadedImage;
 
-  const panel=document.createElement('section');
+  const panel=document.createElement('details');
   panel.id='reading-infographic-panel';
-  panel.className='reading-section';
-  panel.style.marginTop='24px';
+  panel.className='reading-infographic-preview';
   panel.innerHTML=`
-    <h3>Shareable Reading Infographic</h3>
-    <p style="margin-bottom:14px">A visual summary made from the confirmed cards and the reading above. Card names and orientations come from your reviewed spread.</p>
-    <div style="border:1px solid rgba(205,169,92,.42);border-radius:8px;overflow:hidden;background:#f6f0df;box-shadow:0 18px 50px rgba(0,0,0,.22)">
-      <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading" style="display:block;width:100%;height:auto"></canvas>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
-      <button type="button" id="download-reading-infographic" class="btn btn-primary">Download PNG</button>
-      <button type="button" id="redraw-reading-infographic" class="btn">Redraw</button>
-      <span id="reading-infographic-status" role="status" aria-live="polite" style="font-size:12px;opacity:.78">Building infographic…</span>
+    <summary>Reading infographic <span class="optional-label">PNG</span></summary>
+    <div class="reading-infographic-body">
+      <p>A visual summary of your confirmed cards and reading.</p>
+      ${photo?'<label><input type="checkbox" id="poster-include-photo"> Include my spread photo</label>':''}
+      <div class="reading-infographic-frame" hidden>
+        <canvas id="reading-infographic-canvas" role="img" aria-label="Visual summary of this card reading"></canvas>
+      </div>
+      <div class="reading-infographic-tools">
+        <button type="button" id="download-reading-infographic" class="btn btn-primary" disabled>Download PNG</button>
+        <button type="button" id="redraw-reading-infographic" class="btn">Refresh preview</button>
+      </div>
+      <p id="reading-infographic-status" role="status"></p>
     </div>`;
-  content.appendChild(panel);
+  host.appendChild(panel);
 
   const canvas=panel.querySelector('#reading-infographic-canvas');
+  const frame=canvas.parentElement;
   const status=panel.querySelector('#reading-infographic-status');
   const downloadButton=panel.querySelector('#download-reading-infographic');
   const redrawButton=panel.querySelector('#redraw-reading-infographic');
-
-  drawReadingInfographic(canvas,model)
-    .then(()=>{status.textContent='Ready to download.';})
-    .catch(error=>{status.textContent=`Preview could not be completed: ${error.message}`;});
-
-  downloadButton.addEventListener('click',()=>downloadReadingInfographic(canvas,model,status));
-  redrawButton.addEventListener('click',async()=>{
-    status.textContent='Redrawing…';
+  const photoChoice=panel.querySelector('#poster-include-photo');
+  let started=false;
+  let busy=false;
+  async function renderPreview(){
+    if(!requestPremiumFeature('poster'))return;
+    if(busy)return;
+    started=true;
+    busy=true;
+    downloadButton.disabled=true;
+    if(photoChoice)photoChoice.disabled=true;
+    redrawButton.setAttribute('aria-disabled','true');
+    status.textContent='Building infographic…';
     try{
-      await drawReadingInfographic(canvas,model);
+      await drawReadingInfographic(canvas,model,{photo:photoChoice?.checked?photo:null});
+      frame.hidden=false;
+      downloadButton.disabled=false;
       status.textContent='Ready to download.';
     }catch(error){
-      status.textContent=`Redraw failed: ${error.message}`;
+      frame.hidden=true;
+      status.textContent=`Preview could not be completed: ${error.message}`;
+    }finally{
+      busy=false;
+      if(photoChoice)photoChoice.disabled=false;
+      redrawButton.removeAttribute('aria-disabled');
+    }
+  }
+  panel.addEventListener('toggle',()=>{
+    if(panel.open&&!started)renderPreview();
+  });
+  redrawButton.addEventListener('click',renderPreview);
+  photoChoice?.addEventListener('change',renderPreview);
+  downloadButton.addEventListener('click',async()=>{
+    if(busy)return;
+    busy=true;
+    if(photoChoice)photoChoice.disabled=true;
+    downloadButton.setAttribute('aria-disabled','true');
+    redrawButton.setAttribute('aria-disabled','true');
+    try{
+      await downloadReadingInfographic(canvas,model,status,photoChoice?.checked?photo:null);
+    }finally{
+      busy=false;
+      if(photoChoice)photoChoice.disabled=false;
+      downloadButton.removeAttribute('aria-disabled');
+      redrawButton.removeAttribute('aria-disabled');
     }
   });
 }
@@ -910,10 +937,12 @@ async function drawReadingInfographic(canvas,model,options={}){
   const width=1200;
   const sidePadding=54;
   const headerHeight=440;
+  const photo=options.photo?await loadCanvasImage(options.photo).catch(()=>null):null;
+  const photoHeight=photo?430:0;
   const adviceHeight=430;
   const footerHeight=215;
-  const bodyHeadingTop=headerHeight+30;
-  const bodyLayout=buildInfographicBodyLayout(model,width,headerHeight+112);
+  const bodyHeadingTop=headerHeight+photoHeight+30;
+  const bodyLayout=buildInfographicBodyLayout(model,width,headerHeight+photoHeight+112);
   const adviceTop=bodyLayout.contentBottom+30;
   const height=Math.max(1500,adviceTop+adviceHeight+footerHeight+80);
 
@@ -949,6 +978,11 @@ async function drawReadingInfographic(canvas,model,options={}){
     for(let x=(y/14)%2?7:0;x<width;x+=18){ctx.fillRect(x,y,1,1);}
   }
   ctx.restore();
+  if(photo){
+    const scale=Math.min((width-sidePadding*2)/photo.width,(photoHeight-40)/photo.height);
+    const photoWidth=photo.width*scale;
+    ctx.drawImage(photo,(width-photoWidth)/2,headerHeight+20,photoWidth,photo.height*scale);
+  }
 
   drawInfographicBodyHeading(ctx,bodyLayout.template,sidePadding,bodyHeadingTop,width-sidePadding*2,palette);
   bodyLayout.rowHeaders.forEach(row=>drawInfographicRowLabel(ctx,row.label,row.x,row.y,row.width,palette));
@@ -1241,6 +1275,7 @@ function loadCanvasImage(src){
   return new Promise((resolve,reject)=>{
     const image=new Image();
     if(!String(src).startsWith('data:')&&!String(src).startsWith('blob:'))image.crossOrigin='anonymous';
+    image.referrerPolicy='no-referrer';
     image.onload=()=>resolve(image);
     image.onerror=()=>reject(new Error('Card artwork could not be loaded.'));
     image.src=src;
@@ -1394,44 +1429,36 @@ function wrapCanvasText(ctx,text,maxWidth,maxLines){
   return lines;
 }
 
-async function downloadReadingInfographic(canvas,model,statusElement){
+async function downloadReadingInfographic(canvas,model,statusElement,photo=null){
+  if(!requestPremiumFeature('poster'))return;
   if(statusElement)statusElement.textContent='Preparing PNG…';
   try{
     let blob=await canvasToPngBlob(canvas);
-    if(!blob){
-      await drawReadingInfographic(canvas,model,{skipImages:true});
+    const useFallback=!blob;
+    if(useFallback){
+      await drawReadingInfographic(canvas,model,{skipImages:true,photo});
       blob=await canvasToPngBlob(canvas);
     }
     if(!blob)throw new Error('The image could not be exported.');
 
+    const spreadSlug=String(model.spreadName||'reading').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'reading';
+    const filename=`arcana-${spreadSlug}-${model.generatedDate}.png`;
+    if(globalThis.arcanaAndroid?.saveFile){
+      const saved=await arcanaAndroid.saveFile(blob,filename);
+      if(statusElement)statusElement.textContent=saved?'PNG saved.':'Save canceled.';
+      return;
+    }
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
-    const spreadSlug=String(model.spreadName||'reading').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'reading';
     link.href=url;
-    link.download=`arcana-${spreadSlug}-${model.generatedDate}.png`;
+    link.download=filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
-    if(statusElement)statusElement.textContent='PNG downloaded.';
+    if(statusElement)statusElement.textContent=useFallback?'PNG downloaded with the built-in card design.':'PNG downloaded.';
   }catch(error){
-    // Cross-origin artwork can taint a canvas on some hosts. Redraw with the built-in card backs and retry once.
-    try{
-      await drawReadingInfographic(canvas,model,{skipImages:true});
-      const safeBlob=await canvasToPngBlob(canvas);
-      if(!safeBlob)throw error;
-      const url=URL.createObjectURL(safeBlob);
-      const link=document.createElement('a');
-      link.href=url;
-      link.download=`arcana-reading-${model.generatedDate}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
-      if(statusElement)statusElement.textContent='PNG downloaded with the built-in card design.';
-    }catch(finalError){
-      if(statusElement)statusElement.textContent=`Download failed: ${finalError.message}`;
-    }
+    if(statusElement)statusElement.textContent=`Download failed: ${error.message}`;
   }
 }
 

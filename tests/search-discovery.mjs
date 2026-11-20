@@ -45,7 +45,10 @@ for (const file of files) {
     const target = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
     await access(path.join(root, target));
     if (url.hash && target.endsWith('.html')) {
-      assert.ok((await read(target)).includes('id="' + decodeURIComponent(url.hash.slice(1)) + '"'), file + ' has a missing anchor: ' + match[1]);
+      const fragment = decodeURIComponent(url.hash.slice(1));
+      const targetHtml = await read(target);
+      const journalRoute = target === 'index.html' && fragment === 'history' && targetHtml.includes('id="screen-history"');
+      assert.ok(journalRoute || targetHtml.includes('id="' + fragment + '"'), file + ' has a missing anchor: ' + match[1]);
     }
   }
   for (const page of infoPages) {
@@ -68,7 +71,7 @@ assert.match(sitemap, /xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9"/
 assert.deepEqual([...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]).sort(), canonicals.sort());
 assert.match(await read('robots.txt'), /Sitemap: https:\/\/www.arcanaguide.com\/sitemap.xml/);
 const llms = await read('llms.txt');
-assert.match(llms, /Hosted AI is available without a user-supplied API key/);
+assert.match(llms, /Premium includes hosted AI without a user-supplied API key/);
 assert.doesNotMatch(llms, /AI features require a user-supplied|\/templates\//);
 for (const url of canonicals) assert.ok(llms.includes(url), 'llms.txt must point to the complete public pages');
 
@@ -111,6 +114,7 @@ for (const [hasHomepage, protocol] of [[true, 'https:'], [false, 'https:'], [tru
 // Pre-rendering exposes buttons before startup finishes on slow connections.
 // Keep those actions disabled until spreads and the rest of the UI are ready.
 const homepageButtons = [...main.matchAll(/<button\b[^>]*>/g)];
+assert.match(main, /<a href="#history">Journal<\/a>/, 'The homepage Journal link must open saved readings.');
 assert.ok(homepageButtons.length);
 for (const [tag] of homepageButtons) assert.match(tag, /disabled data-app-startup/);
 const buttons = homepageButtons.map(() => ({ disabled: true, removeAttribute() {} }));

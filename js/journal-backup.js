@@ -162,8 +162,15 @@ function downloadJournalBackup(){
     const backup=createJournalBackup();
     const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
     if(blob.size>JOURNAL_BACKUP_MAX_BYTES)throw new Error('This archive is too large for a portable backup. Export important readings individually.');
+    const filename='arcana-journal-'+new Date().toISOString().slice(0,10)+'.json';
+    if(globalThis.arcanaAndroid?.saveFile){
+      arcanaAndroid.saveFile(blob,filename)
+        .then(saved=>journalBackupStatus(saved ? 'Backup saved. Keep this private file somewhere safe.' : 'Backup canceled.'))
+        .catch(()=>journalBackupStatus('The backup could not be saved. Try another folder.'));
+      return true;
+    }
     const url=URL.createObjectURL(blob);
-    const link=document.createElement('a');link.href=url;link.download='arcana-journal-'+new Date().toISOString().slice(0,10)+'.json';
+    const link=document.createElement('a');link.href=url;link.download=filename;
     document.body.appendChild(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
     journalBackupStatus('Backup download started. The file contains your private readings and reflections; keep it somewhere safe.');

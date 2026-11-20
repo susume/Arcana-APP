@@ -69,6 +69,14 @@ The static frontend can be deployed independently. AI and premium services
 depend on runtime endpoint configuration in `js/config.js` and Worker
 environment bindings/secrets.
 
+The Android build packages these same screens into a Capacitor WebView at the
+app-owned `https://www.arcanaguide.com` origin. `npm run android:sync` stages the
+public assets and the Android purchase controls, then copies them into the
+native project. Journal data is local to each installation. Android uses
+system file dialogs for backups and infographics, Android printing, and
+device text-to-speech. See [android/README.md](android/README.md) for build
+and release steps.
+
 ## 4. Product and visual direction
 
 The current theme is **Quiet Atelier**, selected by `data-theme="atelier"` on
@@ -286,6 +294,8 @@ Key functions in `js/ui.js`:
 - `navigate()` and `goScreen()` activate screens and update the hash.
 - `updateDots()` and `updateProgressEstimate()` update guided progress.
 - `ensureRitualUtilities()` installs shared shell utilities, including Journal.
+- The homepage Journal link opens `#history`, including when a saved draft
+  exists. The legacy `#journal` section anchor still opens the homepage offer.
 
 `js/app.js`:
 
@@ -345,8 +355,9 @@ tips are expandable, and manual entry includes a searchable, suit-aware picker.
 ```text
 Homepage
   -> quick workspace
-  -> choose the layout used
-  -> identify a photo or enter cards by hand
+  -> choose the layout used, then the deck and photo (if using photo recognition)
+  -> optionally add a question or life stage
+  -> identify the photo or enter cards by hand
   -> review cards and correct missing or uncertain positions
   -> choose AI or Classic
   -> shared reading and save screen
@@ -626,7 +637,10 @@ two-pathways, and relationship spreads—to visual card positions. Unknown layou
 use a grid fallback.
 
 The structured reading pipeline also renders a downloadable infographic in
-`js/reading-engine.js`. It selects an adaptive template from the active spread:
+`js/reading-engine.js` for Premium. It uses the saved reading, confirmed cards,
+existing artwork, and an optional spread photo. The renderer runs locally
+without an AI call. Free readers can view a public sample and share or print
+their reading text. The infographic selects a template from the active spread:
 a featured card for one-card readings, a three-column sequence for Past / Present /
 Future, a balanced two-column grid for six-card and Celtic Cross readings, a
 quarter-by-quarter timeline for yearly readings, paired comparison rows for Two
@@ -637,9 +651,11 @@ height for wrapped text.
 
 ### Printing
 
-`printReading()` prepares a print view and coordinates cleanup through
-`afterprint`. Theme changes must preserve print-specific readability and hide
-non-print controls.
+`buildPrintableReading()` formats the completed, safely rendered narrative as
+a paper document with the spread, mode, date, and optional question. It avoids
+copying the app's journal reflection, canvas, or controls. `printReading()` sends
+the same HTML to the Android print bridge or to a browser frame cleaned up
+through `afterprint`.
 
 ### Narration
 
@@ -648,7 +664,7 @@ stored in settings, and reading markdown is reduced to narration-friendly text.
 
 ## 16. Premium and monetization
 
-Arcana Premium is a one-time **pay-what-you-want lifetime unlock**, with a
+On the web, Arcana Premium is a one-time **pay-what-you-want lifetime unlock**, with a
 **$10 minimum** and **$20 suggested contribution**. Every contribution amount
 unlocks the same Premium features. Pricing is configured on Gumroad; the app
 displays the offer on the homepage, in Settings, and in the upgrade modal.
@@ -665,6 +681,12 @@ required by applicable law or Gumroad's policies.
 - Premium UI rendering
 - Narration and comparison entry points
 
+Free includes one manually entered, one-card Classic reading per local day
+and up to three saved readings. Premium opens every spread, unlimited Classic
+readings, AI photo identification and interpretation, and poster exports. New
+purchases get 30 hosted operations per UTC calendar month. Earlier purchases
+keep their existing allowance. Reading comparison runs locally.
+
 The browser does not contain an activation allow-list. `activatePremiumKey()`
 posts the entered key to `getActivationApiUrl()`, which uses an explicit
 activation endpoint when configured or the Worker/proxy base otherwise.
@@ -673,10 +695,31 @@ After successful verification, the browser stores premium state in
 `arcana_subscription`. This local state controls the UI, but its source of truth
 at activation time is the Worker/Gumroad response.
 
+The Android app (`com.arcanaguide.app`) uses Google Play Billing for the
+non-consumable `arcana_premium_lifetime` product. `PlayBillingPlugin.java`
+retrieves the localized Play price and ownership. `android/web/android.js`
+enables checkout when Play returns an offer and the Worker's status endpoint
+confirms it can authenticate with Google. The Worker verifies ownership and
+acknowledges a completed order before the app unlocks Premium. The app checks
+ownership again on launch, resume, and **Restore purchases**. It keeps the
+signed purchase entitlement in memory. See the
+[Google Play release handoff](docs/google-play-handoff.md) for the current
+rollout and verification status.
+
+Internal Android builds can exchange a tester code for a signed pass at
+`/api/android/tester`. The app keeps the pass locally and revalidates it with
+the Worker on start and resume. The Worker holds the tester code digest in its
+secret bindings.
+
+Public Android builds use `/api/android/review` and a separate review code
+digest for Google Play reviewer access. The app revalidates reviewer passes
+with the Worker. Public builds route AI through Arcana's hosted Gemini project.
+See [Google Play disclosures](docs/google-play-disclosures.md) for data flows.
+
 ## 17. Cloudflare Worker services
 
 `server/cloudflare-worker.js` handles exact-origin CORS, request parsing, JSON
-responses, rate limits, upstream timeouts, and three service paths.
+responses, rate limits, and upstream timeouts for the routes below.
 
 ### `POST /api/activate`
 
@@ -697,13 +740,25 @@ responses, rate limits, upstream timeouts, and three service paths.
 - Stores only minimal hashed sale/refund metadata in `ARCANA_LICENSES`
 - Does not store browser reading or journal data
 
+### Android routes
+
+| Route | Behavior |
+|---|---|
+| `POST /api/play/status` | Obtains or reuses a Google OAuth access token and returns readiness. Purchase lookup and acknowledgement happen on `/api/play/verify`. |
+| `POST /api/play/verify` | Checks the submitted token with the Google Play Developer API for the Arcana package and product. Acknowledges completed purchases before returning a signed Premium entitlement. Pending and inactive purchases receive no entitlement. The Worker uses the raw purchase token for the API calls and keeps only its hash in the signed entitlement. |
+| `POST /api/android/tester` and `POST /api/android/review` | Check the code against the corresponding Worker secret, issue a signed access pass, and revalidate saved passes. Updating the relevant digest revokes its earlier passes. |
+| `POST /api/reading-report` | Stores the reading text, reason, and report time in `ARCANA_REPORTS` for 90 days after an explicit submission. |
+
 ### AI proxy route
 
-Other accepted POST traffic is handled by the Gemini proxy path. It requires the
-Worker secret `GOOGLE_API_KEY`, validates prompt and image size/type, applies
-route rate limits and upstream timeouts, forwards a Gemini request, and applies
-model fallback/retry behavior. Browser and Worker model order is centralized on
-`gemini-3.6-flash`, `gemini-3.1-flash-lite`, and `gemini-2.5-flash`.
+`POST /api/ai/v2` requires a signed 15-minute session issued from a verified
+Gumroad activation, Google Play purchase, or Android review or tester pass.
+A Durable Object deduplicates request IDs and reserves the allowance and
+estimated spend before Gemini runs. The Worker uses Flash-Lite for short
+interpretations and Flash for longer readings and photo identification, with
+output and thinking limits. It records token counts without reading content.
+See [Worker rollout configuration](server/README.md) for purchase cutoffs,
+legacy Android compatibility, and the project spend ceiling.
 
 Expected Worker configuration:
 
@@ -714,6 +769,10 @@ Expected Worker configuration:
 | `GUMROAD_SELLER_ID` | optional seller override |
 | `GUMROAD_WEBHOOK_SECRET` | required shared webhook verification secret |
 | `ARCANA_ENTITLEMENT_SECRET` | required HMAC secret used for entitlement tokens |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Cloudflare secret containing the dedicated Play service account JSON for purchase lookup and acknowledgement |
+| `ARCANA_ANDROID_TESTER_CODE_HASH` | secret digest for internal tester access |
+| `ARCANA_ANDROID_REVIEW_CODE_HASH` | secret digest for Play reviewer access |
+| `ARCANA_REPORTS` | KV namespace for user-submitted Android AI reading reports |
 | `ARCANA_ALLOWED_ORIGINS` | optional comma-separated exact browser origins |
 | `ARCANA_RATE_LIMITER` | recommended Cloudflare rate-limiting binding |
 | `ARCANA_LICENSES` | required for webhook idempotency and license status records |
@@ -748,7 +807,7 @@ treated as private.
 `templates/welcome.html` and its embedded counterpart implement the current
 homepage:
 
-- Ritual navigation to How It Works, Premium, and Journal sections
+- Ritual navigation to homepage sections and the saved Journal
 - Guided and quick-upload calls to action
 - Image-led physical-card hero
 - Four-step reading journey

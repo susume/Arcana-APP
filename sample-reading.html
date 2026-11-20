@@ -192,7 +192,15 @@
   <script>
     const printSample = document.getElementById('sample-print');
     printSample.hidden = false;
-    printSample.addEventListener('click', () => window.print());
+    printSample.addEventListener('click', () => {
+      if (globalThis.arcanaAndroid?.printPage) {
+        arcanaAndroid.printPage(document.title).catch(() => {
+          printSample.textContent = 'Print unavailable';
+        });
+      } else {
+        window.print();
+      }
+    });
   </script>
 </body>
 </html>

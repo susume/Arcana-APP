@@ -9,10 +9,10 @@ Canonical website: https://www.arcanaguide.com/
 - Users choose a spread, shuffle and draw their own physical cards, then upload a spread photo or enter the cards by hand.
 - Arcana helps identify cards by position and creates reflective interpretations. Users can review and correct AI identification.
 - Arcana does not draw random cards or guarantee predictions.
-- The free tier includes one reading per day.
+- The free tier includes one manual, one-card Classic reading per day.
 - Premium is a lifetime unlock: $10 USD minimum, $20 suggested, pay what you want. Every contribution at or above $10 unlocks the same features. It is not a monthly subscription.
-- Premium includes unlimited readings, the journal, advanced spreads, narration, and reading comparisons.
-- Hosted AI is available without a user-supplied API key. An optional Gemini key in Settings sends requests directly to Google. AI needs internet access and service availability.
+- Premium includes unlimited Classic readings, all spreads, personalized poster downloads, the journal, narration, and reading comparisons. New purchases include 30 hosted AI requests per UTC calendar month.
+- Premium includes hosted AI without a user-supplied API key. An optional Gemini key in Settings sends requests directly to Google. AI needs internet access and service availability.
 - Classic readings use built-in meanings without an AI connection once the app has loaded; the first visit needs internet access.
 - No Arcana account is required. Readings, journal notes, settings, and Premium activation are stored in the user's browser, with journal backup and restore available.
 - A separate device or an AI assistant's cloud browser does not automatically receive that browser's journal or Premium activation. There is no dedicated Muse or Dots connector.

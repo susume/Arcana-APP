@@ -3,6 +3,7 @@
 // https://commons.wikimedia.org/wiki/File:English_pattern_playing_cards_deck.svg
 const CARD_ART_BASE_URL = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 const CARD_ART_UPLOAD_BASE_URL = 'https://upload.wikimedia.org/wikipedia/commons/';
+const CARD_ART_THUMB_BASE_URL = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
 
 const CARD_ART_MAJOR_FILES = {
   0: 'RWS Tarot 00 Fool.jpg',
@@ -200,15 +201,35 @@ function md5(value) {
   return md51(String(value)).map(rhex).join('');
 }
 
-function getCardArtUrl(card, width = 180) {
+const BUNDLED_CANVAS_ART = {
+  'Two of Pentacles': 'assets/samples/celtic-cross/cards/TwP.webp',
+  'Two of Swords': 'assets/samples/celtic-cross/cards/TwS.webp',
+  'Six of Cups': 'assets/samples/celtic-cross/cards/SiC.webp',
+  'Eight of Pentacles': 'assets/samples/celtic-cross/cards/EiP.webp',
+  'The Star': 'assets/samples/celtic-cross/cards/Star.webp',
+  'Page of Wands': 'assets/samples/celtic-cross/cards/PaW.webp',
+  'The Hermit': 'assets/samples/celtic-cross/cards/Her.webp',
+  'Three of Pentacles': 'assets/samples/celtic-cross/cards/ThP.webp',
+  'Seven of Cups': 'assets/samples/celtic-cross/cards/SeC.webp',
+  'Temperance': 'assets/samples/celtic-cross/cards/Tem.webp'
+};
+
+function getCardArtUrl(card, width = 180, { forCanvas = false } = {}) {
+  if (forCanvas && card?.system === 'tarot' && Object.hasOwn(BUNDLED_CANVAS_ART, card.name)) return BUNDLED_CANVAS_ART[card.name];
   const fileName = getCardArtFile(card);
   if (!fileName) return '';
   const normalized = fileName.replace(/\s+/g, '_');
-  const requestedWidth = Math.max(64, Math.min(1200, Math.round(Number(width) || 180)));
-  const hash = md5(normalized);
   const encoded = encodeURIComponent(normalized);
-  if (requestedWidth < 600) return `${CARD_ART_BASE_URL}${encoded}?width=${requestedWidth}`;
-  return `${CARD_ART_UPLOAD_BASE_URL}${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
+  const requestedWidth = Math.max(64, Math.min(1200, Math.round(Number(width) || 180)));
+  if (!forCanvas && requestedWidth < 600) return `${CARD_ART_BASE_URL}${encoded}?width=${requestedWidth}`;
+  const hash = md5(normalized);
+  const uploadPath = `${hash[0]}/${hash.slice(0, 2)}/${encoded}`;
+  if (forCanvas) {
+    // The public thumbnails allow canvas access. The Commons redirects do not.
+    const extension = fileName.endsWith('.svg') ? '.png' : '';
+    return `${CARD_ART_THUMB_BASE_URL}${uploadPath}/250px-${encoded}${extension}`;
+  }
+  return `${CARD_ART_UPLOAD_BASE_URL}${uploadPath}`;
 }
 
 function renderCardFallback(card) {

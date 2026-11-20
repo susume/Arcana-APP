@@ -1,0 +1,11 @@
+{
+  "name": "ancient-smoke-2917",
+  "main": "cloudflare-worker.js",
+  "compatibility_date": "2026-06-08",
+  "keep_vars": true,
+  "durable_objects": {
+    "bindings": [{ "name": "ARCANA_HOSTED_USAGE", "class_name": "HostedUsage" }]
+  },
+  "migrations": [{ "tag": "arcana-hosted-usage-v1", "new_sqlite_classes": ["HostedUsage"] }],
+  "observability": { "enabled": true }
+}

@@ -65,6 +65,16 @@ const url = run("getCardArtUrl({system:'playing',name:'Five of Clubs'},96)");
 assert.match(url, /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//);
 assert.match(url, /English_pattern_5_of_clubs\.svg\?width=96$/);
 
+// A canvas needs a direct image response that permits cross-origin drawing.
+assert.equal(
+  run("getCardArtUrl({system:'tarot',arcana:'major',number:3},250,{forCanvas:true})"),
+  "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/RWS_Tarot_03_Empress.jpg/250px-RWS_Tarot_03_Empress.jpg"
+);
+assert.equal(
+  run("getCardArtUrl({system:'playing',name:'Ace of Hearts'},250,{forCanvas:true})"),
+  "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/English_pattern_ace_of_hearts.svg/250px-English_pattern_ace_of_hearts.svg.png"
+);
+
 const rendered = run(
   "renderCardArt({system:'playing',name:'Queen of Hearts',suit:'hearts'},'picker-card-art',96)"
 );

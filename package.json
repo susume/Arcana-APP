@@ -9,11 +9,21 @@
     "sync": "node scripts/sync-embedded-content.mjs",
     "build": "npm run sync && npm run build:css && npm run build:ts",
     "test": "npm run sync && npm run build:ts && node tests/run-tests.mjs",
-    "serve": "node scripts/serve-static.mjs"
+    "serve": "node scripts/serve-static.mjs",
+    "android:stage": "npm run build && node scripts/stage-android.mjs",
+    "android:sync": "npm run android:stage && cap sync android",
+    "android:tester-sync": "npm run android:stage -- --tester-access && cap sync android",
+    "android:open": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
     "@tailwindcss/cli": "^4.1.17",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
   }
 }

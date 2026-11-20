@@ -1,9 +1,8 @@
 // ===== PREMIUM / ENTITLEMENTS =====
 const FREE_DAILY_READING_LIMIT = 1;
-const FREE_SPREAD_ID = 'one-card';
+const FREE_SPREAD_IDS = new Set(['one-card', 'three-card']);
 const HOSTED_AI_MONTHLY_LIMIT = 30;
 const PAID_FEATURES = new Set(['journal', 'voice', 'advanced-spreads', 'comparison', 'unlimited', 'ai-reading', 'photo-ai', 'poster']);
-const PREMIUM_SPREAD_IDS = ['celtic-cross', 'romany', 'yearly', 'two-pathways', 'relationship'];
 let sessionUsage={};
 let usagePersisted=true;
 let webAiSession=null;
@@ -159,7 +158,7 @@ function premiumFeature(name){
 }
 
 function requestReadingAccess(spreadId, mode='classic'){
-  if(spreadId!==FREE_SPREAD_ID&&!requestPremiumFeature('advanced-spreads'))return false;
+  if(!FREE_SPREAD_IDS.has(spreadId)&&!requestPremiumFeature('advanced-spreads'))return false;
   return mode!=='ai' || requestPremiumFeature('ai-reading');
 }
 
@@ -201,7 +200,7 @@ function showUpgradeModal(reason){
       <div class="plan-pill">Premium lifetime unlock from $10</div>
       <h2>${featureTitle(reason)}</h2>
       <p class="upgrade-price">$10 minimum &middot; $20 suggested &middot; one payment</p>
-      <p class="upgrade-note">Free includes one manual, one-card Classic reading each day.</p>
+      <p class="upgrade-note">Free includes one Classic reading each day with a manually entered one-card or three-card spread.</p>
       ${getGumroadProductUrl()?`<button type="button" class="btn btn-primary upgrade-buy" onclick="window.open(getGumroadProductUrl(),'_blank','noopener,noreferrer')">Unlock Premium from $10</button>`:''}
       <details class="flow-details activation-box">
         <summary>Already purchased? Activate Premium</summary>

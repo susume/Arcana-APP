@@ -79,7 +79,7 @@ function resolveScreenPrerequisite(id){
   if(state.mode!=='guided')return 'screen-welcome';
   if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
   if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
-  if(!isPremium()&&state.spreadId!==FREE_SPREAD_ID&&['screen-reflection','screen-card-entry','screen-overview'].includes(id))return 'screen-spread';
+  if(!isPremium()&&!FREE_SPREAD_IDS.has(state.spreadId)&&['screen-reflection','screen-card-entry','screen-overview'].includes(id))return 'screen-spread';
   if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
   return id;
 }
@@ -390,19 +390,6 @@ function selectReadingType(id, el){
   const spread=SPREADS.find(s=>s.id===id);
   if(spread){state.spreadId=id;}
   autoSaveState();
-}
-
-function toggleAdvancedReadings(){
-  const panel=document.getElementById('advanced-readings-panel');
-  const arrow=document.getElementById('adv-arrow');
-  if(panel.style.display==='none'){
-    panel.style.display='block';
-    arrow.textContent='▲';
-  }else{
-    panel.style.display='none';
-    arrow.textContent='▼';
-  }
-  document.querySelector('.advanced-readings-toggle')?.setAttribute('aria-expanded',String(panel.style.display!=='none'));
 }
 
 function confirmReflection(){
@@ -1610,7 +1597,7 @@ function renderQuickSpreads(){
     const spread=SPREADS.find(item=>item.id===id);
     if(!spread)continue;
     const primary=id==='one-card'||id==='three-card';
-    const advanced=PREMIUM_SPREAD_IDS.includes(id);
+    const advanced=!FREE_SPREAD_IDS.has(id);
     const selected=state.quickSpreadId===id;
     const card=document.createElement('button');
     const title=id==='one-card'?'One Card':id==='three-card'?'Past · Present · Future':spread.name;
@@ -1620,7 +1607,7 @@ function renderQuickSpreads(){
     if(advanced)card.dataset.premiumFeature='advanced-spreads';
     card.setAttribute('aria-pressed',String(selected));
     card.onclick=()=>{
-      if(advanced&&!requestPremiumFeature('advanced-spreads'))return;
+      if(!requestReadingAccess(id))return;
       selectQuickSpread(id);
     };
     card.innerHTML='<span class="quick-layout-mark" aria-hidden="true"></span>'+
@@ -1640,7 +1627,7 @@ function enterQuickCardsManually(){
     document.querySelector('#quick-spread-grid button')?.focus();
     return;
   }
-  if(PREMIUM_SPREAD_IDS.includes(state.quickSpreadId)&&!requestPremiumFeature('advanced-spreads'))return;
+  if(!requestReadingAccess(state.quickSpreadId))return;
   saveQuickDraft();
   state.spreadId=state.quickSpreadId;
   state.cardEntryTab='tab-manual';
@@ -1706,7 +1693,7 @@ function quickRead(){
   if(!quickHasPhoto()||!state.quickSpreadId)return;
   const spread=SPREADS.find(item=>item.id===state.quickSpreadId);
   if(!spread)return;
-  if(PREMIUM_SPREAD_IDS.includes(spread.id)&&!requestPremiumFeature('advanced-spreads'))return;
+  if(!requestReadingAccess(spread.id))return;
   state.spreadId=spread.id;
   saveQuickDraft();
   return identifyPhotoForReview('quick-upload-zone','quick-go','quick-results','quick-file');

@@ -1229,7 +1229,6 @@
 .ritual-screen :is(
   button.card-opt,
   button.reading-choice-card,
-  button.advanced-readings-toggle,
   button.tag-chip,
   button.tab-btn,
   button.spread-card,
@@ -1245,7 +1244,6 @@
 .ritual-screen :is(
   button.card-opt,
   button.reading-choice-card,
-  button.advanced-readings-toggle,
   button.spread-card,
   button.card-picker-item
 ) {
@@ -1255,7 +1253,6 @@
 .ritual-screen :is(
   button.card-opt,
   button.reading-choice-card,
-  button.advanced-readings-toggle,
   button.tag-chip,
   button.tab-btn,
   button.spread-card,
@@ -1415,11 +1412,6 @@
   border: 1px solid rgba(212, 175, 55, 0.26);
   background: rgba(212, 175, 55, 0.08);
   color: var(--ritual-gold-bright);
-}
-
-.ritual-screen-choice .advanced-readings-toggle {
-  border-color: rgba(212, 175, 55, 0.22);
-  color: var(--ritual-silver);
 }
 
 .ritual-screen-choice .radio-mark {
@@ -2510,7 +2502,6 @@ textarea:focus-visible {
     border-color: oklch(0.82 0.11 82 / 0.44) !important;
   }
 
-  .advanced-readings-toggle,
   .tab-bar,
   .footer-links {
     border-color: oklch(0.82 0.11 82 / 0.16) !important;
@@ -3190,11 +3181,6 @@ textarea:focus-visible {
   .rc-cards,
   .rc-time {
     font-size: 9px !important;
-  }
-
-  .advanced-readings-toggle {
-    padding: 13px 4px !important;
-    font-size: 12px;
   }
 
   .dropped-card-section {
@@ -4042,7 +4028,6 @@ textarea:focus-visible {
     box-shadow: 0 24px 80px -46px rgb(214 181 109 / 0.82), inset 0 0 0 1px rgb(214 181 109 / 0.12) !important;
   }
 
-  .advanced-readings-toggle,
   .tab-bar,
   .reading-toggle,
   .footer-links {
@@ -5528,10 +5513,61 @@ html[data-theme="atelier"] body .ritual-screen .tag-chip[aria-pressed=true],html
 html[data-theme="atelier"] body .ritual-screen .tag-chip[aria-pressed=true] {
   text-decoration: underline !important;
   text-underline-offset: 4px !important; }
-html[data-theme="atelier"] body .ritual-screen .advanced-readings-toggle {
-  color: var(--ink) !important;
-  background: #edf0e5 !important;
-  border-color: var(--line) !important; }
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card {
+  --premium-spread-accent: #f0d69d;
+  position: relative;
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px 20px !important;
+  margin: 0 !important;
+  border: 1px solid #ab8a52 !important;
+  background: radial-gradient(ellipse at top right, #36594b, transparent 75%), #203b33 !important;
+  box-shadow: inset 0 0 0 3px #f0d69d1a, 0 3px 10px #203b3322 !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card:hover {
+  border-color: var(--premium-spread-accent) !important;
+  background: radial-gradient(ellipse at top right, #416554, transparent 75%), #27463a !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card.selected {
+  padding: 18px 20px !important;
+  border: 1px solid var(--premium-spread-accent) !important;
+  background: radial-gradient(ellipse at top right, #416554, transparent 75%), #27463a !important;
+  box-shadow: inset 0 0 0 2px var(--premium-spread-accent) !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .rc-header {
+  width: 100%;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card h3 {
+  color: #fff4dc !important;
+  font-size: 23px !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card p {
+  color: #f1ebd9 !important;
+  margin: 0;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .radio-mark {
+  border-color: var(--premium-spread-accent) !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .reading-choice-card.selected .radio-mark {
+  border-color: var(--premium-spread-accent) !important;
+  box-shadow: inset 0 0 0 3px #27463a, inset 0 0 0 8px var(--premium-spread-accent) !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .rc-cards {
+  color: #fff4dc !important;
+  border-color: #e0c08280 !important;
+  background: #f0d69d18 !important;
+}
+html[data-theme="atelier"] body .ritual-screen .premium-spread-choices .rc-time {
+  color: var(--premium-spread-accent) !important;
+  background: transparent !important;
+  margin-top: auto;
+}
 html[data-theme="atelier"] body .ritual-screen .nav-row {
   border-color: var(--line) !important;
   margin-top: 32px !important; }

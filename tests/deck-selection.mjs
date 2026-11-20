@@ -62,7 +62,7 @@ const context = vm.createContext({
   confirm: () => true,
   alert() {},
   isPremium: () => true,
-  FREE_SPREAD_ID: "one-card",
+  FREE_SPREAD_IDS: new Set(["one-card", "three-card"]),
   requestPremiumFeature: () => true,
   requestReadingAccess: () => true,
   autoSaveState() {},

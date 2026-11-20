@@ -49,10 +49,19 @@ const renders=[];let resolveAI,rejectAI;let completions=0;
 const upgrades=[];
 context.showUpgradeModal=feature=>upgrades.push(feature);
 assert.equal(run("requestReadingAccess('one-card','classic')"),true);
-assert.equal(run("requestReadingAccess('three-card','classic')"),false);
-assert.equal(run("requestReadingAccess('one-card','ai')"),false);
+assert.equal(run("requestReadingAccess('three-card','classic')"),true);
+assert.equal(run("requestReadingAccess('six-card','classic')"),false);
+assert.equal(run("requestReadingAccess('celtic-cross','classic')"),false);
+assert.equal(run("requestReadingAccess('three-card','ai')"),false);
 run('startQuick()');
-assert.deepEqual(upgrades,['advanced-spreads','ai-reading','photo-ai']);
+assert.deepEqual(upgrades,['advanced-spreads','advanced-spreads','ai-reading','photo-ai']);
+run("state.cardSystemEstablished=true;state.spreadId='three-card'");
+for(const screen of ['screen-reflection','screen-card-entry','screen-overview']){
+  assert.equal(context.resolveScreenPrerequisite(screen),screen);
+}
+run("state.spreadId='six-card'");
+assert.equal(context.resolveScreenPrerequisite('screen-card-entry'),'screen-spread');
+run('state.cardSystemEstablished=false;state.spreadId=null');
 run("renderReadingInfographicPanel(document.getElementById('reading-image-export'))");
 assert.match(getNode('reading-image-export').innerHTML,/sample-reading\.html#keepsake/);
 assert.doesNotMatch(getNode('reading-image-export').innerHTML,/<canvas/);

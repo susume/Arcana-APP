@@ -12,16 +12,14 @@ The product deliberately is not a random-card generator. The user supplies the
 deck, draw, layout, intention, and final judgment. AI supports identification and
 interpretation but does not replace manual review or make guaranteed predictions.
 
-Arcana has two deployment layers:
+The browser app runs on GitHub Pages as static HTML, CSS, and ordered global
+JavaScript. Android packages the shared UI in a Capacitor WebView. Both use a
+Cloudflare Worker for purchase verification and hosted Gemini access.
 
-1. A statically hosted browser SPA made from HTML, CSS, and ordered global
-   JavaScript.
-2. A Cloudflare Worker used for Gumroad premium activation, Gumroad webhook
-   ingestion, and optional Arcana-hosted Gemini proxying.
-
-There is no application server, account system, or user-profile database.
-Browser data stays in `localStorage`. Cloudflare KV, when configured, stores
-license and Gumroad event metadata rather than tarot readings or journal entries.
+Readings, journal entries, and preferences live in local storage on each
+installation or browser. The Worker stores hashed license and event metadata
+and keeps a monthly ledger for hosted AI. Android users can explicitly submit
+an AI reading report, which the Worker stores for up to 90 days.
 
 ## 2. Technology stack
 
@@ -30,39 +28,32 @@ license and Gumroad event metadata rather than tarot readings or journal entries
 | Browser runtime | Vanilla JavaScript globals, HTML5, CSS |
 | Build-time code | TypeScript for the AI identification parser |
 | Styling build | Tailwind CSS CLI v4 compiling a large custom source stylesheet |
-| Frontend hosting | Static files; supports HTTP(S) and embedded fallbacks for `file://` |
+| Frontend hosting | GitHub Pages over HTTPS, with embedded fallbacks for local `file://` use |
+| Android runtime | Capacitor WebView with a native Google Play Billing bridge |
 | Service layer | Cloudflare Worker |
 | AI | Google Gemini REST API with text and image input |
-| Payments/licenses | Gumroad license verification |
-| Service persistence | Optional Cloudflare KV binding `ARCANA_LICENSES` |
+| Payments and licenses | Gumroad license verification on web, Google Play purchase verification on Android |
+| Service persistence | Cloudflare KV for licenses and reports, SQLite-backed Durable Object for hosted AI usage |
 | Browser persistence | `localStorage` |
 | Fonts | Self-hosted WOFF2 files, including Cormorant Garamond |
-| Runtime frameworks | None |
+| Browser framework | None |
 
-`package.json` is intentionally small. Its dependencies are build tools, not
-browser runtime libraries.
+`package.json` contains the build tooling and Capacitor dependencies.
 
 ## 3. Runtime and deployment topology
 
 ```text
-Browser
-  |
-  |-- static HTML/CSS/JS ----------------------> static host / local server
-  |
-  |-- user Gemini key (preferred) ------------> Google Gemini REST API
-  |
-  |-- no user key + proxy configured ----------> Cloudflare Worker
-  |                                                |
-  |                                                +--> Gemini API
-  |
-  |-- premium license activation --------------> Cloudflare Worker
-                                                   |
-                                                   +--> Gumroad verify API
-                                                   +--> ARCANA_LICENSES KV (optional)
+Browser on GitHub Pages                       Android Capacitor WebView
+  |-- Gumroad license activation                |-- Google Play purchase or restore
+  |-- hosted AI session exchange                |-- hosted AI session in verification response
+  +----------------------> Cloudflare Worker <--+
+                              |-- Gumroad and Google Play verification APIs
+                              |-- ARCANA_LICENSES and ARCANA_REPORTS KV
+                              |-- ARCANA_HOSTED_USAGE Durable Object
+                              +-- Gemini API
 
-Gumroad sale/refund events --------------------> Worker webhook
-                                                   |
-                                                   +--> ARCANA_LICENSES KV (optional)
+Premium browser with a personal Gemini key --> Gemini API
+Gumroad events, when configured -------------> Worker webhook --> ARCANA_LICENSES KV
 ```
 
 The static frontend can be deployed independently. AI and premium services
@@ -349,6 +340,8 @@ Homepage
 `startGuided()` resets reading state and starts at the optional question.
 Spread choices precede collapsed life-stage context. Preparation and jumper-card
 tips are expandable, and manual entry includes a searchable, suit-aware picker.
+Free readers choose the one-card or three-card spread, enter their cards
+manually, and receive one Classic reading per local day.
 
 ### Quick upload
 
@@ -363,7 +356,7 @@ Homepage
   -> shared reading and save screen
 ```
 
-`startQuick()` resets state for the shorter flow. Identification sends the photo
+`startQuick()` opens the shorter Premium flow. Identification sends the photo
 and layout to Gemini when requested. A photo error leaves the spread and
 question available for retry or manual entry. The shared review requires at least
 one card and a confirmed orientation for every included card. A partial spread
@@ -427,14 +420,14 @@ on artwork availability.
 Spread records include ID, name, category, description, card count, ordered
 positions, and a layout key.
 
-The default visible choices are:
+The free choices are:
 
 - `one-card`
 - `three-card`
+
+The spread picker also shows these Premium choices:
+
 - `six-card`
-
-Advanced premium choices are:
-
 - `celtic-cross`
 - `romany`
 - `yearly`
@@ -480,14 +473,12 @@ deck.
 
 ### Configuration priority
 
-`js/ai.js` prefers:
-
-1. An explicit or locally saved user Gemini API key
-2. The configured Arcana Worker proxy when no user key is available
-
-The user key is sent directly to Google using the `x-goog-api-key` header. It is
-stored in `arcana_settings` in the current browser and can be tested or removed
-from Settings.
+A Premium browser user can use a personal Gemini key or Arcana-hosted AI.
+`js/ai.js` prefers the personal key when configured and sends it directly to
+Google using the `x-goog-api-key` header. The current browser stores the key in
+`arcana_settings`. Settings lets the user test or remove it. Personal-key
+requests use the user's Gemini project. Public Android builds use Arcana-hosted
+AI.
 
 `js/config.js` contains public runtime configuration:
 
@@ -496,19 +487,15 @@ from Settings.
 - Gumroad product URL
 - Empty legacy/local Google key override
 
-Private API keys and webhook secrets must not be shipped in browser JavaScript.
+Store the production Gemini key and webhook credentials in Cloudflare secrets.
 
 ### Gemini client
 
-`callGemini()` supports text prompts and base64 image input. It handles:
-
-- Direct and proxy request shapes
-- Multiple Gemini model attempts
-- Retryable rate-limit/server statuses
-- Countdown/status messaging
-- Useful configuration and error messages
-
-The Worker has its own model fallback and retry logic for proxied requests.
+`callGemini()` supports text prompts and base64 image input. Personal-key calls
+can retry or move to a fallback Gemini model. Hosted calls send a signed
+session, operation, and unique request ID to `/api/ai/v2`. The Worker chooses
+the model, admits at most one Gemini call per request ID, and returns the
+remaining monthly allowance when applicable.
 
 ### Identification parser
 
@@ -554,7 +541,8 @@ than overriding it.
 ## 14. Reading generation and readiness
 
 `generateReading()` in `js/reading-engine.js` runs the mode chosen in the shared
-review. Identification and review do not consume the daily reading allowance.
+review. Completion counts against the Free daily allowance. Hosted photo
+identification and hosted interpretation each count as one Premium AI request.
 
 ```text
 AI selected and configured
@@ -570,7 +558,7 @@ AI prompts include:
 - Spread and layout context
 - Position names and meanings
 - Card names and orientations
-- Card keywords and the full meaning for each card's active orientation
+- Each confirmed card's active-orientation meaning, with keywords as a fallback
 - Dropped card
 - Concerns and reader context
 - Reading style and tone
@@ -637,10 +625,12 @@ two-pathways, and relationship spreads—to visual card positions. Unknown layou
 use a grid fallback.
 
 The structured reading pipeline also renders a downloadable infographic in
-`js/reading-engine.js` for Premium. It uses the saved reading, confirmed cards,
-existing artwork, and an optional spread photo. The renderer runs locally
-without an AI call. Free readers can view a public sample and share or print
-their reading text. The infographic selects a template from the active spread:
+`js/reading-engine.js` for Premium. Canvas reuses the completed or saved reading
+and the confirmed cards. Artwork comes from bundled images or the existing
+card-art URLs, with built-in card backs as a fallback. Users can include a
+spread photo held in memory. Rendering and re-exporting use zero Gemini tokens.
+Free readers can view a public sample and share or print their reading text.
+The infographic selects a template from the active spread:
 a featured card for one-card readings, a three-column sequence for Past / Present /
 Future, a balanced two-column grid for six-card and Celtic Cross readings, a
 quarter-by-quarter timeline for yearly readings, paired comparison rows for Two
@@ -681,19 +671,25 @@ required by applicable law or Gumroad's policies.
 - Premium UI rendering
 - Narration and comparison entry points
 
-Free includes one manually entered, one-card Classic reading per local day
-and up to three saved readings. Premium opens every spread, unlimited Classic
-readings, AI photo identification and interpretation, and poster exports. New
-purchases get 30 hosted operations per UTC calendar month. Earlier purchases
-keep their existing allowance. Reading comparison runs locally.
+Free includes one Classic reading per local day with a manually entered
+one-card or three-card spread and up to three saved readings. Premium opens
+every spread, unlimited Classic readings, AI photo identification and
+interpretation, poster exports, and up to 50 saved readings. New purchases get
+30 hosted operations per UTC calendar month.
+The Worker meters usage by verified purchase, so restoring it on another
+device or browser shares the allowance. Earlier purchases keep their existing
+allowance. Reading comparison and poster export run locally and use zero hosted
+requests.
 
 The browser does not contain an activation allow-list. `activatePremiumKey()`
 posts the entered key to `getActivationApiUrl()`, which uses an explicit
 activation endpoint when configured or the Worker/proxy base otherwise.
 
-After successful verification, the browser stores premium state in
-`arcana_subscription`. This local state controls the UI, but its source of truth
-at activation time is the Worker/Gumroad response.
+After successful verification, the browser stores the signed Gumroad
+entitlement and Premium UI state in `arcana_subscription`. It exchanges the
+entitlement for a hosted AI session through the Worker. A buyer whose
+activation predates the license database may need to enter the original key
+once in Premium Access to refresh the verified record.
 
 The Android app (`com.arcanaguide.app`) uses Google Play Billing for the
 non-consumable `arcana_premium_lifetime` product. `PlayBillingPlugin.java`
@@ -724,13 +720,15 @@ responses, rate limits, and upstream timeouts for the routes below.
 ### `POST /api/activate`
 
 - Normalizes and hashes the submitted license key
-- Verifies the approved founder-key digest on the server before the Gumroad path;
-  founder credentials are never sent to Gumroad and receive signed entitlements
+- Verifies founder credentials locally against the approved digest and issues
+  their signed entitlements
 - Calls Gumroad's license verification endpoint
 - Uses the configured product ID or the checked-in public fallback product ID
 - Requires an exact product and seller match and rejects failed, refunded, or chargebacked purchases
-- Stores only hashed license metadata in `ARCANA_LICENSES` when bound
-- Returns a signed entitlement token without returning or persisting the raw license key
+- Stores hashed license metadata and the purchase timestamp in `ARCANA_LICENSES`
+  when bound
+- Returns a signed entitlement token. The raw license key stays in the
+  verification request
 
 ### `POST /api/gumroad/webhook`
 
@@ -738,36 +736,52 @@ responses, rate limits, and upstream timeouts for the routes below.
 - Requires `GUMROAD_WEBHOOK_SECRET` and validates the seller and product IDs
 - Uses event-type-aware KV idempotency keys for repeated deliveries and refund events
 - Stores only minimal hashed sale/refund metadata in `ARCANA_LICENSES`
-- Does not store browser reading or journal data
+- Marks a matching license inactive when a revocation event arrives
+
+### `POST /api/ai/session`
+
+Verifies the signed browser entitlement, checks the active Gumroad license in
+`ARCANA_LICENSES`, and returns a signed 15-minute hosted AI session. Founder
+credentials use the configured digest. Each channel's purchase cutoff
+determines whether the session carries the 30-request monthly allowance.
 
 ### Android routes
 
 | Route | Behavior |
 |---|---|
 | `POST /api/play/status` | Obtains or reuses a Google OAuth access token and returns readiness. Purchase lookup and acknowledgement happen on `/api/play/verify`. |
-| `POST /api/play/verify` | Checks the submitted token with the Google Play Developer API for the Arcana package and product. Acknowledges completed purchases before returning a signed Premium entitlement. Pending and inactive purchases receive no entitlement. The Worker uses the raw purchase token for the API calls and keeps only its hash in the signed entitlement. |
-| `POST /api/android/tester` and `POST /api/android/review` | Check the code against the corresponding Worker secret, issue a signed access pass, and revalidate saved passes. Updating the relevant digest revokes its earlier passes. |
+| `POST /api/play/verify` | Checks the submitted token with the Google Play Developer API. For completed purchases, the Worker acknowledges the order and returns a signed Premium entitlement and hosted AI session. The Worker uses the purchase completion time for the allowance cutoff and the purchase-token hash as the usage identity. |
+| `POST /api/android/tester` and `POST /api/android/review` | Verify the supplied code or saved pass, then return the signed access pass and a hosted AI session. Rotating the configured digest revokes its earlier passes. |
 | `POST /api/reading-report` | Stores the reading text, reason, and report time in `ARCANA_REPORTS` for 90 days after an explicit submission. |
 
-### AI proxy route
+### Hosted AI and usage meter
 
-`POST /api/ai/v2` requires a signed 15-minute session issued from a verified
-Gumroad activation, Google Play purchase, or Android review or tester pass.
-A Durable Object deduplicates request IDs and reserves the allowance and
-estimated spend before Gemini runs. The Worker uses Flash-Lite for short
-interpretations and Flash for longer readings and photo identification, with
-output and thinking limits. It records token counts without reading content.
-See [Worker rollout configuration](server/README.md) for purchase cutoffs,
-legacy Android compatibility, and the project spend ceiling.
+`POST /api/ai/v2` requires a signed, unexpired hosted AI session. The legacy
+AI routes at `/` and `/api/ai` also require a session after the compatibility
+cutoff. The production cutoff has passed.
+
+The SQLite-backed `HostedUsage` Durable Object tracks requests and estimated
+spend for each UTC calendar month. It checks request IDs and atomically
+reserves one request and an estimate of its cost before Gemini runs. A
+duplicate request is rejected. Gemini's token counts reconcile the estimate,
+and an unknown outcome retains the reservation. The project ceiling applies
+to all hosted calls, including calls from earlier buyers and review access.
+
+The Worker uses Gemini 3.1 Flash-Lite for one- to three-card interpretations
+and Gemini 3.6 Flash for longer interpretations and photo identification.
+Generation uses per-operation output and thinking limits. Telemetry records
+the operation, model, token counts, attempt count, and finish reason.
+See [Worker setup](server/README.md) for rollout configuration and
+[the release handoff](docs/google-play-handoff.md) for production values.
 
 Expected Worker configuration:
 
 | Binding/variable | Purpose |
 |---|---|
-| `GOOGLE_API_KEY` | private Gemini key for hosted proxy fallback |
+| `GOOGLE_API_KEY` | encrypted Cloudflare secret for the hosted Gemini project |
 | `GUMROAD_PRODUCT_ID` | optional override for the Arcana product |
 | `GUMROAD_SELLER_ID` | optional seller override |
-| `GUMROAD_WEBHOOK_SECRET` | required shared webhook verification secret |
+| `GUMROAD_WEBHOOK_SECRET` | shared secret required when enabling Gumroad webhook ingestion |
 | `ARCANA_ENTITLEMENT_SECRET` | required HMAC secret used for entitlement tokens |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Cloudflare secret containing the dedicated Play service account JSON for purchase lookup and acknowledgement |
 | `ARCANA_ANDROID_TESTER_CODE_HASH` | secret digest for internal tester access |
@@ -775,7 +789,12 @@ Expected Worker configuration:
 | `ARCANA_REPORTS` | KV namespace for user-submitted Android AI reading reports |
 | `ARCANA_ALLOWED_ORIGINS` | optional comma-separated exact browser origins |
 | `ARCANA_RATE_LIMITER` | recommended Cloudflare rate-limiting binding |
-| `ARCANA_LICENSES` | required for webhook idempotency and license status records |
+| `ARCANA_LICENSES` | KV namespace for Gumroad license status and webhook idempotency |
+| `ARCANA_HOSTED_USAGE` | SQLite-backed `HostedUsage` Durable Object for quotas and estimated spend |
+| `ARCANA_AI_MONTHLY_BUDGET_USD` | project-wide estimated Gemini spend ceiling per UTC month |
+| `ARCANA_AI_PLAN_START` | Gumroad purchase timestamp cutoff for the monthly allowance |
+| `ARCANA_PLAY_AI_PLAN_START` | Google Play purchase completion cutoff for the monthly allowance |
+| `ARCANA_AI_LEGACY_UNTIL` | end of unsigned access on the legacy AI routes |
 
 ## 18. Browser persistence
 
@@ -785,7 +804,7 @@ Expected Worker configuration:
 | `arcana_settings` | Gemini key, reading style/tone, narrator voice |
 | `arcana_subscription` | local premium entitlement metadata |
 | `arcana_usage` | daily/monthly usage counters |
-| `arcana_readings` | saved reading archive, capped at 50 |
+| `arcana_readings` | saved reading archive, three on Free and 50 on Premium |
 | `arcana-journal` | lightweight reflection entries, capped at 50 |
 
 Saved reading records contain the mode, spread, cards, dropped card, narrative,
@@ -871,20 +890,17 @@ Selection surfaces use semantic `<button type="button">` elements. Preserve:
 
 ## 21. Tests and verification
 
-`npm test` runs:
-
-1. Template/data synchronization and TypeScript compilation
-2. `tests/card-art.mjs`
-3. `tests/ai-identification.mjs`
-4. `tests/deck-selection.mjs`
-5. `tests/worker-activation.mjs`
-6. `tests/portable-regressions.mjs`
-7. Windows contract checks: `tests/*.ps1`
+`npm test` synchronizes templates and spread data, compiles TypeScript, and
+runs the regression suites listed in [tests/run-tests.mjs](tests/run-tests.mjs).
+Windows runs the PowerShell contract checks alongside the Node suites.
 
 Coverage is contract-oriented:
 
 - Worker activation success/failure/default configuration and webhook validation
 - Worker CORS, body/image limits, rate limits, timeout/error behavior, and webhook idempotency
+- Hosted AI session authorization, purchase cutoffs, the monthly allowance,
+  duplicate requests, spend reservations, and usage telemetry privacy
+- Google Play verification, acknowledgement, tester and reviewer access, and reports
 - No hardcoded browser activation keys
 - Current lifetime pricing and Gemini-key settings
 - Journal wiring and post-reading actions
@@ -921,7 +937,7 @@ mobile, keyboard navigation, loading/error states, overflow, and console output.
 8. Preserve global script dependency order.
 9. Keep manual card correction and classic fallback working.
 10. Do not expose Gemini keys, webhook secrets, or activation secrets.
-11. Verify premium licenses through the Worker/Gumroad path.
+11. Verify Premium purchases through the Worker using Gumroad or Google Play.
 12. Keep browser readings, photos, and journal data private and local.
 13. Preserve Ritual Stage/Ritual Shell accessibility and responsive behavior.
 14. Keep result-only controls hidden until a reading is ready.

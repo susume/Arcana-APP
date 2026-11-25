@@ -54,48 +54,63 @@
       <a href="privacy.html" aria-current="page">Privacy</a>
     </nav>
   </header>
-  <main id="content" class="public-content" tabindex="-1">
+  <main id="content" class="public-content article-page" tabindex="-1">
     <h1>Arcana Guide Privacy Policy</h1>
     <p class="public-intro">This policy covers the Arcana Guide website and Android app. The Android app is for adults aged 18 and over. Arcana Guide works without an Arcana account.</p>
 
       <p class="public-updated">Updated November 18, 2026</p>
-      <section aria-labelledby="device-data">
-        <h2 id="device-data">Readings and notes on your device</h2>
-        <p>Arcana stores saved readings, journal notes, preferences, and usage counters in your browser or Android app. Classic readings use built-in card meanings on your device. You can export a journal backup and import it on another device. Your exported files can contain private reading and journal content.</p>
-        <p>Temporary reading drafts expire after one hour. Arcana keeps a selected card photo in memory for the current reading and excludes the photo from drafts and journal backups. Clearing Arcana's saved data removes your local readings, settings, and access passes.</p>
-      </section>
-      <section aria-labelledby="ai-requests">
-        <h2 id="ai-requests">Photos and AI requests</h2>
-        <p>When you request AI card identification, an interpretation, or a reading comparison, Arcana sends the relevant spread photo or text over HTTPS. Text can include your card names and positions, question, optional life stage, selected readings, and reading preferences. Android sends these requests through Arcana's Cloudflare Worker to Google Gemini.</p>
-        <!-- play:direct-gemini -->
-        <p>On the website, you can add a Gemini API key to send requests directly to Google. Arcana saves that key in your browser until you remove it. Google may use content submitted to its unpaid services to improve its products. Keep personal or confidential information out of unpaid requests.</p>
-        <!-- /play:direct-gemini -->
-        <p>Arcana's Worker forwards AI requests without adding routine photos or prompts to an Arcana database. Google can retain inputs, context, and outputs for abuse monitoring. For details, see the <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a> and <a href="https://ai.google.dev/gemini-api/docs/usage-policies">Google's abuse monitoring policy</a>. Enter cards manually and choose Classic for a reading that keeps your question and cards on your device.</p>
-      </section>
-      <section aria-labelledby="payments">
-        <h2 id="payments">Payments and Premium activation</h2>
-        <!-- play:privacy-web-payments -->
-        <p>Gumroad handles checkout and provides your activation key. Arcana's activation service verifies that key and may retain license and entitlement records to support Premium activation. The browser saves your verified activation status.</p>
-        <p>See <a href="https://gumroad.com/privacy">Gumroad's privacy policy</a> for its handling of purchase information.</p>
-        <!-- /play:privacy-web-payments -->
-        <p>When Android checkout is available, Google Play processes payment and handles payment card details. Arcana sends a purchase token to its Cloudflare Worker to verify ownership, acknowledge purchases, and restore Premium. The Worker uses the raw token during verification and releases a signed entitlement to the app.</p>
-        <p>When an authorized reviewer enters a review code, the Worker checks it and returns a signed access pass. The Android app saves that pass on the device and rechecks it with the Worker. You can end review access from Settings.</p>
-      </section>
-      <section aria-labelledby="reading-reports">
-        <h2 id="reading-reports">Reporting an AI reading</h2>
-        <p>When you submit an AI reading report, Arcana receives the displayed reading text, the reason you select, and the submission time. Arcana uses reports to investigate content issues and retains them in Cloudflare storage for up to 90 days. Review the text before sending if it contains personal details.</p>
-      </section>
-      <section aria-labelledby="hosting">
-        <h2 id="hosting">Network and device services</h2>
-        <p>Arcana uses IP addresses to limit abusive requests to its Cloudflare Worker. Cloudflare, GitHub Pages, and Wikimedia Commons can receive connection information such as your IP address and the resource requested when their services are contacted. GitHub Pages hosts the website. Wikimedia Commons supplies some of the card artwork.</p>
-        <p>When you choose narration on Android, Arcana passes the reading text to your device's text-to-speech engine. Your engine and voice settings determine whether that service uses the network. When you print an item or save a backup, you choose its destination through the device.</p>
-        <p>See the privacy notices for <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>, <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a>, <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia</a>, and <a href="https://policies.google.com/privacy">Google</a>.</p>
-      </section>
-      <section aria-labelledby="data-control">
-        <h2 id="data-control">Data deletion and privacy contact</h2>
-        <p>Use the journal controls to delete individual entries or choose <strong>Clear Saved Data</strong> in Settings to remove Arcana's local data. Delete any exported backup copies where you saved them.<!-- play:direct-gemini --> You can remove a saved Gemini API key in website Settings.<!-- /play:direct-gemini --></p>
-        <p>Email <a href="mailto:support@arcanaguide.com">support@arcanaguide.com</a> for privacy questions or to request deletion of data Arcana received. For a submitted report, include the approximate submission time so we can try to locate it. Arcana receives the email address and message you send to support. Google and other service providers manage their own records and deletion controls.</p>
-      </section>
+    <div class="article-layout">
+      <nav class="article-contents" aria-label="On this page">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#device-data">On-device data</a></li>
+          <li><a href="#ai-requests">Photos and AI</a></li>
+          <li><a href="#payments">Premium activation</a></li>
+          <li><a href="#reading-reports">Reading reports</a></li>
+          <li><a href="#hosting">Network services</a></li>
+          <li><a href="#data-control">Deletion and contact</a></li>
+        </ul>
+      </nav>
+      <div class="article-sections">
+        <section aria-labelledby="device-data">
+          <h2 id="device-data">Readings and notes on your device</h2>
+          <p>Arcana stores saved readings, journal notes, preferences, and usage counters in your browser or Android app. Classic readings use built-in card meanings on your device. You can export a journal backup and import it on another device. Your exported files can contain private reading and journal content.</p>
+          <p>Temporary reading drafts expire after one hour. Arcana keeps a selected card photo in memory for the current reading and excludes the photo from drafts and journal backups. Clearing Arcana's saved data removes your local readings, settings, and access passes.</p>
+        </section>
+        <section aria-labelledby="ai-requests">
+          <h2 id="ai-requests">Photos and AI requests</h2>
+          <p>When you request AI card identification, an interpretation, or a reading comparison, Arcana sends the relevant spread photo or text over HTTPS. Text can include your card names and positions, question, optional life stage, selected readings, and reading preferences. Android sends these requests through Arcana's Cloudflare Worker to Google Gemini.</p>
+          <!-- play:direct-gemini -->
+          <p>On the website, you can add a Gemini API key to send requests directly to Google. Arcana saves that key in your browser until you remove it. Google may use content submitted to its unpaid services to improve its products. Keep personal or confidential information out of unpaid requests.</p>
+          <!-- /play:direct-gemini -->
+          <p>Arcana's Worker forwards AI requests without adding routine photos or prompts to an Arcana database. Google can retain inputs, context, and outputs for abuse monitoring. For details, see the <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a> and <a href="https://ai.google.dev/gemini-api/docs/usage-policies">Google's abuse monitoring policy</a>. Enter cards manually and choose Classic for a reading that keeps your question and cards on your device.</p>
+        </section>
+        <section aria-labelledby="payments">
+          <h2 id="payments">Payments and Premium activation</h2>
+          <!-- play:privacy-web-payments -->
+          <p>Gumroad handles checkout and provides your activation key. Arcana's activation service verifies that key and may retain license and entitlement records to support Premium activation. The browser saves your verified activation status.</p>
+          <p>See <a href="https://gumroad.com/privacy">Gumroad's privacy policy</a> for its handling of purchase information.</p>
+          <!-- /play:privacy-web-payments -->
+          <p>When Android checkout is available, Google Play processes payment and handles payment card details. Arcana sends a purchase token to its Cloudflare Worker to verify ownership, acknowledge purchases, and restore Premium. The Worker uses the raw token during verification and releases a signed entitlement to the app.</p>
+          <p>When an authorized reviewer enters a review code, the Worker checks it and returns a signed access pass. The Android app saves that pass on the device and rechecks it with the Worker. You can end review access from Settings.</p>
+        </section>
+        <section aria-labelledby="reading-reports">
+          <h2 id="reading-reports">Reporting an AI reading</h2>
+          <p>When you submit an AI reading report, Arcana receives the displayed reading text, the reason you select, and the submission time. Arcana uses reports to investigate content issues and retains them in Cloudflare storage for up to 90 days. Review the text before sending if it contains personal details.</p>
+        </section>
+        <section aria-labelledby="hosting">
+          <h2 id="hosting">Network and device services</h2>
+          <p>Arcana uses IP addresses to limit abusive requests to its Cloudflare Worker. Cloudflare, GitHub Pages, and Wikimedia Commons can receive connection information such as your IP address and the resource requested when their services are contacted. GitHub Pages hosts the website. Wikimedia Commons supplies some of the card artwork.</p>
+          <p>When you choose narration on Android, Arcana passes the reading text to your device's text-to-speech engine. Your engine and voice settings determine whether that service uses the network. When you print an item or save a backup, you choose its destination through the device.</p>
+          <p>See the privacy notices for <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>, <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a>, <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia</a>, and <a href="https://policies.google.com/privacy">Google</a>.</p>
+        </section>
+        <section aria-labelledby="data-control">
+          <h2 id="data-control">Data deletion and privacy contact</h2>
+          <p>Use the journal controls to delete individual entries or choose <strong>Clear Saved Data</strong> in Settings to remove Arcana's local data. Delete any exported backup copies where you saved them.<!-- play:direct-gemini --> You can remove a saved Gemini API key in website Settings.<!-- /play:direct-gemini --></p>
+          <p>Email <a href="mailto:support@arcanaguide.com">support@arcanaguide.com</a> for privacy questions or to request deletion of data Arcana received. For a submitted report, include the approximate submission time so we can try to locate it. Arcana receives the email address and message you send to support. Google and other service providers manage their own records and deletion controls.</p>
+        </section>
+      </div>
+    </div>
     <div class="public-next">
       <p>A quiet moment with your own cards.</p>
       <a class="btn btn-primary public-cta" href="./">Open Arcana</a>

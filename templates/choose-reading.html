@@ -7,11 +7,13 @@
     <fieldset class="reading-options">
       <legend class="sr-only">Standard layouts</legend>
       <label class="reading-choice-card">
+        <span class="spread-preview" aria-hidden="true"><i></i></span>
         <span class="choice-title" id="one-card-label">One card</span>
         <span class="choice-detail" id="one-card-detail">A focused reading for one question or a moment of reflection.</span>
         <input type="radio" name="guided-spread" value="one-card" aria-labelledby="one-card-label" aria-describedby="one-card-detail" onchange="selectReadingType(this.value)">
       </label>
       <label class="reading-choice-card">
+        <span class="spread-preview" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="choice-title" id="three-card-label">Three cards</span>
         <span class="choice-detail" id="three-card-detail">Look at past influences, the present, and a possible direction.</span>
         <input type="radio" name="guided-spread" value="three-card" aria-labelledby="three-card-label" aria-describedby="three-card-detail" onchange="selectReadingType(this.value)">

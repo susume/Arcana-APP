@@ -34,7 +34,7 @@ html[data-theme=atelier] {
 .atlas-plate img { position: absolute; width: 32%; height: auto; border: clamp(3px,.4vw,6px) solid #f9f0d6; border-radius: 4%; box-shadow: 3px 8px 10px #101a2050, 7px 20px 25px #13232c36; }
 .plate-hermit { transform: translate(-57%,4%) rotate(-19deg); }
 .plate-temperance { transform: translate(57%,3%) rotate(18deg); }
-.plate-star { transform: translateY(-4%) rotate(-4deg); }
+.plate-center { transform: translateY(-4%) rotate(-4deg); }
 .atlas-dial, .atlas-rail-chart { position: absolute; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--atlas-brass); }
 .atlas-dial { width: 77%; color: var(--atlas-foil); background: var(--atlas-night); box-shadow: 0 0 0 5px var(--atlas-paper), 0 0 0 6px #ac9977; }
 .atlas-dial::before, .atlas-rail-chart::before { content: ""; position: absolute; inset: 3%; border-radius: 50%; background: repeating-conic-gradient(from -1deg, currentColor 0 .38deg, transparent .4deg 5deg); mask: radial-gradient(circle, transparent 0 67%, black 67.2%); }

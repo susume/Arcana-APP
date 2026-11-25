@@ -1,4 +1,6 @@
+@layer atlas;
 @import "tailwindcss";
+@import "./celestial-atlas.css";
 
 @layer base {
   :root {

@@ -125,12 +125,12 @@
 <div class="screen active landing-screen ritual-home" id="screen-welcome">
   <div class="ritual-ambient" aria-hidden="true"></div>
 
-  <header class="ritual-nav" aria-label="Arcana homepage">
-    <div class="brand-lockup ritual-brand">
+  <header class="atlas-masthead" aria-label="Arcana homepage">
+    <div class="atlas-brand">
       <h1 class="sr-only">Arcana Guide</h1>
-      <div class="brand-logo" aria-hidden="true"><img src="assets/brand/arcana-guide-horizontal-256.webp" srcset="assets/brand/arcana-guide-horizontal-256.webp 256w, assets/brand/arcana-guide-horizontal-480.webp 480w, assets/brand/arcana-guide-horizontal.webp 836w" sizes="(max-width: 760px) 175px, 200px" alt="" width="836" height="471"></div>
+      <span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span>
     </div>
-    <nav class="ritual-nav-links" aria-label="Arcana navigation">
+    <nav class="atlas-mast-links" aria-label="Arcana navigation">
       <a href="#why-arcana" class="home-nav-wide">Why Arcana</a>
       <a href="#how-it-works" class="home-nav-wide">How it works</a>
       <a href="#reading-examples">Examples</a>
@@ -143,34 +143,66 @@
 
   <noscript><p class="public-noscript">Enable JavaScript to start a reading. You can still explore Arcana and read the <a href="guide.html">reading guide</a> and <a href="faq.html">FAQ</a>.</p></noscript>
 
-  <section class="ritual-hero" aria-labelledby="ritual-hero-title">
-    <div class="ritual-hero-copy">
+  <section class="atlas-opening" aria-labelledby="ritual-hero-title">
+    <div class="atlas-opening-copy">
       <span class="atelier-eyebrow">REFLECTIVE READINGS FOR YOUR REAL CARDS</span>
       <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
       <h2 id="ritual-hero-title">Read your cards<br><em>with clarity.</em></h2>
-      <div class="hero-title-rule" aria-hidden="true"></div>
       <p>Draw your own tarot or playing cards. Arcana helps you read the spread, reflect on what it brings up, and keep the insight.</p>
-      <div class="hero-cta-row ritual-cta-row">
+      <div class="atlas-opening-actions">
         <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
           Guide me through a spread
         </button>
-        <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
+        <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
+      </div>
+      <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
           My cards are already laid out
         </button>
-      </div>
-      <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
       <p class="ritual-trust-note">One free Classic reading per day with one or three cards. No account needed.</p>
     </div>
+    <figure class="atlas-frontispiece" aria-label="Illustrations from the Rider–Waite–Smith tarot">
+      <div class="atlas-plate" aria-hidden="true">
+        <div class="atlas-dial"><i></i></div>
+        <img class="plate-hermit" src="assets/atlas/hermit.webp" srcset="assets/samples/celtic-cross/cards/Her.webp 149w, assets/atlas/hermit.webp 421w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="421" height="720">
+        <img class="plate-temperance" src="assets/atlas/temperance.webp" srcset="assets/samples/celtic-cross/cards/Tem.webp 147w, assets/atlas/temperance.webp 415w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="415" height="720">
+        <img class="plate-star" src="assets/atlas/star.webp" srcset="assets/samples/celtic-cross/cards/Star.webp 148w, assets/atlas/star.webp 418w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="418" height="720" fetchpriority="high">
+      </div>
+      <figcaption>Major Arcana <span aria-hidden="true">/</span> Rider–Waite–Smith</figcaption>
+    </figure>
+  </section>
 
-    <div class="ritual-hero-visual" aria-hidden="true">
-      <picture>
-        <source media="(width > 760px)" srcset="assets/homepage/atelier/reading-table-480.webp 480w, assets/homepage/atelier/reading-table-800.webp 800w, assets/homepage/atelier/reading-table.webp 1254w" sizes="(max-width: 1320px) 46vw, 600px">
-        <img src="assets/homepage/atelier/reading-table-480.webp" alt="" fetchpriority="high" width="1254" height="1254">
-      </picture>
-      <div class="ritual-orbit orbit-one"></div>
-      <div class="ritual-orbit orbit-two"></div>
+  <section class="atlas-process" id="how-it-works" aria-labelledby="journey-title">
+    <div class="ritual-section-heading">
+      <h3 id="journey-title">From your cards to clarity.</h3>
+      <p>Four simple steps. Your own cards, every time.</p>
+    </div>
+    <div class="journey-steps">
+      <div class="journey-step">
+        <span class="journey-number">1</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-choose-spread.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Choose a Spread</h4>
+        <p>Choose a layout that fits what&rsquo;s on your mind.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">2</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-draw-cards.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Draw Your Cards</h4>
+        <p>Shuffle your own deck and lay out your cards.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">3</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-upload-photo.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Upload a Photo</h4>
+        <p>Upload your spread, or enter your cards by hand.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">4</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-review-and-read.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Review and Read</h4>
+        <p>Check your cards, then choose an AI or Classic reading.</p>
+      </div>
     </div>
   </section>
 
@@ -238,39 +270,6 @@
     </div>
   </section>
 
-  <section class="ritual-journey" id="how-it-works" aria-labelledby="journey-title">
-    <div class="ritual-section-heading">
-      <h3 id="journey-title">From your cards to clarity.</h3>
-      <p>Four simple steps. Your own cards, every time.</p>
-    </div>
-    <div class="journey-steps">
-      <div class="journey-step">
-        <span class="journey-number">1</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-choose-spread.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Choose a Spread</h4>
-        <p>Choose a layout that fits what&rsquo;s on your mind.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">2</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-draw-cards.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Draw Your Cards</h4>
-        <p>Shuffle your own deck and lay out your cards.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">3</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-upload-photo.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Upload a Photo</h4>
-        <p>Upload your spread, or enter your cards by hand.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">4</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-review-and-read.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Review and Read</h4>
-        <p>Check your cards, then choose an AI or Classic reading.</p>
-      </div>
-    </div>
-  </section>
-
   <section class="ritual-journal-premium atelier-offer" id="journal" aria-labelledby="journal-title">
     <div class="journal-copy" id="premium">
       <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
@@ -319,7 +318,8 @@
     <p>No account needed to begin.</p>
   </section>
 
-  <div class="footer-links ritual-footer">
+  <div class="footer-links ritual-footer atlas-footer">
+    <span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span>
     <a class="footer-link" href="guide.html">Reading guide</a>
     <a class="footer-link" href="faq.html">FAQ</a>
     <a class="footer-link" href="pricing.html">Pricing</a>
@@ -332,12 +332,12 @@
 <div class="screen active landing-screen ritual-home" id="screen-welcome">
   <div class="ritual-ambient" aria-hidden="true"></div>
 
-  <header class="ritual-nav" aria-label="Arcana homepage">
-    <div class="brand-lockup ritual-brand">
+  <header class="atlas-masthead" aria-label="Arcana homepage">
+    <div class="atlas-brand">
       <h1 class="sr-only">Arcana Guide</h1>
-      <div class="brand-logo" aria-hidden="true"><img src="assets/brand/arcana-guide-horizontal-256.webp" srcset="assets/brand/arcana-guide-horizontal-256.webp 256w, assets/brand/arcana-guide-horizontal-480.webp 480w, assets/brand/arcana-guide-horizontal.webp 836w" sizes="(max-width: 760px) 175px, 200px" alt="" width="836" height="471"></div>
+      <span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span>
     </div>
-    <nav class="ritual-nav-links" aria-label="Arcana navigation">
+    <nav class="atlas-mast-links" aria-label="Arcana navigation">
       <a href="#why-arcana" class="home-nav-wide">Why Arcana</a>
       <a href="#how-it-works" class="home-nav-wide">How it works</a>
       <a href="#reading-examples">Examples</a>
@@ -350,34 +350,66 @@
 
   <noscript><p class="public-noscript">Enable JavaScript to start a reading. You can still explore Arcana and read the <a href="guide.html">reading guide</a> and <a href="faq.html">FAQ</a>.</p></noscript>
 
-  <section class="ritual-hero" aria-labelledby="ritual-hero-title">
-    <div class="ritual-hero-copy">
+  <section class="atlas-opening" aria-labelledby="ritual-hero-title">
+    <div class="atlas-opening-copy">
       <span class="atelier-eyebrow">REFLECTIVE READINGS FOR YOUR REAL CARDS</span>
       <span class="plan-kicker" id="subscription-status">1 free reading left today</span>
       <h2 id="ritual-hero-title">Read your cards<br><em>with clarity.</em></h2>
-      <div class="hero-title-rule" aria-hidden="true"></div>
       <p>Draw your own tarot or playing cards. Arcana helps you read the spread, reflect on what it brings up, and keep the insight.</p>
-      <div class="hero-cta-row ritual-cta-row">
+      <div class="atlas-opening-actions">
         <button class="btn btn-primary ritual-primary-cta" disabled data-app-startup onclick="startGuided()">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6c.8 6 4.4 9.6 10.4 10.4-6 .8-9.6 4.4-10.4 10.4-.8-6-4.4-9.6-10.4-10.4 6-.8 9.6-4.4 10.4-10.4Z"></path></svg>
           Guide me through a spread
         </button>
-        <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
+        <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
+      </div>
+      <button class="btn ritual-secondary-cta" disabled data-app-startup data-premium-feature="photo-ai" onclick="startQuick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.6" width="18" height="13" rx="2.6"></rect><circle cx="12" cy="13.1" r="3.4"></circle><path d="M8.4 6.6 9.6 4.4h4.8L15.6 6.6"></path></svg>
           My cards are already laid out
         </button>
-      </div>
-      <a class="sample-text-link" href="sample-reading.html">See a sample reading <span aria-hidden="true">&#8599;</span></a>
       <p class="ritual-trust-note">One free Classic reading per day with one or three cards. No account needed.</p>
     </div>
+    <figure class="atlas-frontispiece" aria-label="Illustrations from the Rider–Waite–Smith tarot">
+      <div class="atlas-plate" aria-hidden="true">
+        <div class="atlas-dial"><i></i></div>
+        <img class="plate-hermit" src="assets/atlas/hermit.webp" srcset="assets/samples/celtic-cross/cards/Her.webp 149w, assets/atlas/hermit.webp 421w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="421" height="720">
+        <img class="plate-temperance" src="assets/atlas/temperance.webp" srcset="assets/samples/celtic-cross/cards/Tem.webp 147w, assets/atlas/temperance.webp 415w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="415" height="720">
+        <img class="plate-star" src="assets/atlas/star.webp" srcset="assets/samples/celtic-cross/cards/Star.webp 148w, assets/atlas/star.webp 418w" sizes="(max-width: 650px) 24vw, (max-width: 1100px) 15vw, 195px" alt="" width="418" height="720" fetchpriority="high">
+      </div>
+      <figcaption>Major Arcana <span aria-hidden="true">/</span> Rider–Waite–Smith</figcaption>
+    </figure>
+  </section>
 
-    <div class="ritual-hero-visual" aria-hidden="true">
-      <picture>
-        <source media="(width > 760px)" srcset="assets/homepage/atelier/reading-table-480.webp 480w, assets/homepage/atelier/reading-table-800.webp 800w, assets/homepage/atelier/reading-table.webp 1254w" sizes="(max-width: 1320px) 46vw, 600px">
-        <img src="assets/homepage/atelier/reading-table-480.webp" alt="" fetchpriority="high" width="1254" height="1254">
-      </picture>
-      <div class="ritual-orbit orbit-one"></div>
-      <div class="ritual-orbit orbit-two"></div>
+  <section class="atlas-process" id="how-it-works" aria-labelledby="journey-title">
+    <div class="ritual-section-heading">
+      <h3 id="journey-title">From your cards to clarity.</h3>
+      <p>Four simple steps. Your own cards, every time.</p>
+    </div>
+    <div class="journey-steps">
+      <div class="journey-step">
+        <span class="journey-number">1</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-choose-spread.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Choose a Spread</h4>
+        <p>Choose a layout that fits what&rsquo;s on your mind.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">2</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-draw-cards.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Draw Your Cards</h4>
+        <p>Shuffle your own deck and lay out your cards.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">3</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-upload-photo.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Upload a Photo</h4>
+        <p>Upload your spread, or enter your cards by hand.</p>
+      </div>
+      <div class="journey-step">
+        <span class="journey-number">4</span>
+        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-review-and-read.webp" alt="" loading="lazy" width="840" height="560"></div>
+        <h4>Review and Read</h4>
+        <p>Check your cards, then choose an AI or Classic reading.</p>
+      </div>
     </div>
   </section>
 
@@ -445,39 +477,6 @@
     </div>
   </section>
 
-  <section class="ritual-journey" id="how-it-works" aria-labelledby="journey-title">
-    <div class="ritual-section-heading">
-      <h3 id="journey-title">From your cards to clarity.</h3>
-      <p>Four simple steps. Your own cards, every time.</p>
-    </div>
-    <div class="journey-steps">
-      <div class="journey-step">
-        <span class="journey-number">1</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-choose-spread.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Choose a Spread</h4>
-        <p>Choose a layout that fits what&rsquo;s on your mind.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">2</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-draw-cards.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Draw Your Cards</h4>
-        <p>Shuffle your own deck and lay out your cards.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">3</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-upload-photo.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Upload a Photo</h4>
-        <p>Upload your spread, or enter your cards by hand.</p>
-      </div>
-      <div class="journey-step">
-        <span class="journey-number">4</span>
-        <div class="journey-visual" aria-hidden="true"><img src="assets/homepage/atelier/journey-review-and-read.webp" alt="" loading="lazy" width="840" height="560"></div>
-        <h4>Review and Read</h4>
-        <p>Check your cards, then choose an AI or Classic reading.</p>
-      </div>
-    </div>
-  </section>
-
   <section class="ritual-journal-premium atelier-offer" id="journal" aria-labelledby="journal-title">
     <div class="journal-copy" id="premium">
       <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
@@ -526,7 +525,8 @@
     <p>No account needed to begin.</p>
   </section>
 
-  <div class="footer-links ritual-footer">
+  <div class="footer-links ritual-footer atlas-footer">
+    <span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span>
     <a class="footer-link" href="guide.html">Reading guide</a>
     <a class="footer-link" href="faq.html">FAQ</a>
     <a class="footer-link" href="pricing.html">Pricing</a>
@@ -569,16 +569,19 @@
   <fieldset class="reading-options">
     <legend class="sr-only">Deck type</legend>
     <label class="card-opt selected">
+      <span class="atlas-deck atlas-deck-tarot" aria-hidden="true"><img src="assets/atlas/star.webp" alt="" width="418" height="720"></span>
       <span class="choice-title" id="deck-tarot-label">Traditional Tarot</span>
       <span class="choice-detail" id="deck-tarot-detail">A 78-card tarot deck.</span>
       <input type="radio" name="guided-deck" value="tarot" aria-labelledby="deck-tarot-label" aria-describedby="deck-tarot-detail" onchange="selectSystem(this.value)" checked>
     </label>
     <label class="card-opt">
+      <span class="atlas-deck atlas-deck-playing" aria-hidden="true"><b>A</b>♠</span>
       <span class="choice-title" id="deck-playing-label">Playing Cards</span>
       <span class="choice-detail" id="deck-playing-detail">A standard 52-card deck.</span>
       <input type="radio" name="guided-deck" value="playing" aria-labelledby="deck-playing-label" aria-describedby="deck-playing-detail" onchange="selectSystem(this.value)">
     </label>
     <label class="card-opt">
+      <span class="atlas-deck atlas-deck-joker" aria-hidden="true"><b>J</b>✦</span>
       <span class="choice-title" id="deck-joker-label">Playing Cards + Joker</span>
       <span class="choice-detail" id="deck-joker-detail">A 52-card deck with one Joker.</span>
       <input type="radio" name="guided-deck" value="playing-joker" aria-labelledby="deck-joker-label" aria-describedby="deck-joker-detail" onchange="selectSystem(this.value)">

@@ -1,0 +1,334 @@
+/* Shared atlas plates, manuscript typography and reading-room furniture. */
+html[data-theme=atelier] {
+  --atlas-night: #192b30;
+  --atlas-ink: #202b2c;
+  --atlas-paper: #f5f1e7;
+  --atlas-leaf: #fffcf4;
+  --atlas-brass: #89652d;
+  --atlas-foil: #d4b57a;
+  --atlas-rule: #cdc7b7;
+  --atlas-muted: #54605d;
+  --atlas-tint: #e6e9df;
+  --atlas-plum: #584554;
+  --atlas-edge: clamp(20px, 5vw, 84px);
+  --atlas-width: 1320px;
+  --atlas-rail: clamp(215px, 20vw, 304px);
+}
+.atlas-wordmark { display: inline-flex; align-items: center; gap: 0; color: inherit; font: 600 32px/1 var(--font-display); letter-spacing: -.055em; white-space: nowrap; }
+.atlas-wordmark em { font-weight: 500; }
+.atlas-sigil { display: inline-grid; place-items: center; position: relative; flex: none; width: 32px; height: 32px; margin-right: 10px; color: var(--atlas-brass); border: 1px solid currentColor; border-radius: 50%; }
+.atlas-sigil::before, .atlas-sigil::after { content: ""; position: absolute; width: 135%; height: 135%; background: currentColor; clip-path: polygon(50% 0%,55% 43%,100% 50%,56% 56%,50% 100%,44% 57%,0 50%,44% 44%); }
+.atlas-sigil::after { transform: rotate(45deg) scale(.59); }
+.atlas-brand { display: inline-flex; align-items: center; width: max-content; min-height: 44px; text-decoration: none; background: transparent; border: 0; color: var(--atlas-ink); cursor: pointer; }
+.atlas-masthead, .atlas-opening, .atlas-process { width: min(calc(100% - var(--atlas-edge) * 2), var(--atlas-width)); margin-inline: auto; }
+.atlas-masthead { display: flex; align-items: center; gap: 28px; min-height: 86px; border-bottom: 1px solid var(--atlas-rule); }
+.atlas-mast-links { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(12px, 2.4vw, 40px); margin-left: auto; }
+.atlas-mast-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-ink); font-size: 15px; text-decoration: none; }
+.atlas-mast-links a:hover, .atlas-brand:hover { color: var(--atlas-brass); }
+.atlas-opening { display: grid; grid-template-columns: minmax(0,.94fr) minmax(0,1.06fr); align-items: center; gap: clamp(16px,3vw,54px); padding-block: clamp(36px,4vw,64px); text-align: left; }
+.atlas-opening-copy { min-width: 0; max-width: 570px; }
+.atlas-opening-copy > p:not(.ritual-trust-note) { max-width: 43ch; font: 400 clamp(17px,1.4vw,20px)/1.55 var(--font-body); color: var(--atlas-muted); margin: 22px 0 26px; }
+.atlas-opening-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 22px; }
+.atlas-frontispiece { position: relative; display: grid; justify-items: center; align-content: center; min-width: 0; margin: 0; }
+.atlas-plate { isolation: isolate; width: 100%; max-width: 610px; aspect-ratio: 1.29; position: relative; display: grid; place-items: center; }
+.atlas-plate img { position: absolute; width: 32%; height: auto; border: clamp(3px,.4vw,6px) solid #f9f0d6; border-radius: 4%; box-shadow: 3px 8px 10px #101a2050, 7px 20px 25px #13232c36; }
+.plate-hermit { transform: translate(-57%,4%) rotate(-19deg); }
+.plate-temperance { transform: translate(57%,3%) rotate(18deg); }
+.plate-star { transform: translateY(-4%) rotate(-4deg); }
+.atlas-dial, .atlas-rail-chart { position: absolute; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--atlas-brass); }
+.atlas-dial { width: 77%; color: var(--atlas-foil); background: var(--atlas-night); box-shadow: 0 0 0 5px var(--atlas-paper), 0 0 0 6px #ac9977; }
+.atlas-dial::before, .atlas-rail-chart::before { content: ""; position: absolute; inset: 3%; border-radius: 50%; background: repeating-conic-gradient(from -1deg, currentColor 0 .38deg, transparent .4deg 5deg); mask: radial-gradient(circle, transparent 0 67%, black 67.2%); }
+.atlas-dial::after, .atlas-rail-chart::after { content: ""; position: absolute; inset: 9%; border-radius: 50%; border: 1px solid currentColor; opacity: .6; }
+.atlas-dial i { position: absolute; inset: 16%; border: 1px solid #c3a56d70; transform: rotate(45deg); }
+.atlas-frontispiece figcaption { display: flex; align-items: center; gap: 10px; justify-content: center; color: var(--atlas-muted); font: 500 11px/1.4 var(--font-body); text-transform: uppercase; letter-spacing: .14em; margin-top: 15px; }
+.atlas-frontispiece figcaption span { color: var(--atlas-brass); }
+.atlas-process { border-top: 1px solid var(--atlas-rule); padding-block: clamp(28px,4vw,55px); display: grid; grid-template-columns: minmax(170px,.9fr) minmax(0,3fr); gap: 32px; text-align: left; }
+.atlas-reading-strip { display: flex; gap: 16px; overflow-x: auto; padding: 3px 3px 10px; scroll-snap-type: x proximity; }
+.atlas-reading-card { flex: 0 0 108px; margin: 0; scroll-snap-align: start; text-align: left; }
+.atlas-card-mount { height: 108px; width: 66px; display: grid; place-items: center; margin-bottom: 8px; border: 1px solid #c9ad79; background: #344247; color: var(--atlas-foil); }
+.atlas-reading-card .card-art-frame { width: 100%; height: 100%; }
+.atlas-reading-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+.atlas-reading-card.is-reversed img { transform: rotate(180deg); }
+.atlas-reading-card figcaption { display: grid; gap: 2px; }
+.atlas-reading-card small { font: 500 12px/1.35 var(--font-body); color: #ddd0b8; }
+.atlas-reading-card strong { font: 600 19px/1.1 var(--font-display); color: var(--atlas-leaf); }
+.atlas-deck { height: 72px; width: 46px; display: grid; align-content: center; justify-items: center; position: relative; margin: 0 0 8px 3px; border: 1px solid #87775e; border-radius: 3px; background: #fff9e9; box-shadow: -3px 3px 0 -1px #e0d6be,-4px 4px #91826a; color: var(--atlas-ink); font: 28px Georgia,serif; transform: rotate(-5deg); }
+.atlas-deck b { position: absolute; left: 3px; top: 2px; font: 12px Georgia,serif; }
+.atlas-deck img { width: 100%; height: 100%; object-fit: fill; }
+.atlas-deck-joker { color: #744552; }
+.atlas-rail-inner { position: sticky; top: 0; padding: 40px 28px; display: flex; flex-direction: column; align-items: stretch; height: min(100svh,1100px); overflow: hidden; }
+.atlas-rail-heading { color: var(--atlas-leaf); font: italic 500 33px/1.12 var(--font-display); margin: 64px 0 16px; }
+.atlas-rail-chart { position: relative; color: #b49763; display: grid; place-items: center; width: min(86%,180px); margin: auto auto 18px; }
+.atlas-rail-chart .atlas-sigil { margin: 0; color: inherit; width: 45%; height: 45%; }
+
+@layer atlas {
+  html[data-theme=atelier], html[data-theme=atelier] :is(.ritual-home,.ritual-screen) {
+    --paper: var(--atlas-paper) !important; --paper-card: var(--atlas-leaf) !important;
+    --paper-2: var(--atlas-leaf) !important; --paper-3: #e8e2d5 !important;
+    --ink: var(--atlas-ink) !important; --ink-soft: #465251 !important; --ink-faint: var(--atlas-muted) !important;
+    --line: var(--atlas-rule) !important; --line-2: #a6987d !important; --accent: #354d4c !important;
+    --lilac: #e4e8df !important; --wash: #eeece2 !important; --marigold: #d6bd88 !important;
+    --focus: #795421 !important; --brass: var(--atlas-brass) !important; --corner: 3px !important;
+  }
+  @media screen {
+    .atlas-masthead .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip-path: inset(50%) !important; }
+    .atlas-masthead .ritual-settings { position: static !important; margin: 0 !important; min-width: 44px !important; min-height: 44px !important; }
+    .btn { border-radius: 3px !important; font-weight: 600 !important; font-size: 14px !important; }
+    .btn.btn-primary { color: var(--atlas-leaf) !important; border-color: var(--atlas-night) !important; background: var(--atlas-night) !important; }
+    .btn.btn-primary:hover { background: #30474a !important; }
+    .btn:disabled { opacity: .55 !important; cursor: not-allowed !important; }
+    .atlas-opening .atelier-eyebrow, .home-reading-example .atelier-eyebrow, .public-eyebrow {
+      color: var(--atlas-brass) !important; text-transform: uppercase !important; font: 650 11px/1.5 var(--font-body) !important; letter-spacing: .15em !important;
+    }
+    .atlas-opening .atelier-eyebrow { display: flex !important; align-items: center !important; gap: 12px !important; margin: 0 0 20px !important; }
+    .atlas-opening .atelier-eyebrow::before { content: ""; width: 36px; height: 1px; background: currentColor; }
+    .atlas-opening h2 { font: 500 clamp(58px,6.6vw,96px)/.92 var(--font-display) !important; color: var(--atlas-ink) !important; margin: 0 !important; letter-spacing: -.056em !important; text-transform: none !important; }
+    .atlas-opening h2 em { color: #735b39 !important; font-weight: 500 !important; }
+    .atlas-opening .plan-kicker { display: none !important; }
+    .atlas-opening .ritual-primary-cta { display: inline-flex !important; gap: 12px !important; align-items: center !important; min-height: 50px !important; padding: 12px 22px !important; width: auto !important; }
+    .atlas-opening .ritual-primary-cta svg { width: 15px !important; height: 15px !important; color: var(--atlas-foil) !important; }
+    .atlas-opening .ritual-secondary-cta { display: inline-flex !important; align-items: center !important; gap: 7px !important; width: max-content !important; max-width: 100% !important; min-height: 44px !important; padding: 4px 0 !important; margin: 8px 0 0 !important; border: 0 !important; background: none !important; color: var(--atlas-ink) !important; opacity: 1 !important; }
+    .atlas-opening .ritual-secondary-cta svg { height: 16px !important; width: 16px !important; }
+    .atlas-opening .premium-locked::after { position: static !important; padding: 2px 5px !important; background: #e7decd !important; color: #5c4729 !important; border: 0 !important; border-radius: 2px !important; font: 700 9px/1.4 var(--font-body) !important; }
+    .atlas-opening .ritual-trust-note { margin: 8px 0 0 !important; max-width: 45ch !important; color: var(--atlas-muted) !important; font: 400 14px/1.55 var(--font-body) !important; }
+    .atlas-opening .sample-text-link { color: var(--atlas-ink) !important; font-size: 14px !important; }
+    .atlas-process .ritual-section-heading { text-align: left !important; margin: 0 !important; }
+    .atlas-process .ritual-section-heading h3 { font: 500 clamp(28px,3vw,43px)/1.04 var(--font-display) !important; margin: 0 0 10px !important; }
+    .atlas-process .ritual-section-heading p { font: 400 15px/1.55 var(--font-body) !important; }
+    .atlas-process .journey-steps { display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: clamp(12px,2vw,30px) !important; margin: 0 !important; }
+    .atlas-process .journey-step { display: block !important; text-align: left !important; padding: 0 !important; min-width: 0 !important; }
+    .atlas-process .journey-number { position: static !important; display: block !important; background: none !important; border: 0 !important; color: var(--atlas-brass) !important; font: italic 500 22px/1 var(--font-display) !important; margin-bottom: 10px !important; }
+    .atlas-process .journey-visual { width: 100% !important; height: auto !important; aspect-ratio: 1.9 !important; border-radius: 0 !important; margin-bottom: 12px !important; }
+    .atlas-process .journey-step h4 { font: 600 clamp(19px,1.7vw,24px)/1.15 var(--font-display) !important; margin: 0 0 5px !important; }
+    .atlas-process .journey-step p { font: 400 15px/1.45 var(--font-body) !important; max-width: 25ch !important; }
+    .home-reading-example { width: 100% !important; max-width: none !important; margin: 0 !important; padding: clamp(36px,5vw,80px) max(var(--atlas-edge),calc((100% - var(--atlas-width))/2)) !important; background: var(--atlas-night) !important; border: 0 !important; grid-template-columns: .9fr 1fr .78fr !important; grid-template-rows: 1fr auto auto 1fr !important; grid-template-areas: ". spread keepsake" "intro spread keepsake" "action spread keepsake" "note spread keepsake" !important; column-gap: clamp(20px,3vw,50px) !important; row-gap: 16px !important; }
+    .home-example-intro { padding: 0 !important; align-self: end !important; }
+    .home-example-intro h3, .home-example-card h4 { color: var(--atlas-leaf) !important; }
+    .home-reading-example .atelier-eyebrow { color: var(--atlas-foil) !important; }
+    .home-example-question { color: #e3d8c5 !important; }
+    .home-reading-example .home-example-full { grid-area: action !important; justify-self: start !important; background: var(--atlas-foil) !important; border-color: var(--atlas-foil) !important; color: var(--atlas-night) !important; }
+    .home-example-note, .home-example-note .sample-text-link, .home-example-card figcaption > p:last-child { color: #dbd8ce !important; }
+    .home-example-card { border: 0 !important; border-radius: 0 !important; background: transparent !important; align-self: center !important; }
+    .home-example-card figcaption { padding: 15px 0 0 !important; }
+    .home-example-art { height: auto !important; aspect-ratio: 4/3; background: transparent !important; }
+    .home-example-keepsake .home-example-art { aspect-ratio: 960/1050; }
+    .home-example-card h4 { font-size: 25px !important; }
+    .ritual-home .reading-engine-benefits { display: grid !important; grid-template-columns: minmax(0,.8fr) minmax(0,1.65fr) !important; gap: clamp(26px,5vw,85px) !important; padding-block: clamp(36px,5vw,80px) !important; }
+    .reading-engine-benefits .comparison-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 0 !important; }
+    .reading-engine-benefits .benefit-card { display: grid !important; grid-template-columns: minmax(100px,.65fr) 1fr !important; gap: 20px !important; align-items: center !important; border-radius: 0 !important; border-top: 1px solid var(--line) !important; padding: 16px 0 !important; }
+    .reading-engine-benefits .benefit-art { aspect-ratio: 1.8 !important; }
+    .reading-engine-benefits .benefit-copy { padding: 0 !important; }
+    .reading-engine-benefits .benefit-copy h4 { margin-bottom: 6px !important; }
+    .ritual-home .atlas-footer, .public-footer { border-top: 1px solid var(--atlas-brass) !important; padding-block: 24px !important; }
+    .atlas-footer .atlas-wordmark { margin-right: auto; }
+    .public-header, .public-footer, .sample-header-inner, .sample-reading { width: min(calc(100% - var(--atlas-edge)*2),var(--atlas-width)) !important; }
+    .public-header { border-bottom-color: var(--atlas-rule) !important; }
+    .public-content h1, .sample-reading h1 { font-weight: 500 !important; letter-spacing: -.045em !important; }
+    .plan-comparison section + section { background: var(--atlas-night) !important; border-color: var(--atlas-night) !important; }
+    .plan-comparison section + section :is(h2,p,li) { color: var(--atlas-leaf) !important; }
+    .plan-comparison section + section .btn-primary { background: var(--atlas-foil) !important; color: var(--atlas-night) !important; }
+  }
+}
+
+@layer atlas {
+  @media screen {
+    .ritual-screen {
+      --workspace-edge: max(48px, calc((100% - var(--atlas-rail) - 880px)/2));
+      position: relative !important; width: 100% !important; max-width: none !important; min-height: 100svh !important;
+      margin: 0 !important; padding: 52px var(--workspace-edge) 50px calc(var(--atlas-rail) + var(--workspace-edge)) !important;
+      border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: var(--atlas-paper) !important;
+    }
+    .ritual-screen > .atelier-header { display: block !important; position: absolute !important; inset: 0 auto 0 0 !important; width: var(--atlas-rail) !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: var(--atlas-night) !important; color: var(--atlas-leaf) !important; }
+    .atelier-header .atlas-brand { color: var(--atlas-leaf) !important; padding: 0 !important; }
+    .atelier-header .atlas-sigil { color: var(--atlas-foil); }
+    .atelier-tools { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 0 !important; padding: 0 !important; margin: 0 !important; }
+    .atelier-tools button, .atelier-tools .ritual-journal-shortcut {
+      display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 12px !important;
+      border: 0 !important; border-top: 1px solid #87989555 !important; border-radius: 0 !important; text-align: left !important; min-height: 50px !important;
+      color: #e9e5d9 !important; background: transparent !important; font: 500 15px/1.3 var(--font-body) !important;
+      text-transform: none !important; letter-spacing: normal !important; margin: 0 !important; padding: 7px 0 !important;
+    }
+    .atelier-tools button::before { content: "↗"; color: var(--atlas-foil); }
+    .atelier-tools .ritual-journal-shortcut::before { display: none; }
+    .atelier-tools .ritual-journal-shortcut svg { color: var(--atlas-foil); }
+    .atelier-header :is(a,button):focus-visible, .home-reading-example :is(a,button):focus-visible { outline: 2px solid var(--atlas-foil) !important; }
+    .ritual-screen .step-dots:not([hidden]) { width: min(100%,420px) !important; gap: 10px !important; margin-bottom: 36px !important; }
+    .reading-phase { border: 0 !important; border-bottom: 1px solid var(--atlas-rule) !important; padding: 0 0 8px !important; font: 550 13px/1.4 var(--font-body) !important; }
+    .reading-phase.active { border-bottom: 2px solid var(--atlas-brass) !important; color: var(--atlas-ink) !important; }
+    .reading-phase.done::before { content: "✓ "; }
+    .ritual-screen > h2, .ritual-screen .quick-intro h2, .ritual-screen .reflection-container h2 {
+      font: 500 clamp(38px,3.8vw,58px)/1.04 var(--font-display) !important; letter-spacing: -.045em !important; margin: 0 0 12px !important; text-align: left !important; max-width: none !important;
+    }
+    .ritual-screen .compact-onboard { margin-bottom: 28px !important; }
+    .ritual-screen .reading-options { gap: 18px !important; }
+    .ritual-screen .reading-options label:is(.card-opt,.reading-choice-card) {
+      display: grid !important; grid-template-columns: 1fr !important; gap: 6px !important; overflow: hidden !important; border-radius: 2px !important;
+      padding: 0 18px 20px !important; border: 1px solid var(--atlas-rule) !important; background: var(--atlas-leaf) !important; transform: none !important;
+    }
+    .ritual-screen .reading-options label::before { content: none !important; }
+    .ritual-screen .reading-options label:has(input:checked) { border-color: var(--atlas-night) !important; box-shadow: inset 0 -3px var(--atlas-night) !important; }
+    .ritual-screen .reading-options input[type=radio] { top: 12px !important; right: 12px !important; accent-color: var(--atlas-night) !important; }
+    .spread-preview { isolation: isolate; position: relative !important; display: flex !important; grid-row: auto !important; align-items: center !important; justify-content: center !important; gap: 9px !important; height: clamp(110px,11vw,158px) !important; width: auto !important; margin: 0 -18px 12px !important; background: #e4e2d4 !important; overflow: hidden; }
+    .spread-preview::before { content: ""; position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; border: 1px solid #b9b49f; box-shadow: 0 0 0 8px #e4e2d4, 0 0 0 9px #c7c2b1; z-index: -1; }
+    .spread-preview i { position: relative; display: grid; place-items: center; width: 39px !important; height: 66px !important; background: var(--atlas-night) !important; color: var(--atlas-foil); border: 2px solid #f9f3db !important; border-radius: 3px !important; box-shadow: inset 0 0 0 1px #877c61, 2px 4px 6px #30342733 !important; }
+    .spread-preview i::before { content: "✧"; border: 1px solid #cdb782aa; padding: 2px; border-radius: 50%; font: 21px/1 Georgia,serif; }
+    .spread-preview i:only-child { transform: rotate(-7deg); }
+    .reading-options .choice-title { font: 600 27px/1.09 var(--font-display) !important; }
+    .reading-options .choice-detail { max-width: 40ch; color: var(--atlas-muted) !important; font: 400 15px/1.45 var(--font-body) !important; }
+    .ritual-screen .reading-options label.card-opt { padding-top: 18px !important; }
+    .ritual-screen .flow-details { border: 0 !important; border-block-start: 1px solid var(--atlas-rule) !important; border-radius: 0 !important; background: transparent !important; padding: 0 !important; }
+    .ritual-screen .flow-details > summary { padding: 12px 2px !important; }
+    .ritual-screen .reading-setup, .ritual-screen .review-card-row { background: var(--atlas-leaf) !important; border-radius: 2px !important; border-left: 3px solid var(--atlas-brass) !important; }
+    .ritual-screen .card-entry-row { background: var(--atlas-leaf) !important; border-radius: 2px !important; }
+    .ritual-screen .review-card-art .overview-card-art { width: 54px !important; height: 92px !important; }
+    .ritual-screen .review-card-art { flex-basis: 54px !important; }
+    .ritual-screen .review-card-name { font: 600 24px/1.15 var(--font-display) !important; }
+    .ritual-screen :is(.review-mode-option,.qs-card)[aria-pressed=true], .ritual-screen .qs-card.selected { box-shadow: inset 0 -3px var(--atlas-night) !important; }
+    .ritual-screen .nav-row { border-top-color: var(--atlas-rule) !important; }
+    #screen-quick .quick-step { border-radius: 2px !important; background: var(--atlas-leaf) !important; }
+    #screen-quick .upload-zone { border: 1px dashed var(--atlas-brass) !important; background: var(--atlas-paper) !important; }
+    .card-picker-panel { background: var(--atlas-paper) !important; border-radius: 4px !important; }
+    .card-picker-list { display: grid !important; grid-template-columns: repeat(auto-fill,minmax(97px,1fr)) !important; align-content: start !important; gap: 8px !important; }
+    .card-picker-item { display: flex !important; flex-direction: column !important; justify-content: flex-start !important; align-items: center !important; gap: 8px !important; padding: 10px 4px !important; background: var(--atlas-leaf) !important; font: 500 14px/1.25 var(--font-body) !important; text-align: center !important; border-radius: 2px !important; }
+    .card-picker-item .card-art-frame { flex: none !important; width: 42px !important; height: 72px !important; }
+    .card-picker-item .picker-card-art { width: 42px !important; height: 72px !important; }
+    .card-picker-item:hover { border-color: var(--atlas-brass) !important; }
+    .picker-empty { grid-column: 1/-1 !important; }
+    #screen-reading .reading-toggle { justify-content: flex-start !important; margin-inline: 0 !important; }
+    #screen-reading #reading-content, #screen-reading .reading-finish { max-width: none !important; }
+
+    #screen-reading .reading-section :is(p,ul) { max-width: 68ch !important; }
+    #screen-reading .reading-section h3 { font: 550 clamp(26px,2.4vw,36px)/1.18 var(--font-display) !important; }
+    #screen-reading .reading-finish :is(.reading-actions,.reading-export) { border-radius: 0 !important; border: 0 !important; border-top: 2px solid var(--atlas-brass) !important; padding: 20px 0 !important; background: transparent !important; }
+    .history-empty, .review-empty, .picker-empty { color: var(--atlas-muted) !important; background: var(--atlas-leaf) !important; border: 0 !important; border-inline-start: 3px solid var(--atlas-brass) !important; padding: 20px !important; }
+    .history-header h4 { font: 550 24px/1.15 var(--font-display) !important; }
+    .modal, .ritual-modal { background: var(--atlas-leaf) !important; border: 0 !important; border-top: 4px solid var(--atlas-brass) !important; border-radius: 3px !important; }
+    .modal h2 { font: 500 clamp(30px,3.2vw,45px)/1.1 var(--font-display) !important; letter-spacing: -.035em !important; }
+    .modal .reading-preferences, .modal .settings-section, .modal .archive-backup { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--atlas-rule) !important; border-radius: 0 !important; padding: 18px 0 !important; }
+    .modal .plan-pill { color: var(--atlas-brass) !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
+    .reading-save-status:not([hidden]) { border-color: #718577 !important; background: #e6ecdf !important; }
+    .thoughtful-loading { background: var(--atlas-leaf) !important; border-inline-start: 3px solid var(--atlas-foil) !important; }
+    .photo-recovery { border-inline-start: 3px solid #985c42 !important; background: #faf0e2 !important; }
+  }
+}
+@layer atlas {
+@media screen and (max-width:900px) {
+    .atlas-opening h2 { font-size: clamp(54px,7.3vw,66px) !important; }
+    .atlas-process .ritual-section-heading { display: block !important; }
+    .ritual-home .reading-engine-benefits { grid-template-columns: 1fr !important; }
+    .home-reading-example { grid-template-columns: repeat(2,minmax(0,1fr)) !important; grid-template-rows: auto auto auto !important; grid-template-areas: "intro action" "spread keepsake" "note note" !important; }
+    .ritual-screen { min-height: 100svh !important; padding: 0 clamp(20px,5vw,44px) 36px !important; }
+    .ritual-screen > .atelier-header { position: relative !important; inset: auto !important; width: auto !important; margin: 0 calc(-1 * clamp(20px,5vw,44px)) 28px !important; }
+    .atelier-tools { flex-direction: row !important; gap: clamp(8px,2vw,16px) !important; }
+    .atelier-tools button,.atelier-tools .ritual-journal-shortcut { min-height: 44px !important; font-size: 13px !important; border: 0 !important; }
+    .atelier-tools button::before,.atelier-tools .ritual-journal-shortcut svg { display: none !important; }
+    .ritual-screen .step-dots:not([hidden]) { margin-bottom: 22px !important; }
+  }
+  @media screen and (max-width:650px) {
+    .atlas-opening h2 { font-size: clamp(53px,13vw,72px) !important; }
+    .atlas-opening .atelier-eyebrow { margin-bottom: 14px !important; }
+    .atlas-process .journey-steps { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 24px 16px !important; }
+    .home-reading-example { grid-template-columns: minmax(0,1fr) !important; grid-template-areas: "intro" "action" "spread" "keepsake" "note" !important; }
+    .home-example-art { max-height: 300px !important; }
+    .ritual-screen { padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important; }
+    .ritual-screen .reading-options { gap: 12px !important; grid-template-columns: 1fr !important; }
+    .ritual-screen .reading-options label:is(.card-opt,.reading-choice-card) {
+      grid-template-columns: 88px minmax(0,1fr) !important; grid-template-rows: auto auto !important; column-gap: 14px !important; align-content: center !important;
+      padding: 14px 36px 14px 0 !important; min-height: 105px !important;
+    }
+    .reading-options .spread-preview { grid-row: 1 / span 2 !important; width: 88px !important; height: calc(100% + 28px) !important; margin: 0 !important; align-self: center !important; gap: 3px !important; }
+    .spread-preview i { width: 18px !important; height: 32px !important; }
+    .spread-preview i:only-child { width: 29px !important; height: 48px !important; }
+    .reading-options .choice-title { font-size: 23px !important; }
+    .reading-options .choice-detail { font-size: 14px !important; }
+    .ritual-screen .nav-row { background: var(--atlas-leaf) !important; }
+  }
+}
+@layer atlas {
+  @media screen and (prefers-reduced-motion:no-preference) {
+    .ritual-screen.active { animation: atlas-arrive .25s ease-out both !important; }
+    .atlas-reading-card { animation: atlas-reveal .38s ease-out both; }
+    .spread-preview i { transition: transform .22s ease; }
+    .reading-options label:has(input:checked) .spread-preview i { transform: translateY(-3px); }
+  }
+  @media print { .atlas-rail-inner,.atlas-masthead { display: none !important; } }
+}
+@keyframes atlas-arrive { from { opacity: .45; } to { opacity: 1; } }
+@keyframes atlas-reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media screen and (max-width:900px) {
+  .atlas-opening { grid-template-columns: 1.05fr 1fr; }
+  .atlas-process { grid-template-columns: 1fr; }
+  .atlas-rail-inner { display: flex; height: auto; position: static; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 12px clamp(14px,4vw,36px); }
+  .atlas-rail-heading, .atlas-rail-chart { display: none; }
+}
+@media screen and (max-width:650px) {
+  .atlas-masthead { display: grid; grid-template-columns: 1fr auto; gap: 0; padding-top: 8px; }
+  .atlas-mast-links { grid-row: 2; grid-column: 1/-1; margin: 0; justify-content: space-between; gap: 8px; }
+  .atlas-masthead .ritual-settings { grid-column: 2; grid-row: 1; }
+  .atlas-opening { grid-template-columns: 1fr; gap: 10px; padding-block: 28px 24px; }
+  .atlas-opening-copy > p:not(.ritual-trust-note) { margin: 14px 0 18px; }
+  .atlas-opening-actions { gap: 0 12px; }
+  .atlas-plate { width: min(84%,380px); }
+  .atlas-frontispiece figcaption { margin-top: 6px; }
+  .atlas-footer .atlas-wordmark { flex-basis: 100%; }
+  .spread-preview i::before { font-size: 11px; }
+  .reading-options .atlas-deck { grid-row: span 2; align-self: center; justify-self: center; margin: 0; }
+  .atelier-header .atlas-wordmark { font-size: 24px; }
+  .atelier-header .atlas-sigil { width: 22px; height: 22px; margin-right: 7px; }
+}
+
+/* Set the opening paragraph beside its actual cards. Longer spreads use the full shelf. */
+@layer atlas {
+  @media screen {
+    #screen-reading #reading-content > .atlas-reading-opener:first-child {
+      display: grid !important; grid-template-columns: minmax(0,1.5fr) minmax(155px,.75fr);
+      align-items: center; gap: clamp(18px,3vw,44px); background: var(--atlas-night) !important;
+      border: 0 !important; border-radius: 2px !important; padding: clamp(22px,3vw,40px) !important;
+    }
+    #screen-reading .atlas-reading-opener .atlas-spread-name {
+      margin-bottom: 14px !important; font: 650 11px/1.4 var(--font-body) !important; text-transform: uppercase; letter-spacing: .13em; color: var(--atlas-foil) !important;
+    }
+    #screen-reading .atlas-reading-opener h3 { color: var(--atlas-leaf) !important; max-width: 18ch; margin-bottom: 12px !important; }
+    .atlas-reading-opener .atlas-reading-strip { min-width: 0; border-left: 1px solid #a18d6c80; padding-left: clamp(16px,2vw,30px); }
+    .atlas-reading-opener:has(.atlas-reading-card:nth-child(2)) { grid-template-columns: 1fr !important; }
+    .atlas-reading-opener:has(.atlas-reading-card:nth-child(2)) .atlas-reading-strip { border-left: 0; border-top: 1px solid #a18d6c80; padding: 16px 0 4px; }
+    .atlas-reading-opener .atlas-card-mount { height: 130px; width: 78px; }
+    .atlas-opening-passage p { color: var(--atlas-leaf) !important; }
+    .atlas-reading-strip:focus-visible { outline: 2px solid var(--atlas-foil); outline-offset: 4px; }
+    .atlas-reading-opener .atlas-reading-art { width: 100% !important; height: 100% !important; }
+    .atelier-tools .ritual-journal-shortcut svg { stroke: var(--atlas-foil) !important; }
+    .public-content:not(.sample-reading) > h1 { font-size: clamp(42px,5.2vw,74px) !important; max-width: 20ch; }
+    .public-content > .public-eyebrow { display: flex; gap: 12px; align-items: center; }
+    .public-content > .public-eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--atlas-brass); }
+    .sample-diagram { background: var(--atlas-night) !important; border: 0 !important; border-radius: 2px !important; }
+    .sample-diagram :is(h2,figcaption,.sample-spread-card) { color: var(--atlas-leaf) !important; }
+    .sample-diagram :is(.sample-label,.sample-spread-card span) { color: var(--atlas-foil) !important; }
+    .article-contents { padding: 24px !important; background: var(--atlas-night); color: var(--atlas-leaf); }
+    .public-content .article-contents a { color: var(--atlas-leaf) !important; }
+    .article-contents strong { color: var(--atlas-foil) !important; }
+    .faq-content section h2 { font-style: italic; color: var(--atlas-plum) !important; }
+  }
+  @media screen and (max-width:650px) {
+    .atlas-opening { display: flex !important; flex-direction: column; align-items: stretch !important; gap: 0 !important; }
+    .atlas-opening-copy { display: contents; }
+    .atlas-opening-copy .atelier-eyebrow { order: 0; }
+    .atlas-opening-copy h2 { order: 1; }
+    .atlas-frontispiece { order: 2; margin-block: 10px; }
+    .atlas-opening-copy > p:not(.ritual-trust-note) { order: 3; margin: 12px 0 16px; }
+    .atlas-opening-actions { order: 4; }
+    .atlas-opening-copy > .ritual-secondary-cta { order: 5; }
+    .atlas-opening-copy > .ritual-trust-note { order: 6; }
+    .atlas-frontispiece .atlas-plate { width: min(74%,300px); }
+    .atlas-frontispiece figcaption { font-size: 10px; }
+    #screen-reading #reading-content > .atlas-reading-opener:first-child { grid-template-columns: minmax(0,1fr) 75px; padding: 18px !important; gap: 12px; }
+    .atlas-reading-opener .atlas-reading-strip { border: 0; padding: 0; }
+    .atlas-reading-opener .atlas-reading-card { flex-basis: 74px; }
+    .atlas-reading-opener .atlas-card-mount { height: 97px; width: 58px; }
+    .atlas-reading-opener .atlas-reading-card strong { font-size: 16px !important; overflow-wrap: anywhere; }
+    .atlas-reading-opener:has(.atlas-reading-card:nth-child(2)) .atlas-reading-strip { gap: 16px; }
+    .atlas-reading-strip:has(> :nth-child(3):last-child) {
+      display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px !important;
+    }
+    .atlas-reading-strip:has(> :nth-child(3):last-child) .atlas-card-mount { max-width: 100%; }
+  }
+}

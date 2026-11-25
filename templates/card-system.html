@@ -7,16 +7,19 @@
   <fieldset class="reading-options">
     <legend class="sr-only">Deck type</legend>
     <label class="card-opt selected">
+      <span class="atlas-deck atlas-deck-tarot" aria-hidden="true"><img src="assets/atlas/star.webp" alt="" width="418" height="720"></span>
       <span class="choice-title" id="deck-tarot-label">Traditional Tarot</span>
       <span class="choice-detail" id="deck-tarot-detail">A 78-card tarot deck.</span>
       <input type="radio" name="guided-deck" value="tarot" aria-labelledby="deck-tarot-label" aria-describedby="deck-tarot-detail" onchange="selectSystem(this.value)" checked>
     </label>
     <label class="card-opt">
+      <span class="atlas-deck atlas-deck-playing" aria-hidden="true"><b>A</b>♠</span>
       <span class="choice-title" id="deck-playing-label">Playing Cards</span>
       <span class="choice-detail" id="deck-playing-detail">A standard 52-card deck.</span>
       <input type="radio" name="guided-deck" value="playing" aria-labelledby="deck-playing-label" aria-describedby="deck-playing-detail" onchange="selectSystem(this.value)">
     </label>
     <label class="card-opt">
+      <span class="atlas-deck atlas-deck-joker" aria-hidden="true"><b>J</b>✦</span>
       <span class="choice-title" id="deck-joker-label">Playing Cards + Joker</span>
       <span class="choice-detail" id="deck-joker-detail">A 52-card deck with one Joker.</span>
       <input type="radio" name="guided-deck" value="playing-joker" aria-labelledby="deck-joker-label" aria-describedby="deck-joker-detail" onchange="selectSystem(this.value)">

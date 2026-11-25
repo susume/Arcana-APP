@@ -23,7 +23,15 @@ function ensureRitualUtilities(){
   document.querySelectorAll('.ritual-screen').forEach(screen=>{
     const header=document.createElement('header');
     header.className='atelier-header no-print';
-    header.innerHTML='<button type="button" class="atelier-brand brand-logo" onclick="goScreen(\'screen-welcome\')" aria-label="Arcana home"><img src="assets/brand/arcana-guide-horizontal-256.webp" srcset="assets/brand/arcana-guide-horizontal-256.webp 256w, assets/brand/arcana-guide-horizontal-480.webp 480w" sizes="(max-width: 760px) 138px, 190px" alt="" width="836" height="471"></button><div class="atelier-tools"><button type="button" onclick="openModal(\'modal-help\')">Guide</button><button type="button" onclick="openModal(\'modal-settings\')">Settings</button></div>';
+    header.innerHTML=`<div class="atlas-rail-inner">
+      <button type="button" class="atlas-brand" onclick="goScreen('screen-welcome')" aria-label="Arcana home"><span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span></button>
+      <div class="atlas-rail-heading" aria-hidden="true">${screen.id==='screen-history'?'Your journal':'Reading room'}</div>
+      <nav class="atelier-tools" aria-label="Reading tools">
+        <button type="button" onclick="openModal('modal-help')">Guide</button>
+        <button type="button" onclick="openModal('modal-settings')">Settings</button>
+      </nav>
+      <div class="atlas-rail-chart" aria-hidden="true"><i class="atlas-sigil"></i></div>
+    </div>`;
     screen.prepend(header);
   });
   document.querySelectorAll('.ritual-screen:not(#screen-history)').forEach(screen=>{
@@ -1071,6 +1079,29 @@ function enhanceReadingOutput(){
   const suitCounts={};
   cardObjects.forEach(c=>{if(c.suit)suitCounts[c.suit]=(suitCounts[c.suit]||0)+1;});
   const dominantSuit=Object.entries(suitCounts).sort((a,b)=>b[1]-a[1])[0];
+  const summary=content.querySelector('.reading-section');
+  if(summary && spread){
+    const figures=spread.positions.flatMap((position,index)=>{
+      const entry=state.cards[position.id];
+      if(!entry?.name)return [];
+      const card=cardObjects.find(item=>item.name.toLowerCase()===entry.name.toLowerCase());
+      const art=card?renderCardArt(card,'tarot-card-thumb atlas-reading-art',180):'';
+      const reversed=entry.orientation==='reversed';
+      return [`<figure class="atlas-reading-card${reversed?' is-reversed':''}"><div class="atlas-card-mount">${art}</div><figcaption><small>${index+1} · ${escapeHtml(position.name)}</small><strong>${escapeHtml(entry.name)}</strong>${reversed?'<small>Reversed</small>':''}</figcaption></figure>`];
+    });
+    if(figures.length){
+      const passage=document.createElement('div');
+      passage.className='atlas-opening-passage';
+      passage.append(...summary.childNodes);
+      const label=document.createElement('p');
+      label.className='atlas-spread-name no-print';
+      label.textContent=spread.name;
+      passage.prepend(label);
+      summary.classList.add('atlas-reading-opener');
+      summary.appendChild(passage);
+      summary.insertAdjacentHTML('beforeend',`<div class="atlas-reading-strip no-print" tabindex="0" role="region" aria-label="Confirmed cards in spread order">${figures.join('')}</div>`);
+    }
+  }
   let h='<details class="reading-summary-card reading-spread-details">';
   h+='<summary>Spread details</summary>';
   h+='<p class="summary-copy">'+escapeHtml(spread?spread.name:'Your reading')+' &middot; '+cardNames.length+' confirmed card'+(cardNames.length===1?'':'s')+'</p>';

@@ -88,4 +88,17 @@ const joker = run(
 assert.doesNotMatch(joker, /<img /);
 assert.match(joker, /card-art-fallback/);
 
+vm.runInContext(
+  fs.readFileSync(new URL("../js/tarot.js", import.meta.url), "utf8"),
+  context
+);
+const tarotThumbnails = run(`TAROT_CARDS.map(card =>
+  renderCardArt(card).match(/src="([^"]+)"/)[1]
+)`);
+assert.equal(new Set(tarotThumbnails).size, 78);
+for (const thumbnail of tarotThumbnails) {
+  assert.match(thumbnail, /^assets\/.+\.webp$/);
+  assert.ok(fs.existsSync(new URL("../" + thumbnail, import.meta.url)), thumbnail);
+}
+
 console.log("card art regression passed");

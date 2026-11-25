@@ -93,6 +93,10 @@ for (const [directory, extension] of [['templates', '.html'], ['js', '.js'], ['d
 for (const name of Object.keys(replacements)) {
   if (!usedReplacements.has(name)) throw new Error(`Missing Android content block ${name}.`);
 }
+// The picker derives these filenames from the selected tarot card.
+for (const name of await readdir(path.join(root, 'assets/atlas/cards'))) {
+  if (name.endsWith('.webp')) media.add('assets/atlas/cards/' + name);
+}
 for (const relative of media) {
   const target = path.join(output, relative);
   await mkdir(path.dirname(target), { recursive: true });

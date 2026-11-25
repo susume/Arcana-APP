@@ -239,7 +239,11 @@ function renderCardFallback(card) {
 
 function renderCardArt(card, className = 'tarot-card-thumb', width = 180) {
   const fallback = renderCardFallback(card);
-  const url = getCardArtUrl(card, width);
+  const file = getCardArtFile(card);
+  const localArt = card?.system === 'tarot' && file
+    ? BUNDLED_CANVAS_ART[card.name] || 'assets/atlas/cards/' + file.replace(/ /g, '_').replace(/\.jpg$/, '.webp')
+    : '';
+  const url = localArt || getCardArtUrl(card, width);
   if (!url) return fallback;
   const alt = cardArtEscape(card.name);
   return `<span class="card-art-frame">${fallback}<img class="${className}" src="${url}" alt="${alt}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.closest('.card-art-frame').classList.add('art-missing')"></span>`;

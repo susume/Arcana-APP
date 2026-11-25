@@ -10,6 +10,10 @@
       <select id="reading-tone"><option>Gentle</option><option>Neutral</option><option>Direct</option><option>Mystical</option></select>
       <label for="narrator-voice">Narrator voice</label>
       <select id="narrator-voice"><option value="">Browser default</option></select>
+      <label class="transition-sound-option">
+        <input type="checkbox" id="transition-sounds" aria-describedby="transition-sounds-note">
+        <span><strong>Transition sounds</strong><small id="transition-sounds-note">Soft cues when you advance, get a reading, or save it.</small></span>
+      </label>
       <div class="settings-actions"><button type="button" class="btn btn-primary btn-sm" onclick="saveSettings()">Save preferences</button></div>
     </section>
     <section class="archive-backup" aria-labelledby="settings-backup-title">

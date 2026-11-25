@@ -53,7 +53,8 @@ if ($ui -notlike '*function ensureRitualUtilities()*' -or $ui -notlike '*ritual-
 }
 
 foreach ($semanticControl in @(
-  '<button type="button" class="card-opt"',
+  '<input type="radio" name="guided-deck"',
+  '<input type="radio" name="guided-spread"',
   '<button type="button" class="reading-choice-card"',
   '<button type="button" class="tag-chip"',
   '<button type="button" class="tab-btn',

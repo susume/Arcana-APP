@@ -6,7 +6,11 @@ const source = fs.readFileSync(new URL('../js/reading-engine.js', import.meta.ur
 const uiSource = fs.readFileSync(new URL('../js/ui.js', import.meta.url), 'utf8');
 
 function makeContext() {
-  const content = { innerHTML: '' };
+  const content = {
+    innerHTML: '',
+    querySelector() { return null; },
+    prepend(element) { this.innerHTML = element.innerHTML + this.innerHTML; }
+  };
   const elements = {
     'reading-content': content,
     'journal-section': { style: {}, querySelector: () => null },
@@ -28,6 +32,7 @@ function makeContext() {
     currentCards: [],
     SPREADS: [],
     document: {
+      createElement() { return { innerHTML: '' }; },
       getElementById(id) {
         return elements[id] || null;
       }
@@ -335,6 +340,7 @@ This has **bold**, *italic*, and <img src=x onerror=alert(1)>.
 
   assert.match(content.innerHTML, /<p># Top<\/p>/);
   assert.match(content.innerHTML, /<h3>Section<\/h3>/);
+  assert.match(content.innerHTML, /id="reading-quick-save"/);
   assert.match(content.innerHTML, /### Small/);
   assert.match(content.innerHTML, /<strong>bold<\/strong>/);
   assert.match(content.innerHTML, /<em>italic<\/em>/);

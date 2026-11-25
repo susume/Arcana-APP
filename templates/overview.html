@@ -4,6 +4,7 @@
   <div class="progress-estimate" id="progress-overview"></div>
   <h2>Review your cards</h2>
   <p class="onboard compact-onboard">Check each card and its orientation before you start your reading.</p>
+  <p class="reading-setup-summary" data-reading-setup hidden></p>
   <p class="review-card-count" id="review-card-count" role="status"></p>
   <div class="review-empty" id="review-empty" hidden>
     <h3>No cards added yet</h3>
@@ -15,8 +16,8 @@
   <section class="review-mode" aria-labelledby="review-mode-heading">
     <h3 id="review-mode-heading">Choose your reading</h3>
     <div class="review-mode-options" role="group" aria-label="Reading type">
-      <button type="button" class="btn review-mode-option" data-premium-feature="ai-reading" data-reading-mode="ai" aria-pressed="false" onclick="selectReviewMode('ai')"><strong>AI reading</strong><span>Personalized interpretation from Gemini</span></button>
       <button type="button" class="btn review-mode-option" data-reading-mode="classic" aria-pressed="false" onclick="selectReviewMode('classic')"><strong>Classic reading</strong><span>Built-in card meanings on this device</span></button>
+      <button type="button" class="btn review-mode-option" data-premium-feature="ai-reading" data-reading-mode="ai" aria-pressed="false" onclick="selectReviewMode('ai')"><strong>AI reading</strong><span>Personalized interpretation from Gemini</span></button>
     </div>
     <p class="review-mode-detail" id="review-mode-detail" role="status"></p>
     <p class="review-photo-note" id="review-photo-note" hidden>Arcana already sent your photo to Gemini for card identification.</p>

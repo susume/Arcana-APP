@@ -1,7 +1,7 @@
 .sample-site {
-  --sample-sage: #e5e9dd;
-  --sample-soft: #edede3;
-  --sample-primary: #244c40;
+  --sample-sage: #e9ddf4;
+  --sample-soft: #f0e6df;
+  --sample-primary: #4f3860;
   height: auto;
   overflow: visible;
 }
@@ -109,7 +109,7 @@
   top: 31px;
   left: 50%;
   transform: translate(-50%, -50%) rotate(90deg);
-  box-shadow: 0 1px 5px #203b3338;
+  box-shadow: 0 1px 5px #241b2b38;
 }
 
 .sample-overview { display: grid; gap: 16px; }
@@ -190,7 +190,7 @@
 @media print {
   html[data-theme="atelier"], html[data-theme="atelier"] body.sample-site {
     background: white !important;
-    color: #203b33 !important;
+    color: #241b2b !important;
     min-height: 0;
     margin: 0;
     padding: 0;

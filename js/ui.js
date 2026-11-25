@@ -74,12 +74,10 @@ function resolveScreenPrerequisite(id){
     if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
     return id;
   }
-  if(id==='screen-concerns')return state.mode==='guided'?id:'screen-welcome';
-  if(id==='screen-card-system')return state.mode==='guided'?id:'screen-welcome';
   if(state.mode!=='guided')return 'screen-welcome';
-  if(!state.cardSystemEstablished && id!=='screen-card-system')return 'screen-card-system';
-  if(['screen-reflection','screen-card-entry','screen-overview','screen-reading'].includes(id)&&!state.spreadId)return 'screen-spread';
-  if(!isPremium()&&!FREE_SPREAD_IDS.has(state.spreadId)&&['screen-reflection','screen-card-entry','screen-overview'].includes(id))return 'screen-spread';
+  if(id==='screen-spread')return id;
+  if(!state.spreadId||(!isPremium()&&!FREE_SPREAD_IDS.has(state.spreadId)&&id!=='screen-reading'))return 'screen-spread';
+  if(!state.cardSystemEstablished&&id!=='screen-card-system')return 'screen-card-system';
   if(id==='screen-reading'&&!state.narrative&&!state.readingInProgress)return 'screen-overview';
   return id;
 }
@@ -106,13 +104,17 @@ function goScreen(id, fromRouter){
   const screen=document.getElementById(id);
   screen.classList.add('active');
   if(id==='screen-card-entry')buildCardEntry();
-  if(id==='screen-reflection')state.preparationSkipped=false;
+  if(id==='screen-reflection'){
+    const spread=getSpread();
+    if(spread)document.getElementById('preparation-spread-diagram').innerHTML=renderSpreadDiagram(spread,-1);
+  }
   if(id==='screen-overview')renderOverview();
   if(id==='screen-reading'&&previous!==id&&state.narrative&&!state.readingInProgress){
     renderReading(state.narrative);
     highlightReadingBtn(state.readingMode);
   }
   if(id==='screen-card-system')renderDeckChoice();
+  if(id==='screen-spread')renderGuidedSpreadChoice();
   if(id==='screen-quick'){
     renderQuickSpreads();
     updateQuickGoBtn();
@@ -127,36 +129,88 @@ function goScreen(id, fromRouter){
   document.body.scrollTop=0;
   if(id==='screen-history')renderHistory();
   updateDots(id);
-  updateProgressEstimate(id);
+  renderReadingSetup(screen);
   renderEntitlementsUI();
   autoSaveState();
 }
-const GUIDED_SCREENS=['screen-concerns','screen-card-system','screen-spread','screen-reflection','screen-card-entry','screen-overview','screen-reading'];
-function guidedScreens(){
-  if(state.mode==='quick')return ['screen-quick','screen-overview','screen-reading'];
-  return state.preparationSkipped?GUIDED_SCREENS.filter(id=>id!=='screen-reflection'):GUIDED_SCREENS;
-}
+const READING_PHASES=['Set up','Add cards','Read'];
+const READING_SCREEN_PHASE={
+  'screen-spread':0,'screen-card-system':0,'screen-concerns':1,'screen-reflection':1,
+  'screen-card-entry':1,'screen-overview':1,'screen-reading':2
+};
 function updateDots(screenId){
-  const steps=guidedScreens();
-  const idx=steps.indexOf(screenId);
-  if(idx<0)return;
-  document.querySelectorAll('.step-dots').forEach(container=>{
-    container.innerHTML='';
-    container.setAttribute('role','progressbar');
-    container.setAttribute('aria-label','Reading progress');
-    container.setAttribute('aria-valuemin','1');
-    container.setAttribute('aria-valuemax',String(steps.length));
-    container.setAttribute('aria-valuenow',String(idx+1));
-    steps.forEach((_,i)=>{
-      const d=document.createElement('div');
-      d.className='dot'+(i===idx?' active':'')+(i<idx?' done':'');
-      d.setAttribute('aria-hidden','true');
-      container.appendChild(d);
-    });
+  const index=READING_SCREEN_PHASE[screenId];
+  const container=document.getElementById(screenId)?.querySelector('.step-dots');
+  if(index===undefined||!container)return;
+  container.setAttribute('role','progressbar');
+  container.setAttribute('aria-label','Reading progress');
+  container.setAttribute('aria-valuemin','1');
+  container.setAttribute('aria-valuemax',String(READING_PHASES.length));
+  container.setAttribute('aria-valuenow',String(index+1));
+  container.setAttribute('aria-valuetext',READING_PHASES[index]);
+  container.replaceChildren(...READING_PHASES.map((label,i)=>{
+    const phase=document.createElement('span');
+    phase.className='reading-phase'+(i===index?' active':i<index?' done':'');
+    phase.textContent=label;
+    phase.setAttribute('aria-hidden','true');
+    return phase;
+  }));
+}
+
+function renderReadingSetup(screen){
+  const spread=getSpread();
+  const deck={tarot:'Traditional Tarot',playing:'Playing Cards','playing-joker':'Playing Cards + Joker'};
+  const deckName=screen.id!=='screen-card-system'&&state.cardSystemEstablished?deck[state.cardSystem]:null;
+  const summary=[spread?.name,deckName].filter(Boolean).join(' · ');
+  screen.querySelectorAll('[data-reading-setup]').forEach(line=>{
+    line.textContent=summary;
+    line.hidden=!summary;
   });
+  if(screen.id!=='screen-card-entry')return;
+  const setup=document.getElementById('guided-reading-setup');
+  setup.hidden=state.mode!=='guided';
+  const question=state.concerns.join(' / ');
+  const note=document.getElementById('guided-question-summary');
+  note.textContent=question?'Question: '+question:'';
+  note.hidden=!question;
+  document.getElementById('guided-question-action').textContent=question?'Edit question':'Add a question';
 }
 
 // ===== WELCOME =====
+let readingAudio;
+function prepareReadingAudio(){
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(!Audio||!loadSettings().transitionSounds)return null;
+  try{
+    readingAudio ||= new Audio();
+    if(readingAudio.state==='suspended')readingAudio.resume().catch(()=>{});
+    return readingAudio;
+  }catch(e){return null;}
+}
+
+function playReadingCue(cue){
+  const audio=prepareReadingAudio();
+  if(!audio)return;
+  const notes={
+    step:[[360,0,.12,.025,'triangle']],
+    reveal:[[392,0,.28,.045,'sine'],[523,.05,.29,.024,'sine']],
+    save:[[440,0,.13,.032,'triangle'],[587,.03,.15,.018,'sine']]
+  };
+  for(const [frequency,delay,duration,volume,type] of notes[cue]){
+    const start=audio.currentTime+delay;
+    const tone=audio.createOscillator();
+    const envelope=audio.createGain();
+    tone.type=type;
+    tone.frequency.value=frequency;
+    envelope.gain.setValueAtTime(.0001,start);
+    envelope.gain.exponentialRampToValueAtTime(volume,start+.016);
+    envelope.gain.exponentialRampToValueAtTime(.0001,start+duration);
+    tone.connect(envelope).connect(audio.destination);
+    tone.start(start);
+    tone.stop(start+duration);
+  }
+}
+
 function startGuided(){
   readingRequestVersion++;
   state.readingInProgress=false;
@@ -185,7 +239,7 @@ function startGuided(){
   document.getElementById('drop-card-entry').style.display='none';
   // Reset concern inputs
   const cl=document.getElementById('concern-list');
-  cl.innerHTML='<div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input"></div>';
+  cl.innerHTML='<div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input" oninput="saveGuidedQuestion()"></div>';
   document.querySelectorAll('.flow-details').forEach(details=>{details.open=false;});
   document.querySelectorAll('.tag-chip').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-pressed','false');});
   const lifeStage=document.getElementById('reader-life-stage');
@@ -194,9 +248,8 @@ function startGuided(){
   state.cardSystemEstablished=false;
   currentCards=getCards();
   syncUploadDeckSelectors();
-  document.querySelectorAll('.reading-choice-card').forEach(c=>{c.classList.remove('selected');c.setAttribute('aria-pressed','false');});
-  renderDeckChoice();
-  goScreen('screen-concerns');
+  playReadingCue('step');
+  goScreen('screen-spread');
 }
 function startQuick(){
   if(!requestPremiumFeature('photo-ai'))return;
@@ -233,6 +286,7 @@ function startQuick(){
   if(question)question.open=false;
   syncUploadDeckSelectors();
   goScreen('screen-quick');
+  playReadingCue('step');
 }
 
 // ===== CONCERNS =====
@@ -241,12 +295,12 @@ function addConcern(){
   const row=document.createElement('div');
   row.className='concern-row';
   const inputId='concern-input-'+(Math.max(0,...Array.from(list.querySelectorAll('.concern-input'),input=>Number(input.id.replace('concern-input-',''))||0))+1);
-  row.innerHTML='<label class="sr-only" for="'+inputId+'">Question or focus</label><input id="'+inputId+'" type="text" placeholder="Another question or focus" class="concern-input"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button>';
+  row.innerHTML='<label class="sr-only" for="'+inputId+'">Question or focus</label><input id="'+inputId+'" type="text" maxlength="1000" placeholder="Another question or focus" class="concern-input" oninput="saveGuidedQuestion()"><button type="button" class="btn btn-sm btn-danger" onclick="removeConcern(this)" title="Remove focus">&times;</button>';
   list.appendChild(row);
 }
 function removeConcern(btn){
   const rows=document.querySelectorAll('.concern-row');
-  if(rows.length>1)btn.parentElement.remove();
+  if(rows.length>1){btn.parentElement.remove();saveGuidedQuestion();}
 }
 function tagConcern(el){
   const selected=el.classList.toggle('active');
@@ -255,31 +309,42 @@ function tagConcern(el){
   const inputs=document.querySelectorAll('.concern-input');
   if(!selected){
     inputs.forEach(inp=>{if(inp.value.trim()===topic)inp.value='';});
+    saveGuidedQuestion();
     return;
   }
   if(inputs[0])inputs[0].value=topic;
   document.querySelectorAll('.tag-chip').forEach(chip=>{
     if(chip!==el){chip.classList.remove('active');chip.setAttribute('aria-pressed','false');}
   });
+  saveGuidedQuestion();
 }
 function skipConcerns(){
   document.querySelectorAll('.concern-input').forEach(input=>{input.value='';});
   state.concerns=[];
   document.querySelectorAll('.tag-chip').forEach(chip=>{chip.classList.remove('active');chip.setAttribute('aria-pressed','false');});
-  goScreen('screen-card-system');
+  backFromConcerns();
+}
+function saveGuidedQuestion(){
+  state.concerns=Array.from(document.querySelectorAll('.concern-input'),input=>input.value.trim()).filter(Boolean);
+  autoSaveState();
+}
+function backFromConcerns(){
+  saveGuidedQuestion();
+  goScreen('screen-card-entry');
 }
 function saveConcerns(){
-  state.concerns=[];
-  document.querySelectorAll('.concern-input').forEach(inp=>{
-    if(inp.value.trim())state.concerns.push(inp.value.trim());
-  });
-  goScreen('screen-card-system');
+  playReadingCue('step');
+  backFromConcerns();
 }
 
 // ===== CARD SYSTEM =====
-function selectSystem(sys,el){
+function selectSystem(sys){
   if(sys!==state.cardSystem&&hasSelectedReadingCards()){
-    if(!confirm('Changing your deck clears the cards you have entered. Continue?'))return;
+    if(!confirm('Changing your deck clears the cards you have entered. Continue?')){
+      renderDeckChoice();
+      document.querySelector('input[name="guided-deck"]:checked')?.focus();
+      return;
+    }
     clearSelectedReadingCards();
   }
   state.cardSystem=sys;
@@ -287,12 +352,12 @@ function selectSystem(sys,el){
   renderDeckChoice();
   currentCards=getCards();
   syncUploadDeckSelectors();
+  autoSaveState();
 }
 function renderDeckChoice(){
-  document.querySelectorAll('#screen-card-system .card-opt').forEach(option=>{
-    const selected=option.dataset.deck===state.cardSystem;
-    option.classList.toggle('selected',selected);
-    option.setAttribute('aria-pressed',String(selected));
+  document.querySelectorAll('input[name="guided-deck"]').forEach(input=>{
+    input.checked=input.value===state.cardSystem;
+    input.closest('.card-opt').classList.toggle('selected',input.checked);
   });
 }
 function confirmSystem(){
@@ -300,7 +365,10 @@ function confirmSystem(){
   state.cardSystemEstablished=true;
   currentCards=getCards();
   syncUploadDeckSelectors();
-  goScreen('screen-spread');
+  if(!state.spreadId){goScreen('screen-spread');return;}
+  state.cardEntryTab ||= 'tab-manual';
+  playReadingCue('step');
+  goScreen('screen-card-entry');
 }
 
 // ===== SPREADS =====
@@ -351,13 +419,12 @@ function buildCustomPositions(){
     container.appendChild(row);
   }
 }
-function confirmSpread(alreadyDrawn=false){
+function confirmSpread(){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
   if(!requestReadingAccess(state.spreadId))return;
   saveReaderContext('reader-life-stage');
-  if(alreadyDrawn===true){skipPreparation();return;}
-  state.preparationSkipped=false;
-  goScreen('screen-reflection');
+  playReadingCue('step');
+  goScreen('screen-card-system');
 }
 function skipPreparation(){
   if(!state.spreadId){showToast('Choose a spread before continuing.');return;}
@@ -368,7 +435,7 @@ function skipPreparation(){
   goScreen('screen-card-entry');
 }
 function backFromCardEntry(){
-  goScreen(state.mode==='quick'?'screen-quick':state.preparationSkipped?'screen-spread':'screen-reflection');
+  goScreen(state.mode==='quick'?'screen-quick':'screen-card-system');
 }
 
 function saveReaderContext(lifeStageId){
@@ -377,38 +444,41 @@ function saveReaderContext(lifeStageId){
 }
 
 // ===== READING TYPE SELECTION =====
-function selectReadingType(id, el){
-  if(!requestReadingAccess(id))return;
+function selectReadingType(id){
+  if(!requestReadingAccess(id)){renderGuidedSpreadChoice();return;}
   if(state.spreadId&&state.spreadId!==id&&hasSelectedReadingCards()){
-    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
+    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?')){
+      renderGuidedSpreadChoice();
+      document.querySelector('#reading-choices input:checked, #reading-choices button.selected')?.focus();
+      return;
+    }
     clearSelectedReadingCards();
   }
-  document.querySelectorAll('.reading-choice-card').forEach(c=>c.classList.remove('selected'));
-  document.querySelectorAll('.reading-choice-card').forEach(c=>c.setAttribute('aria-pressed','false'));
-  el.classList.add('selected');
-  el.setAttribute('aria-pressed','true');
-  const spread=SPREADS.find(s=>s.id===id);
-  if(spread){state.spreadId=id;}
+  if(state.spreadId!==id)state.guidedStep=0;
+  state.spreadId=id;
+  renderGuidedSpreadChoice();
   autoSaveState();
+}
+
+function renderGuidedSpreadChoice(){
+  document.querySelectorAll('input[name="guided-spread"]').forEach(input=>{
+    input.checked=input.value===state.spreadId;
+    input.closest('.reading-choice-card').classList.toggle('selected',input.checked);
+  });
+  document.querySelectorAll('#premium-spreads .reading-choice-card').forEach(button=>{
+    const selected=button.dataset.spreadId===state.spreadId;
+    button.classList.toggle('selected',selected);
+    button.setAttribute('aria-pressed',String(selected));
+    if(selected)document.getElementById('premium-spreads').open=true;
+  });
 }
 
 function confirmReflection(){
   state.preparationSkipped=false;
   if(!state.cards||typeof state.cards!=='object')state.cards={};
   state.guidedStep=0;
-  state.cardEntryTab='tab-guided';
+  state.cardEntryTab ||= 'tab-manual';
   goScreen('screen-card-entry');
-}
-
-// ===== PROGRESS ESTIMATE =====
-function updateProgressEstimate(screenId){
-  const steps=guidedScreens();
-  const idx=steps.indexOf(screenId);
-  if(idx<0)return;
-  const total=steps.length;
-  const text='Step '+(idx+1)+' of '+total;
-  const el=document.getElementById('progress-'+screenId.replace('screen-',''));
-  if(el)el.textContent=text;
 }
 
 // ===== SOCIAL SHARING =====
@@ -1062,7 +1132,7 @@ function buildCardEntry(){
   const jumper=document.getElementById('jumper-options');
   if(jumper)jumper.hidden=!isPremium();
   if(description)description.textContent=manualOnly
-    ?'Choose the physical card you placed in each position.'
+    ?'Use the cards you laid out.'
     :'Draw from your physical deck, upload your spread, or enter the cards by hand.';
   if(!manualOnly)buildGuidedDraw(spread);
   buildManualEntries(spread);
@@ -1239,7 +1309,7 @@ function buildManualEntries(spread){
     row.className='card-entry-row';
     const existing=state.cards[pos.id];
     const orientation=existing&&['upright','reversed','unknown'].includes(existing.orientation)?existing.orientation:'upright';
-    const orientationLabel=orientation==='reversed'?'R':orientation==='unknown'?'?':'U';
+    const orientationLabel=cardOrientationLabel(orientation);
     row.innerHTML=`
       <span class="pos-name">${escapeHtml(pos.name)}</span><span class="pos-desc-hint">${escapeHtml(pos.description)}</span>
       <button type="button" class="card-pick-btn${existing?' selected':''}" onclick="openCardPicker('${pos.id}')" data-pos="${pos.id}">${existing?escapeHtml(existing.name):'Choose card...'}</button>
@@ -1269,18 +1339,21 @@ function filterSuit(suit,el){
   el.setAttribute('aria-pressed','true');
 }
 
+function cardOrientationLabel(orientation){
+  return orientation==='reversed'?'Reversed':orientation==='unknown'?'Check':'Upright';
+}
+
 function toggleOrient(el){
   if(el.dataset.orient==='upright'){
     el.dataset.orient='reversed';
-    el.textContent='R';
     el.classList.add('reversed');
   }else{
     el.dataset.orient='upright';
-    el.textContent='U';
     el.classList.remove('reversed');
   }
   el.classList.remove('unknown');
   const orientation=el.dataset.orient;
+  el.textContent=cardOrientationLabel(orientation);
   if(typeof el.setAttribute==='function'){
     el.setAttribute('aria-pressed',String(orientation==='reversed'));
     el.setAttribute('aria-label',`Card orientation: ${orientation}. Activate to mark ${orientation==='reversed'?'upright':'reversed'}.`);
@@ -1569,22 +1642,30 @@ function saveQuickDraft(){
 
 function selectQuickSpread(id){
   if(state.quickSpreadId===id)return;
+  if(!requestReadingAccess(id)){syncQuickSpreadChoice();return;}
   if(hasSelectedReadingCards()){
-    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?'))return;
+    if(!confirm('Changing the layout clears the cards you have entered for this spread. Continue?')){
+      syncQuickSpreadChoice();
+      document.querySelector('input[name="quick-spread"]:checked')?.focus();
+      return;
+    }
     clearSelectedReadingCards();
   }
   cancelPhotoIdentification();
   state.quickSpreadId=id;
   state.spreadId=id;
   state.reviewModeChoice=null;
-  document.querySelectorAll('#screen-quick .qs-card').forEach(card=>{
-    const selected=card.dataset.spreadId===id;
-    card.classList.toggle('selected',selected);
-    card.setAttribute('aria-pressed',String(selected));
-  });
+  syncQuickSpreadChoice();
   clearPhotoResult('quick-upload-zone');
   updateQuickGoBtn();
   saveQuickDraft();
+}
+
+function syncQuickSpreadChoice(){
+  document.querySelectorAll('input[name="quick-spread"]').forEach(input=>{
+    input.checked=input.value===state.quickSpreadId;
+    input.closest('.qs-card').classList.toggle('selected',input.checked);
+  });
 }
 
 function renderQuickSpreads(){
@@ -1599,22 +1680,22 @@ function renderQuickSpreads(){
     const primary=id==='one-card'||id==='three-card';
     const advanced=!FREE_SPREAD_IDS.has(id);
     const selected=state.quickSpreadId===id;
-    const card=document.createElement('button');
-    const title=id==='one-card'?'One Card':id==='three-card'?'Past · Present · Future':spread.name;
-    card.type='button';
+    const card=document.createElement('label');
+    const title=id==='one-card'?'One card':id==='three-card'?'Three cards':spread.name;
     card.className='spread-card qs-card'+(selected?' selected':'');
     card.dataset.spreadId=id;
     if(advanced)card.dataset.premiumFeature='advanced-spreads';
-    card.setAttribute('aria-pressed',String(selected));
-    card.onclick=()=>{
-      if(!requestReadingAccess(id))return;
-      selectQuickSpread(id);
-    };
-    card.innerHTML='<span class="quick-layout-mark" aria-hidden="true"></span>'+
-      '<span class="quick-layout-name">'+escapeHtml(title)+'</span>'+
-      '<span class="quick-layout-meta"><span class="count">'+spread.cardCount+
+    const input=document.createElement('input');
+    input.type='radio';
+    input.name='quick-spread';
+    input.value=id;
+    input.checked=selected;
+    input.onchange=()=>selectQuickSpread(id);
+    card.innerHTML='<span class="quick-layout-name">'+escapeHtml(title)+'</span>'+
+      (primary?'':'<span class="quick-layout-meta"><span class="count">'+spread.cardCount+
       (spread.cardCount===1?' card':' cards')+'</span>'+
-      (advanced?'<span class="quick-layout-premium">Premium</span>':'')+'</span>';
+      (advanced?'<span class="quick-layout-premium">Premium</span>':'')+'</span>');
+    card.prepend(input);
     (primary?common:more).appendChild(card);
     if(!primary&&selected)document.getElementById('quick-more-layouts').open=true;
   }
@@ -1624,7 +1705,7 @@ function renderQuickSpreads(){
 function enterQuickCardsManually(){
   if(!state.quickSpreadId){
     showToast('Choose the layout you used first.');
-    document.querySelector('#quick-spread-grid button')?.focus();
+    document.querySelector('#quick-spread-grid input')?.focus();
     return;
   }
   if(!requestReadingAccess(state.quickSpreadId))return;
@@ -1766,7 +1847,9 @@ async function identifyPhotoForReview(zoneId,btnId,resultId,inputId){
 }
 
 function confirmCards(){
-  if(getSpread())goScreen('screen-overview');
+  if(!getSpread())return;
+  if(hasSelectedReadingCards())playReadingCue('step');
+  goScreen('screen-overview');
 }
 
 // ===== OVERVIEW =====
@@ -1883,9 +1966,6 @@ function renderOverview(){
   const first=document.getElementById('review-first-card');
   const drop=document.getElementById('dropped-overview');
   const note=document.getElementById('review-photo-note');
-  const quick=state.mode==='quick';
-  document.getElementById('dots-overview').hidden=quick;
-  document.getElementById('progress-overview').hidden=quick;
   empty.hidden=review.filled>0;
   first.onclick=()=>{
     if(review.positions.length)openCardPicker(String(review.positions[0].position.id));
@@ -1907,6 +1987,7 @@ function selectReviewMode(mode){
   if(!requestReadingAccess(state.spreadId,mode))return;
   state.reviewModeChoice=mode;
   updateReviewMode(getSpreadReview());
+  autoSaveState();
 }
 
 const AI_READING_DISCLOSURE='AI reading sends your confirmed cards, spread positions, question, and any optional reading context to Gemini.';
@@ -1920,7 +2001,7 @@ function reviewPrerequisite(review){
 }
 
 function updateReviewMode(review){
-  if(!isPremium())state.reviewModeChoice='classic';
+  if(!isPremium()||!['classic','ai'].includes(state.reviewModeChoice))state.reviewModeChoice='classic';
   const mode=state.reviewModeChoice;
   const detail=document.getElementById('review-mode-detail');
   const action=document.getElementById('review-generate');
@@ -2377,6 +2458,9 @@ function openCardPicker(posId){
   pickerSearchQuery='';
   const search=document.getElementById('picker-search');
   if(search)search.value='';
+  const position=getSpread()?.positions?.find(item=>String(item.id)===String(posId));
+  const title=document.getElementById('card-picker-title');
+  if(title)title.textContent=position?'Choose card for '+position.name:posId==='drop'?'Choose a jumper card':'Choose a card';
   currentCards=getCards();
   renderPickerFilters();
   activateDialog(document.getElementById('card-picker-modal'),document.activeElement);
@@ -2473,6 +2557,10 @@ function renderReadingSaveStatus(){
   document.getElementById('journal-reflection-prompt').textContent=state.readingPackage?.reflectionQuestions?.[0]||'What do you want to remember about this reading?';
   document.getElementById('reading-monthly-offer').hidden=premium||(getUsage().monthlyCount||0)<3;
   document.getElementById('reading-save-primary').hidden=!!saved;
+  const quickSave=document.getElementById('reading-quick-save');
+  const quickSaved=document.getElementById('reading-quick-saved');
+  if(quickSave)quickSave.hidden=!!saved;
+  if(quickSaved)quickSaved.hidden=!saved;
   document.getElementById('reading-save-hint').textContent=premium?'Your reflection will be linked to this reading.':`Free keeps up to ${FREE_READING_ARCHIVE_LIMIT} readings in this browser.`;
   document.getElementById('reading-save-status').hidden=!saved;
   const message=document.getElementById('reading-save-message');

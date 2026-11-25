@@ -6,7 +6,8 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;color:var(--au-violet)"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l2 2"></path></svg>
     </div>
     <h2>Take a moment with your cards</h2>
-    <p class="onboard compact-onboard">Shuffle with your question in mind. Arcana will guide each position next.</p>
+    <p class="onboard compact-onboard">Shuffle your deck, then lay the cards in these positions.</p>
+    <div id="preparation-spread-diagram"></div>
     <button type="button" class="btn btn-sm flow-shortcut" onclick="skipPreparation()">My cards are already laid out</button>
     <details class="flow-details preparation-tips">
       <summary>Shuffling and preparation tips</summary>
@@ -23,7 +24,7 @@
     </details>
   </div>
   <div class="nav-row" style="margin-top:32px">
-    <button type="button" class="btn" onclick="goScreen('screen-spread')">Back</button>
-    <button class="btn btn-primary" onclick="confirmReflection()">Continue</button>
+    <button type="button" class="btn" onclick="goScreen('screen-card-entry')">Back</button>
+    <button type="button" class="btn btn-primary" onclick="confirmReflection()">Continue to card entry</button>
   </div>
 </div>

@@ -283,7 +283,7 @@ Key functions in `js/ui.js`:
 
 - `routeForScreen()` and `screenForRoute()` translate IDs and hashes.
 - `navigate()` and `goScreen()` activate screens and update the hash.
-- `updateDots()` and `updateProgressEstimate()` update guided progress.
+- `updateDots()` shows the current reading phase.
 - `ensureRitualUtilities()` installs shared shell utilities, including Journal.
 - The homepage Journal link opens `#history`, including when a saved draft
   exists. The legacy `#journal` section anchor still opens the homepage offer.
@@ -300,26 +300,11 @@ Key functions in `js/ui.js`:
 building choices, card-entry controls, overview data, readings, history, and
 autosave. Modals are overlays and are not routes.
 
-The main guided progress sequence is:
-
-```js
-[
-  'screen-concerns',
-  'screen-card-system',
-  'screen-spread',
-  'screen-reflection',
-  'screen-card-entry',
-  'screen-overview',
-  'screen-reading'
-]
-```
-
-The question is optional and has an explicit skip action. `guidedScreens()`
-omits preparation when `state.preparationSkipped` is true, keeping the dots and
-step count accurate. Users with cards already laid out enter the upload tab;
-Back returns to spread selection. The selected card-entry tab and preparation
-choice survive autosave and reload. Quick Upload uses the same `#card-entry`,
-`#overview`, and `#reading` screens with its own Back destination.
+The progress indicator has three phases: Set up, Add cards, and Read. Optional
+questions and preparation stay within Add cards and return to card entry.
+The selected card-entry tab and preparation choice survive autosave and reload.
+Quick Upload uses the shared `#card-entry`, `#overview`, and `#reading` screens.
+Back from its card entry or review returns to the Quick Upload workspace.
 
 ## 10. User flows
 
@@ -327,19 +312,17 @@ choice survive autosave and reload. Quick Upload uses the same `#card-entry`,
 
 ```text
 Homepage
-  -> optional question
-  -> card system
   -> choose spread
-  -> optional preparation/reflection
-  -> guided draw, upload, or manual card entry
+  -> choose card system
+  -> card entry with optional question and preparation
   -> review identified/entered cards
   -> AI or classic reading
   -> journal, save, share, print, voice, or restart
 ```
 
-`startGuided()` resets reading state and starts at the optional question.
-Spread choices precede collapsed life-stage context. Preparation and jumper-card
-tips are expandable, and manual entry includes a searchable, suit-aware picker.
+`startGuided()` resets reading state and starts at spread selection. Life-stage
+context remains optional. Card entry shows the chosen spread, deck, and question.
+Manual entry includes a searchable, suit-aware picker for the selected position.
 Free readers choose the one-card or three-card spread, enter their cards
 manually, and receive one Classic reading per local day.
 
@@ -801,7 +784,7 @@ Expected Worker configuration:
 | Key | Purpose |
 |---|---|
 | `arcana_autosave` | temporary state recovery, one-hour expiry |
-| `arcana_settings` | Gemini key, reading style/tone, narrator voice |
+| `arcana_settings` | Gemini key, reading style/tone, narrator voice, opt-in transition sounds |
 | `arcana_subscription` | local premium entitlement metadata |
 | `arcana_usage` | daily/monthly usage counters |
 | `arcana_readings` | saved reading archive, three on Free and 50 on Premium |
@@ -864,9 +847,9 @@ existing only after client-side interaction.
 
 Core conventions:
 
-- Near-black/deep-indigo backgrounds
-- Ivory text with brighter secondary copy
-- Antique-gold primary controls, rules, borders, and focus rings
+- Ink-and-paper surfaces, with a plum homepage hero and reading summary
+- Dark plum text and lilac selected states on paper
+- Marigold primary controls and plum focus rings
 - Editorial serif headings and readable sans-serif controls
 - Restrained translucent surfaces and celestial light effects
 - Eight-pixel premium surface radii
@@ -878,7 +861,8 @@ create a containing block that clips that dock. Mobile copy has an explicit
 readability floor, and major controls must remain usable at a 390px viewport
 without horizontal overflow.
 
-Selection surfaces use semantic `<button type="button">` elements. Preserve:
+Deck and standard spread choices use native radio inputs. Gated actions and
+orientation toggles use semantic buttons. Preserve:
 
 - Visible keyboard focus
 - Non-color selection cues

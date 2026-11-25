@@ -2,60 +2,64 @@
   <div class="step-dots" id="dots-spread"></div>
   <div class="progress-estimate" id="progress-spread"></div>
   <h2>Choose your spread</h2>
-  <p class="onboard compact-onboard">One free Classic reading per day. Choose a one-card or three-card spread.</p>
+  <p class="onboard compact-onboard">Choose the layout you’ll use with your physical cards. One-card and three-card Classic readings are available on the Free plan.</p>
   <div class="reading-choices" id="reading-choices">
-    <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('one-card',this)">
-      <div class="rc-header"><h3><span class="radio-mark"></span>Quick Insight</h3><span class="rc-cards">1 Card</span></div>
-      <p>Best for a daily card reading, a simple yes-or-no feeling, or one clear question.</p>
-      <span class="rc-time">~1 minute</span>
-    </button>
-    <button type="button" class="reading-choice-card recommended" aria-pressed="false" onclick="selectReadingType('three-card',this)">
-      <div class="rc-header"><h3><span class="radio-mark"></span>Standard Reading <span class="star-mark">&#9733;</span></h3><span class="rc-cards">3 Cards</span></div>
-      <p>Best for understanding past influences, present energy, and the likely direction of a situation.</p>
-      <span class="rc-time">~3 minutes</span>
-    </button>
-    <h3 class="spread-cat-label" id="premium-spreads-heading">Premium spreads</h3>
-    <div class="premium-spread-choices" role="group" aria-labelledby="premium-spreads-heading">
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('six-card',this)" data-premium-feature="advanced-spreads">
+    <fieldset class="reading-options">
+      <legend class="sr-only">Standard layouts</legend>
+      <label class="reading-choice-card">
+        <span class="choice-title" id="one-card-label">One card</span>
+        <span class="choice-detail" id="one-card-detail">A focused reading for one question or a moment of reflection.</span>
+        <input type="radio" name="guided-spread" value="one-card" aria-labelledby="one-card-label" aria-describedby="one-card-detail" onchange="selectReadingType(this.value)">
+      </label>
+      <label class="reading-choice-card">
+        <span class="choice-title" id="three-card-label">Three cards</span>
+        <span class="choice-detail" id="three-card-detail">Look at past influences, the present, and a possible direction.</span>
+        <input type="radio" name="guided-spread" value="three-card" aria-labelledby="three-card-label" aria-describedby="three-card-detail" onchange="selectReadingType(this.value)">
+      </label>
+    </fieldset>
+    <details class="flow-details" id="premium-spreads">
+      <summary id="premium-spreads-heading">More spreads <span class="optional-label">Premium</span></summary>
+      <div class="premium-spread-choices" role="group" aria-labelledby="premium-spreads-heading">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="six-card" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Deep Exploration</h3><span class="rc-cards">6 Cards</span></div>
         <p>Best when a relationship, career question, or life decision needs more nuance.</p>
         <span class="rc-time">~5 minutes</span>
       </button>
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('celtic-cross',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="celtic-cross" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Advanced Celtic Cross</h3><span class="rc-cards">10 Cards</span></div>
         <p>Look at a complex situation from several angles, including what’s driving it and what could happen next.</p>
         <span class="rc-time">~8 minutes</span>
       </button>
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('romany',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="romany" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Romany Spread</h3><span class="rc-cards">21 Cards</span></div>
         <p>Take stock of seven areas of life and reflect on how each has changed over time.</p>
         <span class="rc-time">~15 minutes</span>
       </button>
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('yearly',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="yearly" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Yearly Forecast</h3><span class="rc-cards">12 Cards</span></div>
         <p>Reflect on a theme for each of the next 12 months, starting with this month.</p>
         <span class="rc-time">~10 minutes</span>
       </button>
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('two-pathways',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="two-pathways" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Two Pathways</h3><span class="rc-cards">14 Cards</span></div>
         <p>Compare two choices side by side and explore what each could mean in the near and longer term.</p>
         <span class="rc-time">~12 minutes</span>
       </button>
-      <button type="button" class="reading-choice-card" aria-pressed="false" onclick="selectReadingType('relationship',this)" data-premium-feature="advanced-spreads">
+      <button type="button" class="reading-choice-card" aria-pressed="false" data-spread-id="relationship" onclick="selectReadingType(this.dataset.spreadId)" data-premium-feature="advanced-spreads">
         <div class="rc-header"><h3><span class="radio-mark"></span>Relationship Spread</h3><span class="rc-cards">15 Cards</span></div>
         <p>Explore both perspectives, what each person brings, and the influences shaping the connection.</p>
         <span class="rc-time">~12 minutes</span>
       </button>
-    </div>
+      </div>
+    </details>
   </div>
-  <button type="button" class="btn btn-sm flow-shortcut" onclick="confirmSpread(true)">My cards are already laid out</button>
   <details class="flow-details context-details" id="reader-context-details">
     <summary>Optional reading context</summary>
     <div class="context-panel">
       <p>Life stage helps Arcana keep the language relevant and age-aware.</p>
       <div class="context-grid">
         <label for="reader-life-stage">Life stage (optional)
-          <select id="reader-life-stage">
+          <select id="reader-life-stage" onchange="saveReaderContext(this.id);autoSaveState()">
             <option value="">Prefer not to say</option>
             <option>Child</option><option>Teen</option><option>Young adult</option><option>Adult</option><option>Older adult</option>
           </select>
@@ -65,7 +69,7 @@
     </div>
   </details>
   <div class="nav-row">
-    <button type="button" class="btn" onclick="goScreen('screen-card-system')">Back</button>
-    <button class="btn btn-primary" onclick="confirmSpread()">Continue</button>
+    <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back</button>
+    <button type="button" class="btn btn-primary" onclick="confirmSpread()">Continue to deck</button>
   </div>
 </div>

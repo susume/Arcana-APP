@@ -3,20 +3,27 @@
   <div class="progress-estimate" id="progress-card-system"></div>
   <h2>Choose your deck</h2>
   <p class="onboard compact-onboard">Use the deck in your hands. Arcana will keep its card names and meanings.</p>
-  <button type="button" class="card-opt selected" data-deck="tarot" aria-pressed="true" onclick="selectSystem('tarot',this)">
-    <h3>Traditional Tarot</h3>
-    <p>A 78-card tarot deck.<span class="card-system-detail"> Major and Minor Arcana, including Wands, Cups, Swords, and Pentacles.</span></p>
-  </button>
-  <button type="button" class="card-opt" data-deck="playing" aria-pressed="false" onclick="selectSystem('playing',this)">
-    <h3>Playing Cards</h3>
-    <p>A standard 52-card deck.<span class="card-system-detail"> Hearts, Diamonds, Clubs, and Spades, read through cartomancy meanings.</span></p>
-  </button>
-  <button type="button" class="card-opt" data-deck="playing-joker" aria-pressed="false" onclick="selectSystem('playing-joker',this)">
-    <h3>Playing Cards + Joker</h3>
-    <p>A 52-card deck with one Joker.<span class="card-system-detail"> The Joker adds themes of possibility, surprise, and the unknown.</span></p>
-  </button>
+  <p class="reading-setup-summary" data-reading-setup hidden></p>
+  <fieldset class="reading-options">
+    <legend class="sr-only">Deck type</legend>
+    <label class="card-opt selected">
+      <span class="choice-title" id="deck-tarot-label">Traditional Tarot</span>
+      <span class="choice-detail" id="deck-tarot-detail">A 78-card tarot deck.</span>
+      <input type="radio" name="guided-deck" value="tarot" aria-labelledby="deck-tarot-label" aria-describedby="deck-tarot-detail" onchange="selectSystem(this.value)" checked>
+    </label>
+    <label class="card-opt">
+      <span class="choice-title" id="deck-playing-label">Playing Cards</span>
+      <span class="choice-detail" id="deck-playing-detail">A standard 52-card deck.</span>
+      <input type="radio" name="guided-deck" value="playing" aria-labelledby="deck-playing-label" aria-describedby="deck-playing-detail" onchange="selectSystem(this.value)">
+    </label>
+    <label class="card-opt">
+      <span class="choice-title" id="deck-joker-label">Playing Cards + Joker</span>
+      <span class="choice-detail" id="deck-joker-detail">A 52-card deck with one Joker.</span>
+      <input type="radio" name="guided-deck" value="playing-joker" aria-labelledby="deck-joker-label" aria-describedby="deck-joker-detail" onchange="selectSystem(this.value)">
+    </label>
+  </fieldset>
   <div class="nav-row">
-    <button type="button" class="btn" onclick="goScreen('screen-concerns')">Back</button>
-    <button class="btn btn-primary" onclick="confirmSystem()">Continue</button>
+    <button type="button" class="btn" onclick="goScreen('screen-spread')">Back</button>
+    <button type="button" class="btn btn-primary" onclick="confirmSystem()">Continue to card entry</button>
   </div>
 </div>

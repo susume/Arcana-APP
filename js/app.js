@@ -39,15 +39,13 @@ async function initApp(){
     migrateRestoredCardSystemState(savedState);
     // Rehydrate the controls as well as the state before resuming a route.
     const concerns=Array.isArray(state.concerns)?state.concerns:[];
-    const question=document.querySelector('.concern-input');
-    if(question)question.value=concerns.join('; ');
+    concerns.slice(1).forEach(()=>addConcern());
+    document.querySelectorAll('.concern-input').forEach((question,index)=>{
+      question.value=concerns[index]||'';
+    });
     document.querySelectorAll('.tag-chip').forEach(chip=>{
       const selected=concerns.includes(chip.textContent.trim());
       chip.classList.toggle('active',selected);chip.setAttribute('aria-pressed',String(selected));
-    });
-    document.querySelectorAll('.reading-choice-card').forEach(option=>{
-      const selected=!!state.spreadId&&option.getAttribute('onclick').includes("'"+state.spreadId+"'");
-      option.classList.toggle('selected',selected);option.setAttribute('aria-pressed',String(selected));
     });
     for(const id of ['reader-life-stage','quick-reader-life-stage']){
       const select=document.getElementById(id);if(select)select.value=state.readerLifeStage||'';
@@ -65,7 +63,7 @@ async function initApp(){
       if(orientation){
         const reversed=state.droppedCard.orientation==='reversed';
         orientation.dataset.orient=state.droppedCard.orientation;
-        orientation.textContent=reversed?'R':'U';
+        orientation.textContent=cardOrientationLabel(state.droppedCard.orientation);
         orientation.classList.toggle('reversed',reversed);
         orientation.setAttribute('aria-pressed',String(reversed));
         orientation.setAttribute('aria-label','Card orientation: '+state.droppedCard.orientation);
@@ -78,7 +76,7 @@ async function initApp(){
       if(!state.spreadId)state.spreadId=state.quickSpreadId;
     }
     if(!homepageSections.has(route)&&screenForRoute(route)!=='screen-history'){
-      route=saved.route || (state.spreadId?'screen-spread':'screen-concerns');
+      route=saved.route || 'screen-spread';
     }
   }
   if(!openHomepageSection(route))goScreen(screenForRoute(route||'welcome'),true);

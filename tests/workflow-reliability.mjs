@@ -19,7 +19,7 @@ const context=vm.createContext({console:{warn(){}},setTimeout,clearTimeout,
   localStorage:{getItem(key){return data.get(key)||null;},setItem(key,value){if(storageFails)throw new Error('QuotaExceededError');data.set(key,value);}},
   getReadingSpread:()=>({id:'one-card',name:'One Card'}),getSpread:()=>({id:'one-card'}),SPREADS:[],GLYPH:{star4:''},
 });
-for(const file of ['state','subscription','storage','dom-helpers','ui','reading-engine'])vm.runInContext(fs.readFileSync(new URL('../js/'+file+'.js',import.meta.url),'utf8'),context);
+for(const file of ['tarot','state','subscription','storage','dom-helpers','ui','reading-engine'])vm.runInContext(fs.readFileSync(new URL('../js/'+file+'.js',import.meta.url),'utf8'),context);
 context.showToast=message=>messages.push(message);
 context.renderEntitlementsUI=()=>{};
 context.getReadingSpread=()=>({id:'one-card',name:'One Card'});
@@ -185,11 +185,19 @@ run("state.mode='guided';state.spreadId='one-card';state.cardSystem='playing';st
 run('skipPreparation()');
 assert.equal(run('state.preparationSkipped'),true);
 assert.equal(run('state.cardSystem'),'playing','Skipping preparation must retain the chosen physical deck');
-assert.equal(run("guidedScreens().includes('screen-reflection')"),false);
 assert.equal(run('serializableState().preparationSkipped'),true,'The optional preparation route must survive an autosave');
-run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-spread');
+run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-card-system');
 run('confirmReflection()');assert.equal(run('state.preparationSkipped'),false);
-run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-reflection');
+run('backFromCardEntry()');assert.equal(navigations.at(-1),'screen-card-system');
+run("state.cardSystemEstablished=false");
+assert.equal(context.resolveScreenPrerequisite('screen-spread'),'screen-spread','Spread selection must be reachable before a deck is confirmed');
+run('confirmSpread()');assert.equal(navigations.at(-1),'screen-card-system');
+run('confirmSystem()');assert.equal(navigations.at(-1),'screen-card-entry');
+inputs=[{id:'concern-input-1',value:'Keep the question'}];
+run('saveConcerns()');assert.equal(navigations.at(-1),'screen-card-entry');
+assert.equal(run('state.concerns[0]'),'Keep the question');
+assert.equal(run('state.spreadId'),'one-card');
+assert.equal(run('state.cardSystem'),'playing');
 console.log('onboarding skip and card search regressions passed');
 
 // Reflection edits must retain the draft when storage fails or another tab changes the journal.

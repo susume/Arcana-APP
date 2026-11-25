@@ -4,7 +4,7 @@
   <h2>What would you like to reflect on?</h2>
   <p class="onboard compact-onboard">One question is enough. You can also continue with an open reading.</p>
   <div id="concern-list">
-    <div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input"></div>
+    <div class="concern-row"><label for="concern-input-1">Your question (optional)</label><input id="concern-input-1" type="text" maxlength="1000" placeholder="What is on your mind?" class="concern-input" oninput="saveGuidedQuestion()"></div>
   </div>
   <button type="button" class="btn btn-sm flow-shortcut" onclick="skipConcerns()">Skip question</button>
   <details class="flow-details question-ideas">
@@ -16,7 +16,7 @@
     </div>
   </details>
   <div class="nav-row">
-    <button type="button" class="btn" onclick="goScreen('screen-welcome')">Back</button>
+    <button type="button" class="btn" onclick="backFromConcerns()">Back</button>
     <button class="btn btn-primary" onclick="saveConcerns()">Continue</button>
   </div>
 </div>

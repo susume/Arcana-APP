@@ -1,23 +1,22 @@
 <div class="screen ritual-screen ritual-screen-workspace" id="screen-quick">
   <header class="quick-intro">
     <div>
-      <p class="reading-kicker">Cards already laid out</p>
       <h2>Read your spread</h2>
-      <p>Choose your layout, then add the physical cards you drew.</p>
+      <p>Already laid out your cards? Choose your layout and add them.</p>
     </div>
     <button type="button" class="btn btn-sm quick-back" onclick="goScreen('screen-welcome')">← Back</button>
   </header>
   <div class="quick-steps">
     <section class="quick-step quick-spread-options" aria-labelledby="quick-layout-heading">
-      <h3 id="quick-layout-heading"><span class="quick-step-number" aria-hidden="true">01</span> Choose a layout</h3>
-      <div class="spread-grid" id="quick-spread-grid"></div>
+      <h3 id="quick-layout-heading">Layout</h3>
+      <div class="spread-grid" id="quick-spread-grid" role="group" aria-labelledby="quick-layout-heading"></div>
       <details class="quick-more-layouts" id="quick-more-layouts">
         <summary>More layouts</summary>
         <div class="spread-grid" id="quick-more-spread-grid"></div>
       </details>
     </section>
     <section class="quick-step quick-upload-step" aria-labelledby="quick-photo-heading">
-      <h3 id="quick-photo-heading"><span class="quick-step-number" aria-hidden="true">02</span> Add your cards</h3>
+      <h3 id="quick-photo-heading">Deck and cards</h3>
       <div class="quick-deck-field">
         <label for="quick-deck-selector">Deck type</label>
         <select id="quick-deck-selector" onchange="if(!selectUploadCardSystem(this.value))syncUploadDeckSelectors()">
@@ -31,6 +30,13 @@
       </button>
       <input type="file" id="quick-file" accept="image/jpeg,image/png,image/webp" aria-label="Choose spread photo" hidden onchange="handleQuickUpload(this)">
       <div id="quick-results"></div>
+      <div class="quick-reading-dock">
+        <div class="quick-reading-dock-inner">
+          <button type="button" class="btn btn-primary" id="quick-go" aria-disabled="true" aria-describedby="quick-prerequisite" onclick="quickRead()">Identify cards</button>
+          <button type="button" class="btn quick-manual" onclick="enterQuickCardsManually()">Enter by hand</button>
+        </div>
+        <p class="quick-prerequisite" id="quick-prerequisite" role="status">Choose a layout to get started.</p>
+      </div>
     </section>
   </div>
   <details class="flow-details quick-reading-details" id="quick-question">
@@ -54,11 +60,4 @@
       </div>
     </div>
   </details>
-  <div class="quick-reading-dock">
-    <p class="quick-prerequisite" id="quick-prerequisite" role="status">Choose a layout to get started.</p>
-    <div class="quick-reading-dock-inner">
-      <button type="button" class="btn btn-primary" id="quick-go" aria-disabled="true" aria-describedby="quick-prerequisite" onclick="quickRead()">Identify cards</button>
-      <button type="button" class="btn quick-manual" onclick="enterQuickCardsManually()">Enter cards manually</button>
-    </div>
-  </div>
 </div>

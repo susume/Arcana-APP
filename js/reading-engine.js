@@ -27,6 +27,7 @@ async function generateReading(mode=state.reviewModeChoice){
   state.readingInfographic=null;
   state.readingMode=mode;
   state.readingInProgress=true;
+  prepareReadingAudio();
   goScreen('screen-reading');
   const requestVersion=++readingRequestVersion;
   setReadingReadyState(false);
@@ -60,6 +61,7 @@ async function generateReading(mode=state.reviewModeChoice){
     renderReading(classic);
   }
   recordReviewedReading();
+  playReadingCue('reveal');
 }
 
 function recordReviewedReading(){
@@ -663,6 +665,12 @@ function renderReading(text){
   // Markdown rendering — process lists properly
   content.innerHTML=renderSafeMarkdown(text);
   enhanceReadingOutput();
+  const save=document.createElement('div');
+  save.className='reading-quick-actions result-only no-print';
+  save.innerHTML='<button type="button" class="btn btn-sm" id="reading-quick-save" onclick="saveReading()">Save reading</button><p id="reading-quick-saved" tabindex="-1" role="status" hidden>Saved on this device</p>';
+  const summary=content.querySelector('.reading-section');
+  if(summary)summary.after(save);
+  else content.prepend(save);
   renderReadingInfographicPanel(document.getElementById('reading-image-export'));
 
   setReadingReadyState(true);

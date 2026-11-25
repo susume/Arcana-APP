@@ -3,6 +3,16 @@
   <div class="progress-estimate" id="progress-card-entry"></div>
   <h2>Add your cards</h2>
   <p class="onboard compact-onboard" id="card-entry-description">Draw from your physical deck, upload your spread, or enter the cards by hand.</p>
+  <div class="reading-setup" id="guided-reading-setup" hidden>
+    <div class="reading-setup-copy">
+      <p class="reading-setup-summary" data-reading-setup hidden></p>
+      <p class="reading-setup-question" id="guided-question-summary" hidden></p>
+    </div>
+    <div class="reading-setup-actions">
+      <button type="button" class="btn btn-sm" id="guided-question-action" onclick="goScreen('screen-concerns')">Add a question</button>
+      <button type="button" class="btn btn-sm" onclick="goScreen('screen-reflection')">See how to lay out your cards</button>
+    </div>
+  </div>
 
   <div class="tab-bar" role="tablist" aria-label="Card entry method">
     <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-guided" onclick="selectCardEntryTab('tab-guided',this)">Guided Draw</button>
@@ -53,7 +63,7 @@
 
   <div id="tab-manual" role="tabpanel" aria-label="Manual card entry" style="display:none">
     <div class="onboard">
-      Choose a card from the picker, then mark it <strong>upright</strong> or <strong>reversed</strong>. Manual entry is useful when a photo is unclear.
+      Choose a card from the picker, then check whether it’s upright or reversed.
     </div>
     <div class="suit-filter" id="suit-filter"></div>
     <div id="manual-entries"></div>
@@ -71,7 +81,7 @@
         <div class="card-entry-row">
           <span class="pos-name">Dropped Card</span>
           <button type="button" class="card-pick-btn" onclick="openCardPicker('drop')" data-pos="drop">Choose card...</button>
-          <button type="button" class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" aria-pressed="false" aria-label="Card orientation: upright. Activate to mark reversed." title="Card orientation: upright">U</button>
+          <button type="button" class="orient-btn" onclick="toggleOrient(this)" data-orient="upright" data-pos="drop" aria-pressed="false" aria-label="Card orientation: upright. Activate to mark reversed." title="Card orientation: upright">Upright</button>
         </div>
       </div>
     </div>

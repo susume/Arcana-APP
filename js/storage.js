@@ -55,6 +55,7 @@ function serializableState(){
     hasDroppedCard:!!state.hasDroppedCard,
     narrative:'',
     readingMode:state.readingMode,
+    reviewModeChoice:state.reviewModeChoice,
     readerLifeStage:state.readerLifeStage||'',
     guidedStep:Number.isFinite(state.guidedStep)?state.guidedStep:0,
     preparationSkipped:!!state.preparationSkipped,
@@ -97,9 +98,10 @@ function loadSettings(){
       geminiKey:saved.geminiKey||'',
       readingStyle:saved.readingStyle||'Traditional',
       readingTone:saved.readingTone||'Gentle',
-      narratorVoice:saved.narratorVoice||''
+      narratorVoice:saved.narratorVoice||'',
+      transitionSounds:saved.transitionSounds===true
     };
-  }catch(e){return{geminiKey:'',readingStyle:'Traditional',readingTone:'Gentle',narratorVoice:''}}
+  }catch(e){return{geminiKey:'',readingStyle:'Traditional',readingTone:'Gentle',narratorVoice:'',transitionSounds:false}}
 }
 function saveSettings(){
   const previous=loadSettings();
@@ -107,7 +109,8 @@ function saveSettings(){
     geminiKey:previous.geminiKey||'',
     readingStyle:document.getElementById('reading-style').value,
     readingTone:document.getElementById('reading-tone').value,
-    narratorVoice:document.getElementById('narrator-voice')?.value||''
+    narratorVoice:document.getElementById('narrator-voice')?.value||'',
+    transitionSounds:document.getElementById('transition-sounds')?.checked===true
   };
   if(!writeStoredJson('arcana_settings',s,'Settings could not be saved. Browser storage is unavailable.'))return;
   renderEntitlementsUI();
@@ -119,6 +122,8 @@ function loadSettingsUI(){
   document.getElementById('reading-style').value=s.readingStyle;
   document.getElementById('reading-tone').value=s.readingTone;
   populateNarratorVoiceOptions(s.narratorVoice);
+  const sounds=document.getElementById('transition-sounds');
+  if(sounds)sounds.checked=s.transitionSounds;
   const keyInput=document.getElementById('premium-key-input');
   if(keyInput)keyInput.value='';
   const geminiInput=document.getElementById('gemini-key-input');
@@ -356,7 +361,9 @@ function openSaveReadingDialog(){
     if(reflectionInput)reflectionInput.value='';
     closeSaveReadingDialog(false);
     renderReadingSaveStatus();
-    document.getElementById('view-saved-journal')?.focus();
+    playReadingCue('save');
+    const savedFocus=returnFocus?.id==='reading-quick-save'?'reading-quick-saved':'view-saved-journal';
+    document.getElementById(savedFocus)?.focus();
   });
 
   requestAnimationFrame(()=>{

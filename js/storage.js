@@ -272,10 +272,10 @@ function openSaveReadingDialog(){
   overlay._returnFocus=returnFocus;
   overlay.innerHTML=`
     <div class="modal ritual-modal save-reading-dialog" role="dialog" aria-modal="true" aria-labelledby="save-reading-title" aria-describedby="save-reading-description">
-      <h2 id="save-reading-title">Save this reading</h2>
+      <h2 id="save-reading-title">Keep this reading in your journal</h2>
       <p id="save-reading-description">${reflection?'Your reflection will be saved with this reading.':'Readings stay in this browser.'}</p>
       <form id="save-reading-form" novalidate>
-        <label for="save-reading-name">Reading title</label>
+        <label for="save-reading-name">Give your reading a title</label>
         <input id="save-reading-name" type="text" maxlength="80" autocomplete="off" required>
         <div class="storage-warning" id="save-reading-capacity" hidden>
           <p id="save-reading-capacity-message"></p>

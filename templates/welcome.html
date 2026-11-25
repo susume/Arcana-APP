@@ -147,19 +147,32 @@
   </section>
 
   <section class="ritual-journal-premium atelier-offer" id="journal" aria-labelledby="journal-title">
+    <header class="offer-intro">
+      <h3 id="journal-title">Choose how you read.</h3>
+      <a class="sample-text-link" href="pricing.html">Compare all features <span aria-hidden="true">&#8599;</span></a>
+    </header>
+    <div class="offer-free">
+      <h4>Free</h4>
+      <p class="offer-lead">One Classic reading each day.</p>
+      <ul><li>Built-in card interpretations</li><li>One-card and three-card spreads</li><li>Manual entry with your own deck</li></ul>
+      <button type="button" class="btn" disabled data-app-startup onclick="startGuided()">Start a free reading</button>
+    </div>
     <div class="journal-copy" id="premium">
-      <span class="atelier-eyebrow">MAKE REFLECTION A RITUAL</span>
-      <h3 id="journal-title">Keep your journey going.</h3>
-      <p>Unlock every spread, unlimited Classic readings, AI photo identification and interpretation, personalized poster downloads, and journal tools. New purchases include 30 hosted AI requests each month.</p>
+      <h4>Premium</h4>
+      <p class="offer-lead">Full access with one payment.</p>
+      <ul><li>Every spread and unlimited Classic readings</li><li>AI photo identification and interpretation</li><li>Personalized posters and a reflection journal</li></ul>
+      <p>New purchases include 30 hosted AI requests each month.</p>
       <!-- play:home-offer -->
       <p class="homepage-monetization-copy">Premium lifetime unlock. Pay what you want, starting at $10.</p>
-      <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
+      <details class="offer-terms"><summary>Payment and refund terms</summary>
+        <p>$10 minimum. $20 suggested. One payment, with the same Premium features at every price. Paying more is optional and helps support Arcana Guide&rsquo;s continued development.</p>
       <p>Try your free daily reading before buying. All sales are final. No refunds, except where required by applicable law or Gumroad&rsquo;s policies.</p>
+      </details>
       <!-- /play:home-offer -->
-    </div>
-    <div class="offer-actions">
-      <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')"><!-- play:home-button -->Unlock Premium from $10<!-- /play:home-button --></button>
-      <button class="btn ritual-journal-cta" disabled data-app-startup onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+      <div class="offer-actions">
+        <button type="button" class="btn btn-primary" disabled data-app-startup onclick="showUpgradeModal('journal')"><!-- play:home-button -->Unlock Premium from $10<!-- /play:home-button --></button>
+        <button class="btn ritual-journal-cta" disabled data-app-startup onclick="goScreen('screen-history')" data-premium-feature="history">Open Tarot Journal</button>
+      </div>
     </div>
   </section>
 

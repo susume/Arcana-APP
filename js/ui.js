@@ -27,8 +27,8 @@ function ensureRitualUtilities(){
       <button type="button" class="atlas-brand" onclick="goScreen('screen-welcome')" aria-label="Arcana home"><span class="atlas-wordmark" aria-hidden="true"><i class="atlas-sigil"></i>Arcana<em>Guide</em></span></button>
       <div class="atlas-rail-heading" aria-hidden="true">${screen.id==='screen-history'?'Your journal':'Reading room'}</div>
       <nav class="atelier-tools" aria-label="Reading tools">
-        <button type="button" onclick="openModal('modal-help')">Guide</button>
-        <button type="button" onclick="openModal('modal-settings')">Settings</button>
+        <button type="button" onclick="openModal('modal-help')">${ICON.help}Guide</button>
+        <button type="button" onclick="openModal('modal-settings')">${ICON.settings}Settings</button>
       </nav>
       <div class="atlas-rail-chart" aria-hidden="true"><i class="atlas-sigil"></i></div>
     </div>`;
@@ -1093,6 +1093,8 @@ function enhanceReadingOutput(){
       const passage=document.createElement('div');
       passage.className='atlas-opening-passage';
       passage.append(...summary.childNodes);
+      const heading=passage.querySelector('h3');
+      if(heading?.textContent.trim()==='Your Reading in 30 Seconds')heading.textContent='At the heart of your reading';
       const label=document.createElement('p');
       label.className='atlas-spread-name no-print';
       label.textContent=spread.name;
@@ -2109,6 +2111,7 @@ function renderHistory(){
       list.appendChild(comparison);
     }
   }
+  const journalCards=new Map([...TAROT_CARDS,...buildPlayingCards(true)].map(card=>[card.name,card]));
   visibleReadings.forEach((r,i)=>{
     if(!r)return;
     const d=new Date(r.date);
@@ -2128,7 +2131,24 @@ function renderHistory(){
     const date=document.createElement('span');
     date.className='h-date';
     date.textContent=Number.isNaN(d.getTime())?'Saved reading':d.toLocaleDateString();
-    header.append(summary,date);
+    const firstName=Object.values(r.cards||{}).find(entry=>entry?.name)?.name;
+    const coverCard=journalCards.get(firstName);
+    if(coverCard){
+      const cover=document.createElement('span');
+      cover.className='journal-cover';
+      cover.setAttribute('aria-hidden','true');
+      cover.innerHTML=coverCard.system==='tarot'?renderCardArt(coverCard,'tarot-card-thumb',96):renderCardFallback(coverCard);
+      header.appendChild(cover);
+    }
+    const insight=r.readingPackage?.quickSummary;
+    if(typeof insight==='string'&&insight.trim()){
+      const excerpt=document.createElement('p');
+      excerpt.className='journal-excerpt';
+      excerpt.textContent=insight;
+      summary.appendChild(excerpt);
+    }
+    summary.prepend(date);
+    header.appendChild(summary);
     if(isPremium()&&visibleReadings.length>=2){
       const check=document.createElement('input');
       check.className='compare-reading-check';
